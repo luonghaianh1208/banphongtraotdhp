@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isAdmin() { return getUserRole() == 'admin'; }
+    function isManager() { return getUserRole() == 'manager'; }
+    function isAuthenticated() { return request.auth != null; }
+    function isAdminOrManager() { return isAdmin() || isManager(); }
+
+    // Users — chỉ đọc, ghi qua Cloud Functions
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // Tasks
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        (isAdminOrManager() || request.resource.data.createdBy == request.auth.uid);
+      allow update: if isAuthenticated() &&
+        (isAdminOrManager() || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Notifications — đọc/update notification của bản thân
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, delete: if false;
+    }
+  }
+}
