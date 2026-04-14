@@ -1,33 +1,46 @@
 // Utility functions cho ngày tháng
-import { format, formatDistanceToNow, isToday, isThisWeek, isThisMonth, differenceInHours, differenceInDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { formatDistanceToNow, isToday, isThisWeek, isThisMonth, differenceInHours, differenceInDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { vi } from 'date-fns/locale';
+
+const TZ = 'Asia/Ho_Chi_Minh';
 
 // Format ngày hiển thị
 export const formatDate = (date) => {
   if (!date) return '';
   const d = date?.toDate ? date.toDate() : new Date(date);
-  return format(d, 'dd/MM/yyyy', { locale: vi });
+  return formatInTimeZone(d, TZ, 'dd/MM/yyyy', { locale: vi });
 };
 
-// Format ngày + giờ
+// Format ngày + giờ (tự động 24h vì dùng HH)
 export const formatDateTime = (date) => {
   if (!date) return '';
   const d = date?.toDate ? date.toDate() : new Date(date);
-  return format(d, 'dd/MM/yyyy HH:mm', { locale: vi });
+  return formatInTimeZone(d, TZ, 'dd/MM/yyyy HH:mm', { locale: vi });
 };
 
-// Format thời gian tương đối ("2 giờ trước", "3 ngày trước")
+// Format thời gian tương đối
 export const formatRelative = (date) => {
   if (!date) return '';
   const d = date?.toDate ? date.toDate() : new Date(date);
   return formatDistanceToNow(d, { addSuffix: true, locale: vi });
 };
 
-// Format cho input datetime-local
+// Format cho input datetime-local form (hiển thị giờ VN)
 export const formatForInput = (date) => {
   if (!date) return '';
   const d = date?.toDate ? date.toDate() : new Date(date);
-  return format(d, "yyyy-MM-dd'T'HH:mm");
+  return formatInTimeZone(d, TZ, "yyyy-MM-dd'T'HH:mm");
+};
+
+// Ép parse input string string ('2024-05-20T14:30') thành giờ VN
+export const parseVNTime = (dateString) => {
+  if (!dateString) return null;
+  // Datetime-local (vd. yyyy-MM-ddThh:mm)
+  if (dateString.length === 16) {
+    return new Date(`${dateString}+07:00`);
+  }
+  return new Date(dateString);
 };
 
 // Kiểm tra task trong khoảng thời gian

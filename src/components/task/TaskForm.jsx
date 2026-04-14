@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { MdSave, MdClose, MdUploadFile } from 'react-icons/md';
 import { useTaskConfig } from '../../context/TaskConfigContext';
-import { formatForInput } from '../../utils/dateUtils';
+import { formatForInput, parseVNTime } from '../../utils/dateUtils';
 import { uploadFile, validateFile } from '../../firebase/storage';
 import toast from 'react-hot-toast';
 
@@ -61,7 +61,7 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         assignees,
         priority,
         category: category || 'other',
-        deadline: new Date(deadline),
+        deadline: parseVNTime(deadline),
         attachments: uploadedFiles,
         createdBy: task?.createdBy || currentUser.uid,
       });
