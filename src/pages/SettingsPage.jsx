@@ -1,55 +1,32 @@
-// SettingsPage — cài đặt cá nhân: đổi mật khẩu, thông tin
-import { useState } from 'react';
-import { MdLock, MdPerson, MdSave } from 'react-icons/md';
+// SettingsPage — hồ sơ cá nhân
+import { MdPerson } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
-import { changePassword } from '../firebase/auth';
 import { ROLES, ORG_NAME } from '../utils/constants';
-import toast from 'react-hot-toast';
 
 const SettingsPage = () => {
   const { currentUser, userProfile } = useAuth();
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    if (newPassword.length < 6) return toast.error('Mật khẩu mới phải ít nhất 6 ký tự');
-    if (newPassword !== confirmPassword) return toast.error('Mật khẩu xác nhận không khớp');
-
-    setLoading(true);
-    try {
-      await changePassword(newPassword);
-      toast.success('Đã đổi mật khẩu thành công');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err) {
-      if (err.code === 'auth/requires-recent-login') {
-        toast.error('Cần đăng nhập lại để đổi mật khẩu. Vui lòng đăng xuất và đăng nhập lại.');
-      } else {
-        toast.error('Lỗi: ' + err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="max-w-2xl mx-auto fade-in space-y-6">
       {/* Thông tin cá nhân */}
       <div className="card p-6">
         <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
-          <MdPerson size={20} /> Thông tin cá nhân
+          <MdPerson size={20} /> Hồ sơ cá nhân
         </h3>
-        <div className="space-y-3">
-          <div className="flex items-center">
-            <span className="w-32 text-sm text-gray-500">Họ tên:</span>
-            <span className="text-sm font-medium text-gray-900">{userProfile?.displayName}</span>
+        <div className="flex items-center gap-4 mb-5">
+          {userProfile?.avatar ? (
+            <img src={userProfile.avatar} alt="" className="w-16 h-16 rounded-full shadow-md" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-2xl shadow-md">
+              {userProfile?.displayName?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
+          <div>
+            <p className="text-lg font-semibold text-gray-900">{userProfile?.displayName}</p>
+            <p className="text-sm text-gray-500">{currentUser?.email}</p>
           </div>
-          <div className="flex items-center">
-            <span className="w-32 text-sm text-gray-500">Email:</span>
-            <span className="text-sm text-gray-900">{currentUser?.email}</span>
-          </div>
+        </div>
+        <div className="space-y-3 border-t border-gray-100 pt-4">
           <div className="flex items-center">
             <span className="w-32 text-sm text-gray-500">Vai trò:</span>
             <span className={`badge ${
@@ -64,46 +41,17 @@ const SettingsPage = () => {
             <span className="w-32 text-sm text-gray-500">Tổ chức:</span>
             <span className="text-sm text-gray-900">{ORG_NAME}</span>
           </div>
+          <div className="flex items-center">
+            <span className="w-32 text-sm text-gray-500">Đăng nhập:</span>
+            <span className="text-sm text-gray-900">Google</span>
+          </div>
         </div>
-      </div>
-
-      {/* Đổi mật khẩu */}
-      <div className="card p-6">
-        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
-          <MdLock size={20} /> Đổi mật khẩu
-        </h3>
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <div>
-            <label className="label">Mật khẩu mới</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              className="input"
-              placeholder="Tối thiểu 6 ký tự"
-            />
-          </div>
-          <div>
-            <label className="label">Xác nhận mật khẩu mới</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              className="input"
-              placeholder="Nhập lại mật khẩu mới"
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn btn-primary">
-            <MdSave size={18} />
-            {loading ? 'Đang lưu...' : 'Đổi mật khẩu'}
-          </button>
-        </form>
       </div>
 
       {/* App info */}
       <div className="card p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-2">Thông tin ứng dụng</h3>
-        <p className="text-sm text-gray-500">Phiên bản 1.0.0</p>
+        <p className="text-sm text-gray-500">Phiên bản 2.0.0</p>
         <p className="text-sm text-gray-500">© 2026 {ORG_NAME}</p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { TaskConfigProvider } from './context/TaskConfigContext';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/LoginPage';
+import PendingPage from './pages/PendingPage';
 import TodayPage from './pages/TodayPage';
 import AllTasksPage from './pages/AllTasksPage';
 import DashboardPage from './pages/DashboardPage';
@@ -17,11 +18,14 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 
 // Route bảo vệ — yêu cầu đăng nhập
 const ProtectedRoute = ({ children, roles }) => {
-  const { currentUser, userProfile, loading } = useAuth();
+  const { currentUser, userProfile, loading, isPending } = useAuth();
 
   if (loading) return <LoadingSpinner fullScreen />;
   if (!currentUser) return <Navigate to="/login" replace />;
   if (!userProfile) return <LoadingSpinner fullScreen />;
+
+  // User chờ duyệt → chuyển sang trang chờ
+  if (isPending) return <Navigate to="/pending" replace />;
 
   // Kiểm tra quyền nếu có yêu cầu
   if (roles && !roles.includes(userProfile.role)) {
@@ -39,12 +43,22 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Route cho trang pending — chỉ hiện khi user đang chờ duyệt
+const PendingRoute = () => {
+  const { currentUser, userProfile, loading, isPending } = useAuth();
+  if (loading) return <LoadingSpinner fullScreen />;
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (!isPending) return <Navigate to="/" replace />;
+  return <PendingPage />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={
         <PublicRoute><LoginPage /></PublicRoute>
       } />
+      <Route path="/pending" element={<PendingRoute />} />
 
       <Route element={
         <ProtectedRoute><MainLayout /></ProtectedRoute>

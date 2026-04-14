@@ -1,7 +1,7 @@
 // AuthContext — quản lý trạng thái đăng nhập & user profile
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, query, where, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured } from '../firebase/config';
 import { getUserProfile } from '../firebase/auth';
 
@@ -26,17 +26,21 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
+    let unsubProfile = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setProfileError(false);
+
+      // Hủy listener profile cũ nếu có
+      if (unsubProfile) { unsubProfile(); unsubProfile = null; }
 
       if (user) {
         try {
           let profile = await getUserProfile(user.uid);
 
-          // Nếu chưa có profile trong Firestore, tự tạo từ thông tin Auth
+          // Nếu chưa có profile → tự tạo
           if (!profile) {
-            // Kiểm tra xem đã có admin nào chưa — nếu chưa, user đầu tiên thành admin
             const usersSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
             const isFirstUser = usersSnap.empty;
 
@@ -44,7 +48,8 @@ export const AuthProvider = ({ children }) => {
               email: user.email,
               displayName: user.displayName || user.email.split('@')[0],
               role: isFirstUser ? 'admin' : 'member',
-              isActive: true,
+              isActive: isFirstUser ? true : false, // User mới phải chờ duyệt!
+              status: isFirstUser ? 'approved' : 'pending',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
               avatar: user.photoURL || null,
@@ -53,16 +58,33 @@ export const AuthProvider = ({ children }) => {
             profile = { id: user.uid, ...newProfile };
           }
 
+          // Nếu user cũ chưa có field status → coi như approved
+          if (!profile.status) {
+            profile.status = profile.isActive !== false ? 'approved' : 'pending';
+          }
+
           setUserProfile(profile);
+
+          // Subscribe realtime vào profile để khi admin duyệt → tự động cập nhật
+          unsubProfile = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+            if (snap.exists()) {
+              const data = { id: snap.id, ...snap.data() };
+              if (!data.status) {
+                data.status = data.isActive !== false ? 'approved' : 'pending';
+              }
+              setUserProfile(data);
+            }
+          });
+
         } catch (err) {
           console.error('Lỗi lấy/tạo profile:', err);
-          // Tạo profile tạm từ Firebase Auth để app không bị kẹt
           setUserProfile({
             id: user.uid,
             email: user.email,
             displayName: user.displayName || user.email.split('@')[0],
             role: 'member',
-            isActive: true,
+            isActive: false,
+            status: 'pending',
           });
           setProfileError(true);
         }
@@ -73,13 +95,18 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (unsubProfile) unsubProfile();
+    };
   }, []);
 
   // Kiểm tra quyền
-  const isAdmin = userProfile?.role === 'admin';
-  const isManager = userProfile?.role === 'manager';
-  const isMember = userProfile?.role === 'member';
+  const isApproved = userProfile?.status === 'approved' || (userProfile?.isActive !== false && !userProfile?.status);
+  const isPending = userProfile?.status === 'pending' || (userProfile?.isActive === false);
+  const isAdmin = isApproved && userProfile?.role === 'admin';
+  const isManager = isApproved && userProfile?.role === 'manager';
+  const isMember = isApproved && userProfile?.role === 'member';
   const canManageTasks = isAdmin || isManager;
   const canApprove = isAdmin;
   const canManageUsers = isAdmin;
@@ -89,6 +116,8 @@ export const AuthProvider = ({ children }) => {
     userProfile,
     loading,
     profileError,
+    isApproved,
+    isPending,
     isAdmin,
     isManager,
     isMember,
