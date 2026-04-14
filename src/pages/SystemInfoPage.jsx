@@ -1,6 +1,6 @@
 // SystemInfoPage — Thông tin hệ thống: Tính năng, Quyền hạn, Thông tin ứng dụng
 import { useState } from 'react';
-import { MdInfo, MdFeaturedPlayList, MdSecurity, MdCheckCircle, MdClose, MdStar, MdNewReleases, MdCode } from 'react-icons/md';
+import { MdInfo, MdFeaturedPlayList, MdSecurity, MdCheckCircle, MdClose, MdNewReleases, MdCode } from 'react-icons/md';
 import { ORG_NAME } from '../utils/constants';
 
 // === TAB 1: Tính năng hệ thống ===
