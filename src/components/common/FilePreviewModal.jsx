@@ -1,17 +1,41 @@
 // FilePreviewModal — xem trước file đính kèm (PDF/ảnh/Word/Excel/PPT) bên trong app
-import { useEffect } from 'react';
-import { MdClose, MdDownload, MdOpenInNew, MdPerson } from 'react-icons/md';
+import { useEffect, useCallback } from 'react';
+import { MdClose, MdDownload, MdOpenInNew } from 'react-icons/md';
 
 const FilePreviewModal = ({ file, onClose }) => {
+  // Lưu trạng thái overflow gốc khi mở, phục hồi đúng khi đóng
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    
     const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handleEsc);
-    document.body.style.overflow = 'hidden';
+    
     return () => {
       document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
+      // Phục hồi trạng thái overflow trước đó (không phải '' mà là giá trị gốc)
+      document.body.style.overflow = previousOverflow;
     };
   }, [onClose]);
+
+  // Download file thực sự qua fetch + Blob (vượt qua CORS của Firebase Storage)
+  const handleDownload = useCallback(async () => {
+    try {
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: mở trực tiếp trong tab mới
+      window.open(file.url, '_blank');
+    }
+  }, [file]);
 
   if (!file) return null;
 
@@ -55,14 +79,13 @@ const FilePreviewModal = ({ file, onClose }) => {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <a
-              href={file.url}
-              download={file.name}
+            <button
+              onClick={handleDownload}
               className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 transition-colors"
               title="Tải xuống"
             >
               <MdDownload size={20} />
-            </a>
+            </button>
             <a
               href={file.url}
               target="_blank"
@@ -110,14 +133,12 @@ const FilePreviewModal = ({ file, onClose }) => {
           {!isPdf && !isImage && !useGoogleViewer && (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-gray-500">
               <p className="text-lg font-medium">Không thể xem trước loại file này</p>
-              <a
-                href={file.url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleDownload}
                 className="btn btn-primary"
               >
                 <MdDownload size={18} /> Tải xuống
-              </a>
+              </button>
             </div>
           )}
         </div>

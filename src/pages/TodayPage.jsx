@@ -5,6 +5,7 @@ import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
 import { createTask, updateTask } from '../firebase/firestore';
+import { uploadFile } from '../firebase/storage';
 import { handleApproveTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
@@ -63,7 +64,16 @@ const TodayPage = () => {
 
   // Tạo task mới
   const handleCreate = async (data) => {
-    await createTask(data);
+    const { pendingFiles, existingAttachments, ...taskData } = data;
+    const docRef = await createTask({ ...taskData, attachments: existingAttachments || [] });
+    if (pendingFiles?.length > 0) {
+      const uploaded = [];
+      for (const file of pendingFiles) {
+        const result = await uploadFile(file, docRef.id, currentUser.uid);
+        uploaded.push(result);
+      }
+      await updateTask(docRef.id, { attachments: [...(existingAttachments || []), ...uploaded] });
+    }
   };
 
   // Duyệt hoàn thành
@@ -156,7 +166,17 @@ const TodayPage = () => {
           task={editTask}
           users={users}
           currentUser={currentUser}
-          onSubmit={editTask ? (data) => updateTask(editTask.id, data, currentUser.uid, { action: 'edit', field: 'multiple' }) : handleCreate}
+          onSubmit={editTask ? async (data) => {
+            const { pendingFiles, existingAttachments, ...taskData } = data;
+            let allAttachments = existingAttachments || [];
+            if (pendingFiles?.length > 0) {
+              for (const file of pendingFiles) {
+                const result = await uploadFile(file, editTask.id, currentUser.uid);
+                allAttachments = [...allAttachments, result];
+              }
+            }
+            await updateTask(editTask.id, { ...taskData, attachments: allAttachments }, currentUser.uid, { action: 'edit', field: 'multiple' });
+          } : handleCreate}
           onClose={() => { setShowCreate(false); setEditTask(null); }}
         />
       </Modal>

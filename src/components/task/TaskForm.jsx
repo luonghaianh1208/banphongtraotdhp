@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { MdSave, MdClose, MdUploadFile } from 'react-icons/md';
 import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatForInput, parseVNTime } from '../../utils/dateUtils';
-import { uploadFile, validateFile } from '../../firebase/storage';
+import { validateFile } from '../../firebase/storage';
 import toast from 'react-hot-toast';
 import DateTimePicker from '../common/DateTimePicker';
 
@@ -49,23 +49,15 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
 
     setLoading(true);
     try {
-      // Upload files nếu có
-      let uploadedFiles = task?.attachments || [];
-      if (files.length > 0) {
-        const taskId = task?.id || 'temp_' + Date.now();
-        for (const file of files) {
-          const uploaded = await uploadFile(file, taskId, currentUser.uid);
-          uploadedFiles = [...uploadedFiles, uploaded];
-        }
-      }
-
+      // Truyền raw files kèm data — để page handler upload sau khi có task ID
       await onSubmit({
         title: title.trim(),
         assignees,
         priority,
         category: category || 'other',
         deadline: deadline,
-        attachments: uploadedFiles,
+        existingAttachments: task?.attachments || [],
+        pendingFiles: files,
         createdBy: task?.createdBy || currentUser.uid,
       });
 
@@ -162,7 +154,7 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
           </label>
           <span className="text-xs text-gray-500">PDF, Word, Excel, PowerPoint, ảnh, ZIP, TXT, CSV (tối đa 10MB/file)</span>
         </div>
-        {/* Preview files */}
+        {/* Preview files mới chọn */}
         {files.length > 0 && (
           <div className="mt-2 space-y-1">
             {files.map((f, i) => (
@@ -175,7 +167,7 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
             ))}
           </div>
         )}
-        {/* Existing attachments */}
+        {/* File đã có (khi edit) */}
         {task?.attachments?.length > 0 && (
           <div className="mt-2 space-y-1">
             {task.attachments.map((f, i) => (
