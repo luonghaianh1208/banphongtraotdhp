@@ -18,7 +18,11 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
   return (
     <div
       onClick={() => onClick(task)}
-      className="card cursor-pointer group hover:shadow-lg hover:border-primary-200 transition-all duration-200"
+      className={`card cursor-pointer group transition-all duration-200 ${
+        task.isReminded
+          ? 'animate-blink-border shadow-md shadow-red-100'
+          : 'hover:shadow-lg hover:border-primary-200'
+      }`}
     >
       {/* Top row: title + status */}
       <div className="flex items-start justify-between gap-3 mb-3">

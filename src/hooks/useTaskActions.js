@@ -57,26 +57,23 @@ export const handleRevertApproveTask = async (taskId, currentUserUid) => {
   }
 };
 
-// Nhắc việc (đổi priority thành high và gửi thông báo)
+// Nhắc việc (không đổi priority, đánh dấu isReminded và gửi thông báo)
 export const handleRemindTask = async (task, currentUserUid) => {
-  if (task.priority !== 'high') {
-    await updateTask(task.id, {
-      priority: 'high',
-      status: 'in_progress',
-    }, currentUserUid, {
-      action: 'remind',
-      field: 'priority',
-      oldValue: task.priority,
-      newValue: 'high',
-    });
-  }
+  await updateTask(task.id, {
+    isReminded: true,
+  }, currentUserUid, {
+    action: 'remind',
+    field: 'isReminded',
+    oldValue: false,
+    newValue: true,
+  });
   
   if (task.assignees && task.assignees.length > 0) {
     task.assignees.forEach(userId => {
       addNotification(
         userId,
-        '[NHẮC NHỞ] Làm khẩn trương',
-        `Tổ trưởng vừa NHẮC NHỞ bạn đẩy nhanh công việc: ${task.title}. Chuyển sang chế độ GẤP!`,
+        '[NHẮC NHỞ] Khẩn trương',
+        `Tổ trưởng vừa NHẮC NHỞ bạn đẩy nhanh tiến độ công việc: ${task.title}. Vui lòng kiểm tra ngay!`,
         'urgent',
         task.id
       );
