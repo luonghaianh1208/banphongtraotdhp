@@ -11,13 +11,13 @@ import { deleteFile } from './storage';
 export const subscribeToTasks = (callback, onError, maxItems = 500) => {
   const q = query(
     collection(db, 'tasks'),
-    where('isDeleted', '!=', true),
-    orderBy('isDeleted'),
     orderBy('createdAt', 'desc'),
     limit(maxItems)
   );
   return onSnapshot(q, (snapshot) => {
-    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const tasks = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(t => !t.isDeleted);
     callback(tasks);
   }, (error) => {
     console.error('Lỗi lắng nghe tasks:', error);
@@ -50,11 +50,16 @@ export const subscribeToMyTasks = (userId, callback, onError) => {
 export const subscribeToTrash = (callback, onError) => {
   const q = query(
     collection(db, 'tasks'),
-    where('isDeleted', '==', true),
-    orderBy('deletedAt', 'desc')
+    where('isDeleted', '==', true)
   );
   return onSnapshot(q, (snapshot) => {
-    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const tasks = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => {
+         const t1 = a.deletedAt?.toMillis ? a.deletedAt.toMillis() : 0;
+         const t2 = b.deletedAt?.toMillis ? b.deletedAt.toMillis() : 0;
+         return t2 - t1;
+      });
     callback(tasks);
   }, (error) => {
     console.error('Lỗi lắng nghe trash:', error);
