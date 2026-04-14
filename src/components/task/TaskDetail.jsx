@@ -11,13 +11,14 @@ import { useTaskConfig } from '../../context/TaskConfigContext';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../common/ConfirmDialog';
 import FilePreviewModal from '../common/FilePreviewModal';
+import DateTimePicker from '../common/DateTimePicker';
 
 const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const { currentUser, userProfile, canApprove, canManageTasks } = useAuth();
   const { getCategoryById } = useTaskConfig();
   const [newNote, setNewNote] = useState('');
   const [showExtend, setShowExtend] = useState(false);
-  const [newDeadline, setNewDeadline] = useState('');
+  const [newDeadline, setNewDeadline] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
@@ -218,8 +219,13 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
                 <MdUpdate size={18} /> Gia hạn
               </button>
             ) : (
-              <div className="flex items-center gap-2 w-full">
-                <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} className="input flex-1" />
+              <div className="flex items-center gap-2 w-full max-w-sm">
+                <DateTimePicker 
+                  selected={newDeadline} 
+                  onChange={(date) => setNewDeadline(date)} 
+                  className="input flex-1 min-w-0" 
+                  placeholder="Chọn thời gian mới"
+                />
                 <button onClick={handleExtend} disabled={loading} className="btn btn-primary px-3">Lưu</button>
                 <button onClick={() => setShowExtend(false)} className="btn btn-ghost px-3">Hủy</button>
               </div>

@@ -5,6 +5,7 @@ import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatForInput, parseVNTime } from '../../utils/dateUtils';
 import { uploadFile, validateFile } from '../../firebase/storage';
 import toast from 'react-hot-toast';
+import DateTimePicker from '../common/DateTimePicker';
 
 const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
   const isEdit = !!task;
@@ -13,7 +14,9 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
   const [assignees, setAssignees] = useState(task?.assignees || []);
   const [priority, setPriority] = useState(task?.priority || (priorities[0]?.id || 'medium'));
   const [category, setCategory] = useState(task?.category || '');
-  const [deadline, setDeadline] = useState(task ? formatForInput(task.deadline) : '');
+  
+  const initialDeadline = task?.deadline?.toDate ? task.deadline.toDate() : (task?.deadline ? new Date(task.deadline) : null);
+  const [deadline, setDeadline] = useState(initialDeadline);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +64,7 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         assignees,
         priority,
         category: category || 'other',
-        deadline: parseVNTime(deadline),
+        deadline: deadline,
         attachments: uploadedFiles,
         createdBy: task?.createdBy || currentUser.uid,
       });
@@ -139,10 +142,10 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         </div>
         <div>
           <label className="label">Thời hạn <span className="text-red-500">*</span></label>
-          <input
-            type="datetime-local"
-            value={deadline}
-            onChange={e => setDeadline(e.target.value)}
+          <DateTimePicker
+            selected={deadline}
+            onChange={(date) => setDeadline(date)}
+            placeholder="Chọn ngày giờ"
             className="input"
           />
         </div>

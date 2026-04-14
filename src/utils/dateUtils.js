@@ -34,13 +34,15 @@ export const formatForInput = (date) => {
 };
 
 // Ép parse input string string ('2024-05-20T14:30') thành giờ VN
-export const parseVNTime = (dateString) => {
-  if (!dateString) return null;
+export const parseVNTime = (dateInput) => {
+  if (!dateInput) return null;
+  if (dateInput instanceof Date) return dateInput;
+  if (dateInput.toDate) return dateInput.toDate();
   // Datetime-local (vd. yyyy-MM-ddThh:mm)
-  if (dateString.length === 16) {
-    return new Date(`${dateString}+07:00`);
+  if (typeof dateInput === 'string' && dateInput.length === 16) {
+    return new Date(`${dateInput}+07:00`);
   }
-  return new Date(dateString);
+  return new Date(dateInput);
 };
 
 // Kiểm tra task trong khoảng thời gian
