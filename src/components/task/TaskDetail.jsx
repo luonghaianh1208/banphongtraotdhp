@@ -94,9 +94,24 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         newValue: `${newAttachments.length} file`,
       });
 
-      // Gửi thông báo cho người tạo task (tổ trưởng)
+      // Gửi thông báo 2 chiều
       const fileNames = uploadedFiles.map(f => f.name).join(', ');
-      if (task.createdBy && task.createdBy !== currentUser.uid) {
+      const isCreator = task.createdBy === currentUser.uid;
+
+      if (isCreator) {
+        // Tổ trưởng upload → thông báo cho tất cả assignees
+        const assigneeIds = (task.assignees || []).filter(id => id !== currentUser.uid);
+        for (const assigneeId of assigneeIds) {
+          await addNotification(
+            assigneeId,
+            'Tổ trưởng gửi tài liệu',
+            `${userProfile.displayName} đã tải lên ${uploadedFiles.length} file cho công việc "${task.title}": ${fileNames}`,
+            'info',
+            task.id
+          );
+        }
+      } else if (task.createdBy) {
+        // Nhân viên upload → thông báo cho tổ trưởng
         await addNotification(
           task.createdBy,
           'Nhân viên nộp tài liệu',

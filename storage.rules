@@ -1,12 +1,10 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Chỉ user đã đăng nhập mới được upload/download
     match /tasks/{taskId}/{allPaths=**} {
       allow read: if request.auth != null;
       allow create, update: if request.auth != null
-        && request.resource.size < 10 * 1024 * 1024  // max 10MB
-        && request.resource.contentType.matches('image/(jpeg|png|jpg)|application/pdf|application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        && request.resource.size < 10 * 1024 * 1024;
       allow delete: if request.auth != null;
     }
   }
