@@ -30,6 +30,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /penalties/{penaltyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdminOrManager();
+      allow update: if isAdminOrManager();
+      allow delete: if isAdminOrManager();
+    }
+
     match /config/{configId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();

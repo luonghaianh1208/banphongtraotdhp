@@ -31,6 +31,7 @@ export const NAV_ITEMS = [
   { path: '/', icon: 'MdToday', label: 'Hôm nay', roles: ['admin', 'manager', 'member'] },
   { path: '/tasks', icon: 'MdAssignment', label: 'Tất cả công việc', roles: ['admin', 'manager', 'member'] },
   { path: '/dashboard', icon: 'MdDashboard', label: 'Dashboard', roles: ['admin', 'manager'] },
+  { path: '/penalties', icon: 'MdGavel', label: 'Quản lý Phạt', roles: ['admin', 'manager'] },
   { path: '/members', icon: 'MdGroup', label: 'Quản lý thành viên', roles: ['admin'] },
   { path: '/task-config', icon: 'MdTune', label: 'Cấu hình công việc', roles: ['admin'] },
   { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },

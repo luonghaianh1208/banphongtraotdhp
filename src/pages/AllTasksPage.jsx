@@ -1,11 +1,11 @@
 // AllTasksPage — trang tất cả công việc: bảng task toàn tổ với filter & export
-import { useState } from 'react';
-import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
+import { useState, useEffect } from 'react';
+import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank, MdNotificationsActive } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
 import { createTask, updateTask, softDeleteTasks } from '../firebase/firestore';
-import { handleApproveTask } from '../hooks/useTaskActions';
+import { handleApproveTask, handleRemindTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
@@ -22,7 +22,7 @@ import toast from 'react-hot-toast';
 const AllTasksPage = () => {
   const { tasks, loading: tasksLoading } = useTasks();
   const { users, loading: usersLoading } = useUsers();
-  const { currentUser, canManageTasks, canApprove } = useAuth();
+  const { currentUser, canManageTasks, canApprove, isMember } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editTask, setEditTask] = useState(null);
@@ -32,6 +32,28 @@ const AllTasksPage = () => {
   const [filters, setFilters] = useState({
     search: '', assignee: '', status: '', priority: '', category: '', dateFrom: '', dateTo: ''
   });
+
+  // Trigger alert once on load if tasks are near deadline
+  useEffect(() => {
+    if (tasks.length === 0 || !isMember) return;
+    const hasAlerted = sessionStorage.getItem('hasAlertedOverdue');
+    if (hasAlerted) return;
+
+    const now = new Date().getTime();
+    const urgentTasks = tasks.filter(t => {
+      if (t.isCompleted || !t.deadline) return false;
+      const timeRemaining = new Date(t.deadline).getTime() - now;
+      return timeRemaining > 0 && timeRemaining < 24 * 60 * 60 * 1000;
+    });
+
+    if (urgentTasks.length > 0) {
+      toast.error(`Bạn có ${urgentTasks.length} công việc sắp hết hạn trong 24h tới!`, {
+        duration: 5000,
+        icon: '⏳'
+      });
+      sessionStorage.setItem('hasAlertedOverdue', 'true');
+    }
+  }, [tasks, isMember]);
 
   const loading = tasksLoading || usersLoading;
 
@@ -43,7 +65,9 @@ const AllTasksPage = () => {
   };
 
   const handleApprove = async (taskId) => {
-    await handleApproveTask(taskId, currentUser.uid);
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    await handleApproveTask(task, currentUser.uid);
   };
 
   const toggleSelect = (id) => {
@@ -77,6 +101,20 @@ const AllTasksPage = () => {
     }
   };
 
+  const handleBulkRemind = async () => {
+    setActionLoading(true);
+    try {
+      const selectedTasks = tasks.filter(t => selectedIds.has(t.id));
+      await Promise.all(selectedTasks.map(t => handleRemindTask(t, currentUser.uid)));
+      toast.success(`Đã gửi nhắc nhở cho ${selectedIds.size} công việc`);
+      setSelectedIds(new Set());
+    } catch (err) {
+      toast.error('Lỗi khi nhắc việc: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const allSelected = filteredTasks.length > 0 && selectedIds.size === filteredTasks.length;
 
   if (loading) return <LoadingSpinner />;
@@ -97,12 +135,22 @@ const AllTasksPage = () => {
             </button>
           )}
           {canManageTasks && selectedIds.size > 0 && (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="btn btn-ghost text-red-600 hover:bg-red-50 text-xs"
-            >
-              <MdDelete size={16} /> Xóa ({selectedIds.size})
-            </button>
+            <>
+              <button
+                onClick={handleBulkRemind}
+                disabled={actionLoading}
+                className="btn btn-primary text-xs"
+              >
+                <MdNotificationsActive size={16} /> Nhắc việc ({selectedIds.size})
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={actionLoading}
+                className="btn btn-ghost text-red-600 hover:bg-red-50 text-xs"
+              >
+                <MdDelete size={16} /> Xóa ({selectedIds.size})
+              </button>
+            </>
           )}
           {canManageTasks && (
             <>

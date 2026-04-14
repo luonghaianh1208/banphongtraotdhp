@@ -17,6 +17,11 @@ const DEFAULT_PRIORITIES = [
   { id: 'low', name: 'Thấp', color: '#3B82F6', order: 3 },
 ];
 
+const DEFAULT_PENALTY_TYPES = [
+  { id: 'overdue', name: 'Lỗi quá hạn', defaultAmount: 50000, isAutoOverdue: true, color: '#DC2626' },
+  { id: 'spelling', name: 'Sai chính tả', defaultAmount: 10000, isAutoOverdue: false, color: '#D97706' },
+];
+
 // Lắng nghe realtime phân loại công việc
 export const subscribeToCategories = (callback, onError) => {
   return onSnapshot(doc(db, 'config', 'categories'), (snap) => {
@@ -55,6 +60,26 @@ export const saveCategories = async (items) => {
 // Lưu danh sách priorities (admin)
 export const savePriorities = async (items) => {
   return setDoc(doc(db, 'config', 'priorities'), { items, updatedAt: serverTimestamp() });
+};
+
+// Lắng nghe realtime cấu hình vi phạm (penaltyTypes)
+export const subscribeToPenaltyTypes = (callback, onError) => {
+  return onSnapshot(doc(db, 'config', 'penaltyTypes'), (snap) => {
+    if (snap.exists()) {
+      callback(snap.data().items || DEFAULT_PENALTY_TYPES);
+    } else {
+      callback(DEFAULT_PENALTY_TYPES);
+    }
+  }, (error) => {
+    console.error('Lỗi lắng nghe penaltyTypes:', error);
+    if (onError) onError(error);
+    callback(DEFAULT_PENALTY_TYPES);
+  });
+};
+
+// Lưu cấu hình vi phạm (penaltyTypes)
+export const savePenaltyTypes = async (items) => {
+  return setDoc(doc(db, 'config', 'penaltyTypes'), { items, updatedAt: serverTimestamp() });
 };
 
 // === TASKS ===
@@ -122,7 +147,7 @@ export const subscribeToTrash = (callback, onError) => {
 
 // Tạo task mới
 export const createTask = async (taskData) => {
-  return addDoc(collection(db, 'tasks'), {
+  const docRef = await addDoc(collection(db, 'tasks'), {
     ...taskData,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -135,6 +160,21 @@ export const createTask = async (taskData) => {
     attachments: taskData.attachments || [],
     status: 'active',
   });
+
+  if (taskData.assignees && taskData.assignees.length > 0) {
+    taskData.assignees.forEach(userId => {
+      const isHigh = taskData.priority === 'high';
+      addNotification(
+        userId,
+        isHigh ? 'Công việc GẤP mới' : 'Công việc mới',
+        `Bạn được phân công công việc: ${taskData.title}`,
+        isHigh ? 'warning' : 'info',
+        docRef.id
+      );
+    });
+  }
+
+  return docRef;
 };
 
 // Cập nhật task
@@ -259,7 +299,99 @@ export const getUser = async (userId) => {
   return null;
 };
 
+// == PENALTIES (Hình phạt thực tế) ==
+
+// Lắng nghe tất cả các khoản phạt
+export const subscribeToAllPenalties = (callback, onError) => {
+  const q = query(collection(db, 'penalties'), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(items);
+  }, (error) => {
+    console.error('Lỗi lắng nghe tất cả penalties:', error);
+    if (onError) onError(error);
+    callback([]);
+  });
+};
+
+// Lắng nghe các khoản phạt của 1 công việc cụ thể
+export const subscribeToTaskPenalties = (taskId, callback, onError) => {
+  const q = query(collection(db, 'penalties'), where('taskId', '==', taskId), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(items);
+  }, (error) => {
+    console.error('Lỗi lắng nghe penalties của task:', error);
+    if (onError) onError(error);
+    callback([]);
+  });
+};
+
+// Tạo phiếu phạt
+export const createPenalty = async (penaltyData) => {
+  const docRef = await addDoc(collection(db, 'penalties'), {
+    ...penaltyData,
+    createdAt: new Date().toISOString(),
+    status: penaltyData.status || 'unpaid',
+    paidAmount: penaltyData.paidAmount || 0
+  });
+
+  // Gửi thông báo cho user bị phạt
+  const formatVND = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+  addNotification(
+    penaltyData.userId,
+    'Giấy phạt vi phạm',
+    `Bạn bị báo phạt ${formatVND(penaltyData.amount)} do vi phạm ở công việc "${penaltyData.taskTitle}". Vui lòng kiểm tra tab Quản lý Phạt.`,
+    'error',
+    penaltyData.taskId
+  );
+
+  return docRef;
+};
+
+// Xóa phiếu phạt
+export const deletePenalty = async (penaltyId) => {
+  return deleteDoc(doc(db, 'penalties', penaltyId));
+};
+
+// Xóa các phiếu phạt quá hạn của một task (khi task được gia hạn)
+export const removeOverduePenaltiesForTask = async (taskId, autoPenaltyTypeId) => {
+  if (!autoPenaltyTypeId) return;
+  const q = query(
+    collection(db, 'penalties'),
+    where('taskId', '==', taskId),
+    where('penaltyTypeId', '==', autoPenaltyTypeId)
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const batch = writeBatch(db);
+    snap.forEach(d => batch.delete(d.ref));
+    return batch.commit();
+  }
+};
+
+// Cập nhật trạng thái phiếu phạt (trả tiền)
+export const updatePenalty = async (penaltyId, updates) => {
+  return updateDoc(doc(db, 'penalties', penaltyId), updates);
+};
+
 // === NOTIFICATIONS ===
+
+export const addNotification = async (userId, title, message, type = 'info', relatedTaskId = null) => {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      userId,
+      title,
+      message,
+      type, // 'info', 'warning', 'success', 'error', 'urgent'
+      relatedTaskId,
+      isRead: false,
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error('Lỗi tạo thông báo:', error);
+  }
+};
 
 // Lắng nghe thông báo của user hiện tại
 export const subscribeToNotifications = (userId, callback, onError) => {

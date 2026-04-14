@@ -1,6 +1,5 @@
-// TaskConfigContext — cung cấp categories & priorities realtime cho toàn app
 import { createContext, useContext, useState, useEffect } from 'react';
-import { subscribeToCategories, subscribeToPriorities } from '../firebase/firestore';
+import { subscribeToCategories, subscribeToPriorities, subscribeToPenaltyTypes } from '../firebase/firestore';
 
 const TaskConfigContext = createContext(null);
 
@@ -13,12 +12,14 @@ export const useTaskConfig = () => {
 export const TaskConfigProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [penaltyTypes, setPenaltyTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let catLoaded = false;
     let priLoaded = false;
-    const checkDone = () => { if (catLoaded && priLoaded) setLoading(false); };
+    let penLoaded = false;
+    const checkDone = () => { if (catLoaded && priLoaded && penLoaded) setLoading(false); };
 
     const unsubCat = subscribeToCategories((items) => {
       setCategories(items);
@@ -32,7 +33,13 @@ export const TaskConfigProvider = ({ children }) => {
       checkDone();
     });
 
-    return () => { unsubCat(); unsubPri(); };
+    const unsubPen = subscribeToPenaltyTypes((items) => {
+      setPenaltyTypes(items);
+      penLoaded = true;
+      checkDone();
+    });
+
+    return () => { unsubCat(); unsubPri(); unsubPen(); };
   }, []);
 
   // Helper: tìm category theo id
@@ -46,8 +53,13 @@ export const TaskConfigProvider = ({ children }) => {
     return priorities.find(p => p.id === id) || priorities[0] || { id: 'medium', name: 'Trung bình', color: '#F59E0B' };
   };
 
+  // Helper: tìm penalty type theo id
+  const getPenaltyTypeById = (id) => {
+    return penaltyTypes.find(p => p.id === id) || null;
+  };
+
   return (
-    <TaskConfigContext.Provider value={{ categories, priorities, loading, getCategoryById, getPriorityById }}>
+    <TaskConfigContext.Provider value={{ categories, priorities, penaltyTypes, loading, getCategoryById, getPriorityById, getPenaltyTypeById }}>
       {children}
     </TaskConfigContext.Provider>
   );

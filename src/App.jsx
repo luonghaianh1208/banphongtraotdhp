@@ -14,6 +14,7 @@ import MembersPage from './pages/MembersPage';
 import TrashPage from './pages/TrashPage';
 import TaskConfigPage from './pages/TaskConfigPage';
 import SettingsPage from './pages/SettingsPage';
+import PenaltyManagementPage from './pages/PenaltyManagementPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // Route bảo vệ — yêu cầu đăng nhập
@@ -76,6 +77,9 @@ const AppRoutes = () => {
         } />
         <Route path="task-config" element={
           <ProtectedRoute roles={['admin']}><TaskConfigPage /></ProtectedRoute>
+        } />
+        <Route path="penalties" element={
+          <ProtectedRoute roles={['admin', 'manager']}><PenaltyManagementPage /></ProtectedRoute>
         } />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

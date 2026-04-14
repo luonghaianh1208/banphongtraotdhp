@@ -68,7 +68,9 @@ const TodayPage = () => {
 
   // Duyệt hoàn thành
   const handleApprove = async (taskId) => {
-    await handleApproveTask(taskId, currentUser.uid);
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    await handleApproveTask(task, currentUser.uid);
   };
 
   if (loading) return <LoadingSpinner />;

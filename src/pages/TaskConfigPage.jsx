@@ -1,8 +1,8 @@
 // TaskConfigPage — trang cấu hình phân loại & mức độ ưu tiên (admin only)
 import { useState } from 'react';
-import { MdAdd, MdEdit, MdDelete, MdSave, MdClose, MdArrowUpward, MdArrowDownward, MdTune, MdLabel, MdFlag } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdSave, MdClose, MdArrowUpward, MdArrowDownward, MdTune, MdLabel, MdFlag, MdGavel } from 'react-icons/md';
 import { useTaskConfig } from '../context/TaskConfigContext';
-import { saveCategories, savePriorities } from '../firebase/firestore';
+import { saveCategories, savePriorities, savePenaltyTypes } from '../firebase/firestore';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ const generateId = (name) => {
 };
 
 const TaskConfigPage = () => {
-  const { categories, priorities } = useTaskConfig();
+  const { categories, priorities, penaltyTypes } = useTaskConfig();
   
   // Category state
   const [catName, setCatName] = useState('');
@@ -39,6 +39,16 @@ const TaskConfigPage = () => {
   const [editPriName, setEditPriName] = useState('');
   const [editPriColor, setEditPriColor] = useState('');
   const [deletePriId, setDeletePriId] = useState(null);
+
+  // Penalty state
+  const [penName, setPenName] = useState('');
+  const [penAmount, setPenAmount] = useState('');
+  const [penColor, setPenColor] = useState(COLOR_PALETTE[0]);
+  const [editPenId, setEditPenId] = useState(null);
+  const [editPenName, setEditPenName] = useState('');
+  const [editPenAmount, setEditPenAmount] = useState('');
+  const [editPenColor, setEditPenColor] = useState('');
+  const [deletePenId, setDeletePenId] = useState(null);
 
   const [saving, setSaving] = useState(false);
 
@@ -162,8 +172,76 @@ const TaskConfigPage = () => {
     await savePriorities(updated.map((p, i) => ({ ...p, order: i + 1 })));
   };
 
+  // === PENALTY ACTIONS ===
+  const handleAddPenaltyType = async () => {
+    if (!penName.trim()) return toast.error('Vui lòng nhập tên vi phạm');
+    if (penaltyTypes.find(p => p.name.toLowerCase() === penName.trim().toLowerCase())) {
+      return toast.error('Lỗi này đã tồn tại');
+    }
+    setSaving(true);
+    try {
+      const parsedAmount = parseInt(String(penAmount).replace(/\D/g, ''), 10) || null;
+      const newItem = {
+        id: generateId(penName.trim()),
+        name: penName.trim(),
+        defaultAmount: parsedAmount,
+        color: penColor,
+        isAutoOverdue: false,
+      };
+      await savePenaltyTypes([...penaltyTypes, newItem]);
+      setPenName('');
+      setPenAmount('');
+      setPenColor(COLOR_PALETTE[0]);
+      toast.success('Đã thêm cấu hình vi phạm');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditPenaltyType = async () => {
+    if (!editPenName.trim()) return toast.error('Tên không được để trống');
+    setSaving(true);
+    try {
+      const parsedAmount = parseInt(String(editPenAmount).replace(/\D/g, ''), 10) || null;
+      const updated = penaltyTypes.map(p =>
+        p.id === editPenId ? { ...p, name: editPenName.trim(), defaultAmount: parsedAmount, color: editPenColor } : p
+      );
+      await savePenaltyTypes(updated);
+      setEditPenId(null);
+      toast.success('Đã cập nhật lỗi vi phạm');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePenaltyType = async () => {
+    setSaving(true);
+    try {
+      const updated = penaltyTypes.filter(p => p.id !== deletePenId);
+      await savePenaltyTypes(updated);
+      setDeletePenId(null);
+      toast.success('Đã xóa cấu hình lỗi');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const startEditCat = (cat) => { setEditCatId(cat.id); setEditCatName(cat.name); setEditCatColor(cat.color); };
   const startEditPri = (pri) => { setEditPriId(pri.id); setEditPriName(pri.name); setEditPriColor(pri.color); };
+  const startEditPen = (pen) => {
+    setEditPenId(pen.id);
+    setEditPenName(pen.name);
+    setEditPenAmount(pen.defaultAmount ? String(pen.defaultAmount) : '');
+    setEditPenColor(pen.color || COLOR_PALETTE[0]);
+  };
+
+  const formatVND = (val) => val != null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : 'Nhập tay';
 
   return (
     <div className="max-w-3xl mx-auto fade-in space-y-6">
@@ -278,6 +356,76 @@ const TaskConfigPage = () => {
         </div>
       </div>
 
+      {/* === DANH MỤC LỖI VI PHẠM (PENALTIES) === */}
+      <div className="card p-6 border-l-4 border-red-500">
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+          <MdGavel size={20} className="text-red-600" /> Danh mục Lỗi Vi Phạm & Phạt Tiền
+        </h3>
+        
+        <p className="text-sm text-gray-500 mb-4">Các lỗi được thiết lập ở đây sẽ hiện trong menu xử phạt. Bỏ trống giá tiền nếu muốn nhập tự do mỗi khi phạt.</p>
+
+        {/* Danh sách penalties */}
+        <div className="space-y-2 mb-4">
+          {penaltyTypes?.map((pen) => (
+            <div key={pen.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50 group border border-transparent hover:border-gray-200">
+              {editPenId === pen.id ? (
+                <>
+                  <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: editPenColor }} />
+                  <input placeholder="Tên lỗi..." value={editPenName} onChange={e => setEditPenName(e.target.value)} className="input flex-1 text-sm" autoFocus />
+                  <input placeholder="Đơn giá (VD: 50000)" value={editPenAmount} onChange={e => setEditPenAmount(e.target.value)} className="input flex-1 text-sm" type="number" />
+                  <ColorPicker selected={editPenColor} onChange={setEditPenColor} />
+                  <button onClick={handleEditPenaltyType} disabled={saving} className="p-1.5 rounded-md text-green-600 hover:bg-green-50"><MdSave size={18} /></button>
+                  <button onClick={() => setEditPenId(null)} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200"><MdClose size={18} /></button>
+                </>
+              ) : (
+                <>
+                  <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: pen.color || COLOR_PALETTE[0] }} />
+                  <div className="flex-1">
+                     <span className="text-sm font-medium text-gray-800 flex items-center gap-2">{pen.name} {pen.isAutoOverdue && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold uppercase">Tự động</span>}</span>
+                  </div>
+                  <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded">{formatVND(pen.defaultAmount)}</span>
+                  
+                  {pen.isAutoOverdue ? (
+                    <div className="flex gap-1 opacity-100 pl-2">
+                      <button onClick={() => startEditPen(pen)} className="btn-icon text-blue-600 bg-blue-50 hover:bg-blue-100"><MdEdit size={16} /></button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
+                        <button onClick={() => startEditPen(pen)} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 hover:text-blue-600"><MdEdit size={16} /></button>
+                        <button onClick={() => setDeletePenId(pen.id)} className="p-1.5 rounded-md text-gray-400 hover:bg-red-50 hover:text-red-600"><MdDelete size={16} /></button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Form thêm mới phạt */}
+        <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+          <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: penColor }} />
+          <input
+            value={penName}
+            onChange={e => setPenName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddPenaltyType()}
+            className="input w-1/3 text-sm"
+            placeholder="Nhập tên lỗi (VD: Đi làm trễ)..."
+          />
+          <input
+            value={penAmount}
+            onChange={e => setPenAmount(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddPenaltyType()}
+            className="input flex-1 text-sm"
+            type="number"
+            placeholder="Giá phạt mặc định (để trống nếu nhập linh động)..."
+          />
+          <ColorPicker selected={penColor} onChange={setPenColor} />
+          <button onClick={handleAddPenaltyType} disabled={saving} className="btn bg-red-600 text-white hover:bg-red-700 text-sm px-3 py-2">
+            <MdAdd size={18} /> Thêm Lỗi
+          </button>
+        </div>
+      </div>
+
       {/* Confirm Dialogs */}
       <ConfirmDialog
         isOpen={!!deleteCatId}
@@ -294,6 +442,15 @@ const TaskConfigPage = () => {
         onConfirm={handleDeletePriority}
         title="Xóa mức độ ưu tiên"
         message={`Bạn chắc chắn muốn xóa mức độ "${priorities.find(p => p.id === deletePriId)?.name}"?`}
+        confirmText="Xóa"
+        danger
+      />
+      <ConfirmDialog
+        isOpen={!!deletePenId}
+        onClose={() => setDeletePenId(null)}
+        onConfirm={handleDeletePenaltyType}
+        title="Xóa lỗi vi phạm"
+        message={`Bạn chắc chắn muốn xóa lỗi "${penaltyTypes.find(p => p.id === deletePenId)?.name}"?`}
         confirmText="Xóa"
         danger
       />

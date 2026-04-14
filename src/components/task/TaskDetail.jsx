@@ -1,21 +1,22 @@
 // TaskDetail — modal chi tiết task: notes, attachments, history, approve
 import { useState } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2 } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDateTime, formatRelative, formatForInput } from '../../utils/dateUtils';
-import { addNote, updateTask, deleteTask } from '../../firebase/firestore';
-import { handleApproveTask, handleExtendDeadline } from '../../hooks/useTaskActions';
+import { addNote, updateTask, deleteTask, removeOverduePenaltiesForTask } from '../../firebase/firestore';
+import { handleApproveTask, handleExtendDeadline, handleRevertApproveTask, handleRemindTask } from '../../hooks/useTaskActions';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskConfig } from '../../context/TaskConfigContext';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../common/ConfirmDialog';
 import FilePreviewModal from '../common/FilePreviewModal';
 import DateTimePicker from '../common/DateTimePicker';
+import TaskPenaltySection from './TaskPenaltySection';
 
 const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const { currentUser, userProfile, canApprove, canManageTasks } = useAuth();
-  const { getCategoryById } = useTaskConfig();
+  const { getCategoryById, penaltyTypes } = useTaskConfig();
   const [newNote, setNewNote] = useState('');
   const [showExtend, setShowExtend] = useState(false);
   const [newDeadline, setNewDeadline] = useState(null);
@@ -54,10 +55,23 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   };
 
   // Duyệt hoàn thành (admin only)
+  const handleRemind = async () => {
+    setLoading(true);
+    try {
+      await handleRemindTask(task, currentUser.uid);
+      toast.success('Đã nhắc việc thành công!');
+      onClose();
+    } catch (err) {
+      toast.error('Lỗi khi nhắc việc: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await handleApproveTask(task.id, currentUser.uid);
+      await handleApproveTask(task, currentUser.uid);
       onClose();
     } catch (err) {
       toast.error('Lỗi: ' + err.message);
@@ -72,6 +86,10 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
     setLoading(true);
     try {
       await handleExtendDeadline(task, newDeadline, currentUser.uid);
+      const autoPenaltyType = penaltyTypes?.find(p => p.isAutoOverdue);
+      if (autoPenaltyType) {
+        await removeOverduePenaltiesForTask(task.id, autoPenaltyType.id);
+      }
       setShowExtend(false);
     } catch (err) {
       toast.error('Lỗi: ' + err.message);
@@ -88,6 +106,19 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
       onClose();
     } catch (err) {
       toast.error('Lỗi: ' + err.message);
+    }
+  };
+
+  // Hủy duyệt hoàn thành
+  const handleRevertApprove = async () => {
+    setLoading(true);
+    try {
+      await handleRevertApproveTask(task.id, currentUser.uid);
+      // Không tự đóng modal để user có thể cấu hình hoặc làm việc tiếp với task
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -202,12 +233,21 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         </div>
       )}
 
+      {/* Phạt vi phạm (Penalty Section) */}
+      <TaskPenaltySection task={task} users={users} />
+
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
-        {/* Duyệt hoàn thành */}
+        {/* Duyệt hoàn thành / Hủy duyệt */}
         {canApprove && !task.isCompleted && (
           <button onClick={handleApprove} disabled={loading} className="btn btn-primary">
             <MdCheckCircle size={18} /> Duyệt hoàn thành
+          </button>
+        )}
+        
+        {canApprove && task.isCompleted && (
+          <button onClick={handleRevertApprove} disabled={loading} className="btn btn-secondary text-amber-600 border-amber-200 hover:bg-amber-50">
+            <MdUndo size={18} /> Hủy duyệt (Khôi phục hoạt động)
           </button>
         )}
 
@@ -236,6 +276,13 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         {/* Sửa task */}
         {canEdit && !task.isCompleted && (
           <button onClick={() => onEdit(task)} className="btn btn-secondary">Chỉnh sửa</button>
+        )}
+
+        {/* Nhắc việc */}
+        {canManageTasks && !task.isCompleted && (
+          <button onClick={handleRemind} disabled={loading} className="btn bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-medium">
+            <MdNotificationsActive size={18} /> Nhắc việc
+          </button>
         )}
 
         {/* Xóa — chỉ admin */}

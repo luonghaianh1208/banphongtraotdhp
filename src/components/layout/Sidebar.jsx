@@ -1,6 +1,6 @@
 // Sidebar — menu chính bên trái
 import { NavLink } from 'react-router-dom';
-import { MdToday, MdAssignment, MdDashboard, MdGroup, MdSettings, MdLogout, MdDeleteSweep, MdTune, MdPerson } from 'react-icons/md';
+import { MdToday, MdAssignment, MdDashboard, MdGroup, MdSettings, MdLogout, MdDeleteSweep, MdTune, MdPerson, MdGavel } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { logout } from '../../firebase/auth';
 import { NAV_ITEMS, ORG_NAME, ROLES } from '../../utils/constants';
@@ -14,6 +14,7 @@ const iconMap = {
   MdDeleteSweep: MdDeleteSweep,
   MdTune: MdTune,
   MdPerson: MdPerson,
+  MdGavel: MdGavel,
 };
 
 const Sidebar = ({ onClose }) => {
