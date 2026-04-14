@@ -68,9 +68,9 @@ const SettingsPage = () => {
 
     setUploading(true);
     try {
-      const url = await uploadFile(file, `avatars/${currentUser.uid}`);
+      const result = await uploadFile(file, `avatars/${currentUser.uid}`, currentUser.uid);
       await updateDoc(doc(db, 'users', currentUser.uid), {
-        avatar: url,
+        avatar: result.url,
         updatedAt: serverTimestamp(),
       });
       toast.success('Đã cập nhật ảnh đại diện');
