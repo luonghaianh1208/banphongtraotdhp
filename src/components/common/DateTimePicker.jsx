@@ -1,39 +1,26 @@
-import DatePicker, { registerLocale } from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
-import vi from 'date-fns/locale/vi';
-import { forwardRef } from 'react';
-
-// Register Vietnamese locale
-registerLocale('vi', vi);
-
-// Custom input to bridge Tailwind styles cleanly
-const CustomInput = forwardRef(({ value, onClick, onChange, placeholder, className }, ref) => (
-  <input
-    value={value}
-    onClick={onClick}
-    onChange={onChange}
-    ref={ref}
-    placeholder={placeholder}
-    className={className}
-    readOnly
-  />
-));
-CustomInput.displayName = 'CustomInput';
+import React from 'react';
+import Flatpickr from 'react-flatpickr';
+import { Vietnamese } from 'flatpickr/dist/l10n/vn';
+import "flatpickr/dist/flatpickr.min.css";
 
 const DateTimePicker = ({ selected, onChange, placeholder = "--/--/---- --:--", className = "input", minDate }) => {
   return (
-    <DatePicker
-      selected={selected}
-      onChange={onChange}
-      showTimeSelect
-      timeFormat="HH:mm"
-      timeIntervals={15}
-      timeCaption="Giờ"
-      dateFormat="dd/MM/yyyy HH:mm"
-      locale="vi"
-      minDate={minDate}
-      customInput={<CustomInput className={className} placeholder={placeholder} />}
-      wrapperClassName="w-full"
+    <Flatpickr
+      data-enable-time
+      value={selected}
+      onChange={([date]) => {
+        if (date) onChange(date);
+      }}
+      options={{
+        locale: Vietnamese,
+        enableTime: true,
+        dateFormat: "d/m/Y H:i",
+        time_24hr: true,
+        minDate: minDate,
+        disableMobile: "true", // Ngăn điện thoại mở giao diện gốc nếu muốn giữ bánh răng của flatpickr
+      }}
+      placeholder={placeholder}
+      className={`${className} bg-white`}
     />
   );
 };
