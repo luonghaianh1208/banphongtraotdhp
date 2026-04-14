@@ -67,9 +67,13 @@ const Sidebar = ({ onClose }) => {
       {/* User info + logout */}
       <div className="px-3 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-sm">
-            {userProfile?.displayName?.charAt(0)?.toUpperCase() || '?'}
-          </div>
+          {userProfile?.avatar ? (
+            <img src={userProfile.avatar} alt="" className="w-9 h-9 rounded-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-sm">
+              {userProfile?.displayName?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">{userProfile?.displayName}</p>
             <p className="text-xs text-gray-500">{ROLES[userProfile?.role]?.label}</p>
