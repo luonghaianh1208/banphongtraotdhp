@@ -6,21 +6,25 @@ import toast from 'react-hot-toast';
 
 // Duyệt hoàn thành task — thử Cloud Function trước, fallback Firestore trực tiếp
 export const handleApproveTask = async (task, currentUserUid) => {
+  // Thử Cloud Function (best-effort), nhưng luôn đảm bảo Firestore update
   try {
     await callApproveTask({ taskId: task.id });
   } catch {
-    await updateTask(task.id, {
-      isCompleted: true,
-      status: 'completed',
-      completedAt: new Date(),
-      completedBy: currentUserUid,
-    }, currentUserUid, {
-      action: 'approve',
-      field: 'isCompleted',
-      oldValue: false,
-      newValue: true,
-    });
+    // Cloud Function thất bại — bỏ qua, Firestore update bên dưới sẽ xử lý
   }
+
+  // Luôn update Firestore trực tiếp để đảm bảo status = 'completed'
+  await updateTask(task.id, {
+    isCompleted: true,
+    status: 'completed',
+    completedAt: new Date(),
+    completedBy: currentUserUid,
+  }, currentUserUid, {
+    action: 'approve',
+    field: 'isCompleted',
+    oldValue: false,
+    newValue: true,
+  });
   
   if (task.assignees && task.assignees.length > 0) {
     task.assignees.forEach(userId => {
