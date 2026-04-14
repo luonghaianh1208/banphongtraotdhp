@@ -17,6 +17,7 @@ const FilePreviewModal = ({ file, onClose }) => {
 
   const isPdf = file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
   const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
+  const isWord = file.type?.includes('wordprocessingml') || file.type?.includes('msword') || /\.(doc|docx)$/i.test(file.name);
 
   return (
     <div
@@ -28,9 +29,9 @@ const FilePreviewModal = ({ file, onClose }) => {
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-3 min-w-0">
             <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${
-              isPdf ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+              isPdf ? 'bg-red-100 text-red-700' : isWord ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
             }`}>
-              {isPdf ? 'PDF' : 'Ảnh'}
+              {isPdf ? 'PDF' : isWord ? 'Word' : 'Ảnh'}
             </span>
             <h3 className="text-sm font-medium text-gray-900 truncate">{file.name}</h3>
             {file.size && (
@@ -76,6 +77,13 @@ const FilePreviewModal = ({ file, onClose }) => {
               title={`Preview: ${file.name}`}
             />
           )}
+          {isWord && (
+            <iframe
+              src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`}
+              className="w-full h-full border-0"
+              title={`Preview: ${file.name}`}
+            />
+          )}
           {isImage && (
             <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
               <img
@@ -85,7 +93,7 @@ const FilePreviewModal = ({ file, onClose }) => {
               />
             </div>
           )}
-          {!isPdf && !isImage && (
+          {!isPdf && !isImage && !isWord && (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-gray-500">
               <p className="text-lg font-medium">Không thể xem trước loại file này</p>
               <a
