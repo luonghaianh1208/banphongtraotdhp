@@ -418,7 +418,8 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
               else if (entry.action === 'upload' && entry.field === 'attachments') actionText = `đã tải lên tài liệu (${entry.newValue})`;
               else if (entry.action === 'submit') actionText = 'đã gửi duyệt công việc';
               else if (entry.action === 'cancel_submit') actionText = 'đã thu hồi gửi duyệt';
-              else if (entry.action === 'revert') actionText = 'đã hủy duyệt, khôi phục hoạt động';
+              else if (entry.action === 'revert_approve') actionText = 'đã hủy duyệt, khôi phục hoạt động';
+              else if (entry.action === 'remind') actionText = 'đã nhắc nhở đẩy nhanh tiến độ';
               else actionText = `đã ${entry.action} ${entry.field}`;
 
               return (
