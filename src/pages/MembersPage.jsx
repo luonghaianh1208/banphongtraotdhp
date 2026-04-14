@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { MdEdit, MdPersonOff, MdCheckCircle, MdPerson, MdHourglassTop } from 'react-icons/md';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { setUserRole, disableUser } from '../firebase/functions';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Modal from '../components/common/Modal';
@@ -62,7 +61,10 @@ const MembersPage = () => {
   const handleRoleChange = async (userId, newRole) => {
     setFormLoading(true);
     try {
-      await setUserRole({ userId, role: newRole });
+      await updateDoc(doc(db, 'users', userId), {
+        role: newRole,
+        updatedAt: serverTimestamp(),
+      });
       toast.success('Đã cập nhật quyền');
       setEditingUser(null);
     } catch (err) {
@@ -75,7 +77,11 @@ const MembersPage = () => {
   // Vô hiệu hóa
   const handleDisable = async (userId) => {
     try {
-      await disableUser({ userId });
+      await updateDoc(doc(db, 'users', userId), {
+        isActive: false,
+        status: 'disabled',
+        updatedAt: serverTimestamp(),
+      });
       toast.success('Đã vô hiệu hóa tài khoản');
     } catch (err) {
       toast.error('Lỗi: ' + err.message);
