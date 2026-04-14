@@ -9,6 +9,7 @@ import TodayPage from './pages/TodayPage';
 import AllTasksPage from './pages/AllTasksPage';
 import DashboardPage from './pages/DashboardPage';
 import MembersPage from './pages/MembersPage';
+import TrashPage from './pages/TrashPage';
 import SettingsPage from './pages/SettingsPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
@@ -53,6 +54,9 @@ const AppRoutes = () => {
         } />
         <Route path="members" element={
           <ProtectedRoute roles={['admin']}><MembersPage /></ProtectedRoute>
+        } />
+        <Route path="trash" element={
+          <ProtectedRoute roles={['admin']}><TrashPage /></ProtectedRoute>
         } />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

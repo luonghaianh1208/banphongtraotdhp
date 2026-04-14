@@ -32,6 +32,7 @@ export const NAV_ITEMS = [
   { path: '/tasks', icon: 'MdAssignment', label: 'Tất cả công việc', roles: ['admin', 'manager', 'member'] },
   { path: '/dashboard', icon: 'MdDashboard', label: 'Dashboard', roles: ['admin', 'manager'] },
   { path: '/members', icon: 'MdGroup', label: 'Quản lý thành viên', roles: ['admin'] },
+  { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },
   { path: '/settings', icon: 'MdSettings', label: 'Cài đặt', roles: ['admin', 'manager', 'member'] },
 ];
 

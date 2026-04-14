@@ -9,6 +9,7 @@ import { handleApproveTask, handleExtendDeadline } from '../../hooks/useTaskActi
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../common/ConfirmDialog';
+import FilePreviewModal from '../common/FilePreviewModal';
 
 const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const { currentUser, userProfile, canApprove, canManageTasks } = useAuth();
@@ -17,6 +18,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const [newDeadline, setNewDeadline] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   if (!task) return null;
 
@@ -120,11 +122,15 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
           <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><MdAttachFile /> File đính kèm</h4>
           <div className="space-y-1.5">
             {task.attachments.map((file, i) => (
-              <a key={i} href={file.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                📎 {file.name}
-                <span className="text-xs text-gray-400 ml-auto">{(file.size / 1024).toFixed(0)} KB</span>
-              </a>
+              <button
+                key={i}
+                onClick={() => setPreviewFile(file)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700 hover:bg-gray-100 transition-colors w-full text-left cursor-pointer"
+              >
+                <MdAttachFile size={16} className="text-gray-400" />
+                <span className="truncate flex-1">{file.name}</span>
+                <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">{(file.size / 1024).toFixed(0)} KB</span>
+              </button>
             ))}
           </div>
         </div>
@@ -223,10 +229,14 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         onClose={() => setConfirmDelete(false)}
         onConfirm={handleDelete}
         title="Xóa công việc"
-        message={`Bạn chắc chắn muốn xóa "${task.title}"? Hành động này không thể hoàn tác.`}
-        confirmText="Xóa"
+        message={`Bạn chắc chắn muốn xóa "${task.title}"? Task sẽ được chuyển vào thùng rác.`}
+        confirmText="Chuyển vào thùng rác"
         danger
       />
+
+      {previewFile && (
+        <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
+      )}
     </div>
   );
 };

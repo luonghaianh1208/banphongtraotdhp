@@ -1,10 +1,10 @@
 // AllTasksPage — trang tất cả công việc: bảng task toàn tổ với filter & export
 import { useState } from 'react';
-import { MdAdd, MdFileDownload, MdPictureAsPdf } from 'react-icons/md';
+import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { createTask, updateTask } from '../firebase/firestore';
+import { createTask, updateTask, softDeleteTasks } from '../firebase/firestore';
 import { handleApproveTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
@@ -25,6 +25,9 @@ const AllTasksPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editTask, setEditTask] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [filters, setFilters] = useState({
     search: '', assignee: '', status: '', priority: '', dateFrom: '', dateTo: ''
   });
@@ -42,6 +45,39 @@ const AllTasksPage = () => {
     await handleApproveTask(taskId, currentUser.uid);
   };
 
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredTasks.length && filteredTasks.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredTasks.map(t => t.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setActionLoading(true);
+    try {
+      await softDeleteTasks([...selectedIds]);
+      toast.success(`Đã xóa ${selectedIds.size} công việc vào thùng rác`);
+      setSelectedIds(new Set());
+      setConfirmDelete(false);
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const allSelected = filteredTasks.length > 0 && selectedIds.size === filteredTasks.length;
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -52,7 +88,21 @@ const AllTasksPage = () => {
           <h2 className="text-sm text-gray-500">{filteredTasks.length} / {tasks.length} công việc</h2>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {canManageTasks && filteredTasks.length > 0 && (
+            <button onClick={toggleSelectAll} className="btn btn-secondary text-xs">
+              {allSelected ? <MdCheckBox size={16} className="text-primary-600" /> : <MdCheckBoxOutlineBlank size={16} />}
+              Chọn tất cả
+            </button>
+          )}
+          {canManageTasks && selectedIds.size > 0 && (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="btn btn-ghost text-red-600 hover:bg-red-50 text-xs"
+            >
+              <MdDelete size={16} /> Xóa ({selectedIds.size})
+            </button>
+          )}
           {canManageTasks && (
             <>
               <button onClick={() => exportToExcel(filteredTasks, users)} className="btn btn-secondary text-xs">
@@ -95,6 +145,9 @@ const AllTasksPage = () => {
               onClick={setSelectedTask}
               onApprove={handleApprove}
               canApprove={canApprove}
+              selectable={canManageTasks}
+              selected={selectedIds.has(task.id)}
+              onToggleSelect={toggleSelect}
             />
           ))}
         </div>
@@ -110,6 +163,16 @@ const AllTasksPage = () => {
           onClose={() => { setShowCreate(false); setEditTask(null); }}
         />
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleBulkDelete}
+        title="Xóa công việc"
+        message={`Chuyển ${selectedIds.size} công việc đã chọn vào thùng rác?`}
+        confirmText="Xóa"
+        danger
+      />
 
       <Modal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} title="Chi tiết công việc" size="lg">
         <TaskDetail

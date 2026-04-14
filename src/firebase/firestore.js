@@ -3,12 +3,19 @@ import {
   query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion, writeBatch, limit
 } from 'firebase/firestore';
 import { db } from './config';
+import { deleteFile } from './storage';
 
 // === TASKS ===
 
-// Lắng nghe realtime tất cả tasks (có giới hạn)
+// Lắng nghe realtime tất cả tasks ACTIVE (không gồm đã xóa)
 export const subscribeToTasks = (callback, onError, maxItems = 500) => {
-  const q = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(maxItems));
+  const q = query(
+    collection(db, 'tasks'),
+    where('isDeleted', '!=', true),
+    orderBy('isDeleted'),
+    orderBy('createdAt', 'desc'),
+    limit(maxItems)
+  );
   return onSnapshot(q, (snapshot) => {
     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(tasks);
@@ -27,10 +34,30 @@ export const subscribeToMyTasks = (userId, callback, onError) => {
     orderBy('createdAt', 'desc')
   );
   return onSnapshot(q, (snapshot) => {
-    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Client-side filter isDeleted vì Firestore không cho 2 field filter + array-contains
+    const tasks = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(t => !t.isDeleted);
     callback(tasks);
   }, (error) => {
     console.error('Lỗi lắng nghe my tasks:', error);
+    if (onError) onError(error);
+    callback([]);
+  });
+};
+
+// Lắng nghe realtime tasks TRONG THÙNG RÁC (admin only)
+export const subscribeToTrash = (callback, onError) => {
+  const q = query(
+    collection(db, 'tasks'),
+    where('isDeleted', '==', true),
+    orderBy('deletedAt', 'desc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(tasks);
+  }, (error) => {
+    console.error('Lỗi lắng nghe trash:', error);
     if (onError) onError(error);
     callback([]);
   });
@@ -43,6 +70,7 @@ export const createTask = async (taskData) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     isCompleted: false,
+    isDeleted: false,
     completedAt: null,
     completedBy: null,
     notes: [],
@@ -84,9 +112,72 @@ export const addNote = async (taskId, note) => {
   });
 };
 
-// Xóa task
+// === TRASH OPERATIONS ===
+
+// Soft-delete: chuyển task vào thùng rác
 export const deleteTask = async (taskId) => {
-  return deleteDoc(doc(db, 'tasks', taskId));
+  return updateDoc(doc(db, 'tasks', taskId), {
+    isDeleted: true,
+    deletedAt: serverTimestamp(),
+  });
+};
+
+// Soft-delete nhiều tasks cùng lúc
+export const softDeleteTasks = async (taskIds) => {
+  const batch = writeBatch(db);
+  taskIds.forEach(id => {
+    batch.update(doc(db, 'tasks', id), {
+      isDeleted: true,
+      deletedAt: serverTimestamp(),
+    });
+  });
+  return batch.commit();
+};
+
+// Khôi phục 1 task từ thùng rác
+export const restoreTask = async (taskId) => {
+  return updateDoc(doc(db, 'tasks', taskId), {
+    isDeleted: false,
+    deletedAt: null,
+  });
+};
+
+// Khôi phục nhiều tasks
+export const restoreTasks = async (taskIds) => {
+  const batch = writeBatch(db);
+  taskIds.forEach(id => {
+    batch.update(doc(db, 'tasks', id), {
+      isDeleted: false,
+      deletedAt: null,
+    });
+  });
+  return batch.commit();
+};
+
+// Xóa hẳn 1 task + file đính kèm trên Storage
+export const permanentDeleteTask = async (taskId) => {
+  const taskRef = doc(db, 'tasks', taskId);
+  const snap = await getDoc(taskRef);
+
+  if (snap.exists()) {
+    const task = snap.data();
+    // Xóa tất cả file đính kèm trên Storage
+    if (task.attachments?.length > 0) {
+      await Promise.allSettled(
+        task.attachments.map(file => deleteFile(file.path).catch(() => {}))
+      );
+    }
+  }
+
+  return deleteDoc(taskRef);
+};
+
+// Xóa hẳn nhiều tasks + file đính kèm
+export const permanentDeleteTasks = async (taskIds) => {
+  // Phải xóa file trước, rồi mới xóa docs (vì cần đọc attachments)
+  for (const id of taskIds) {
+    await permanentDeleteTask(id);
+  }
 };
 
 // === USERS ===

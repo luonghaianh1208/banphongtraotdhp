@@ -1,10 +1,10 @@
 // TaskCard — card hiển thị task trên danh sách
-import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2 } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
 
-const TaskCard = ({ task, users, onClick, onApprove, canApprove }) => {
+const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect }) => {
   // Tìm tên người thực hiện
   const assigneeNames = (task.assignees || [])
     .map(uid => users.find(u => u.id === uid)?.displayName || '?')
@@ -19,9 +19,19 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove }) => {
     >
       {/* Top row: title + status */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-primary-700 transition-colors flex-1">
-          {task.title}
-        </h3>
+        <div className="flex gap-2 items-start flex-1 min-w-0">
+          {selectable && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(task.id); }}
+              className="mt-0.5 p-0.5 rounded hover:bg-gray-100 transition-colors shrink-0"
+            >
+              {selected ? <MdCheckBox size={20} className="text-primary-600" /> : <MdCheckBoxOutlineBlank size={20} className="text-gray-400" />}
+            </button>
+          )}
+          <h3 className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-primary-700 transition-colors flex-1">
+            {task.title}
+          </h3>
+        </div>
         <StatusBadge task={task} />
       </div>
 
