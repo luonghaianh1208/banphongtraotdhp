@@ -18,6 +18,7 @@ const DateTimePicker = ({ selected, onChange, placeholder = "--/--/---- --:--", 
         time_24hr: true,
         minDate: minDate,
         disableMobile: "true", // Ngăn điện thoại mở giao diện gốc nếu muốn giữ bánh răng của flatpickr
+        closeOnSelect: false, // Giữ bảng chọn mở để người dùng tiếp tục nhập giờ/phút
       }}
       placeholder={placeholder}
       className={`${className} bg-white`}
