@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Flatpickr from 'react-flatpickr';
 import { Vietnamese } from 'flatpickr/dist/l10n/vn';
 import "flatpickr/dist/flatpickr.min.css";
 
 const DateTimePicker = ({ selected, onChange, placeholder = "--/--/---- --:--", className = "input", minDate }) => {
+  const options = useMemo(() => ({
+    locale: Vietnamese,
+    enableTime: true,
+    dateFormat: "d/m/Y H:i",
+    time_24hr: true,
+    minDate: minDate,
+    disableMobile: true, // boolean is needed
+    closeOnSelect: false,
+  }), [minDate]);
+
   return (
     <Flatpickr
       data-enable-time
@@ -11,15 +21,7 @@ const DateTimePicker = ({ selected, onChange, placeholder = "--/--/---- --:--", 
       onChange={([date]) => {
         if (date) onChange(date);
       }}
-      options={{
-        locale: Vietnamese,
-        enableTime: true,
-        dateFormat: "d/m/Y H:i",
-        time_24hr: true,
-        minDate: minDate,
-        disableMobile: "true", // Ngăn điện thoại mở giao diện gốc nếu muốn giữ bánh răng của flatpickr
-        closeOnSelect: false, // Giữ bảng chọn mở để người dùng tiếp tục nhập giờ/phút
-      }}
+      options={options}
       placeholder={placeholder}
       className={`${className} bg-white`}
     />
