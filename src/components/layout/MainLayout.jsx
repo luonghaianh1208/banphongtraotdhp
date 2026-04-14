@@ -11,6 +11,7 @@ const PAGE_TITLES = {
   '/dashboard': 'Dashboard tổng quan',
   '/members': 'Quản lý thành viên',
   '/settings': 'Cài đặt',
+  '/system-info': 'Thông tin hệ thống',
 };
 
 const MainLayout = () => {

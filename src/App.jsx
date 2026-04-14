@@ -15,6 +15,7 @@ import TrashPage from './pages/TrashPage';
 import TaskConfigPage from './pages/TaskConfigPage';
 import SettingsPage from './pages/SettingsPage';
 import PenaltyManagementPage from './pages/PenaltyManagementPage';
+import SystemInfoPage from './pages/SystemInfoPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // Route bảo vệ — yêu cầu đăng nhập
@@ -82,6 +83,7 @@ const AppRoutes = () => {
           <ProtectedRoute roles={['admin', 'manager']}><PenaltyManagementPage /></ProtectedRoute>
         } />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="system-info" element={<SystemInfoPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

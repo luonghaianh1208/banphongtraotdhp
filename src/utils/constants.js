@@ -37,6 +37,7 @@ export const NAV_ITEMS = [
   { path: '/task-config', icon: 'MdTune', label: 'Cấu hình công việc', roles: ['admin'] },
   { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },
   { path: '/settings', icon: 'MdPerson', label: 'Hồ sơ', roles: ['admin', 'manager', 'member'] },
+  { path: '/system-info', icon: 'MdInfo', label: 'Thông tin hệ thống', roles: ['admin', 'manager', 'member'] },
 ];
 
 // File types cho upload
