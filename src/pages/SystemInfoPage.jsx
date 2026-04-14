@@ -265,22 +265,7 @@ const AboutTab = () => (
           <span className="w-36 text-sm text-gray-500">Nền tảng:</span>
           <span className="text-sm text-gray-900">Web Application (PWA Ready)</span>
         </div>
-        <div className="flex items-center">
-          <span className="w-36 text-sm text-gray-500">Framework:</span>
-          <span className="text-sm text-gray-900">React 19 + Vite</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-36 text-sm text-gray-500">Backend:</span>
-          <span className="text-sm text-gray-900">Firebase (Firestore, Auth, Storage)</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-36 text-sm text-gray-500">Hosting:</span>
-          <span className="text-sm text-gray-900">Netlify</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-36 text-sm text-gray-500">UI Framework:</span>
-          <span className="text-sm text-gray-900">TailwindCSS 4</span>
-        </div>
+
       </div>
     </div>
 
