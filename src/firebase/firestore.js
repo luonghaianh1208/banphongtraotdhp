@@ -415,6 +415,11 @@ export const markNotificationRead = async (notifId) => {
   return updateDoc(doc(db, 'notifications', notifId), { isRead: true });
 };
 
+// Đánh dấu chưa đọc
+export const markNotificationUnread = async (notifId) => {
+  return updateDoc(doc(db, 'notifications', notifId), { isRead: false });
+};
+
 // Đánh dấu tất cả đã đọc
 export const markAllNotificationsRead = async (notifications) => {
   const unread = notifications.filter(n => !n.isRead);

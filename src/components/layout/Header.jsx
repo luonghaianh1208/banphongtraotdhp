@@ -1,13 +1,13 @@
 // Header — thanh trên cùng với search, notification, user info
 import { useState, useRef, useEffect } from 'react';
-import { MdSearch, MdNotifications, MdMenu, MdClose } from 'react-icons/md';
+import { MdSearch, MdNotifications, MdMenu, MdClose, MdCircle, MdRadioButtonUnchecked } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { formatRelative } from '../../utils/dateUtils';
 
 const Header = ({ title, onToggleSidebar }) => {
   const { userProfile } = useAuth();
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markUnread, markAllRead } = useNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef(null);
 
@@ -82,13 +82,25 @@ const Header = ({ title, onToggleSidebar }) => {
                     {notifications.slice(0, 20).map(notif => (
                       <div
                         key={notif.id}
-                        onClick={() => markRead(notif.id)}
-                        className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                        onClick={() => !notif.isRead && markRead(notif.id)}
+                        className={`group flex items-start px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
                           !notif.isRead ? 'bg-primary-50/50' : ''
                         }`}
                       >
-                        <p className="text-sm text-gray-800">{notif.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{formatRelative(notif.createdAt)}</p>
+                        <div className="flex-1 pr-2">
+                          <p className="text-sm text-gray-800">{notif.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">{formatRelative(notif.createdAt)}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            notif.isRead ? markUnread(notif.id) : markRead(notif.id);
+                          }}
+                          title={notif.isRead ? "Đánh dấu là chưa đọc" : "Đánh dấu là đã đọc"}
+                          className={`mt-1 flex-shrink-0 p-1 rounded-full transition-opacity ${notif.isRead ? 'opacity-0 group-hover:opacity-100 hover:bg-gray-200 text-gray-400' : 'text-primary-600 hover:bg-primary-100'}`}
+                        >
+                          {notif.isRead ? <MdRadioButtonUnchecked size={14} /> : <MdCircle size={12} />}
+                        </button>
                       </div>
                     ))}
                   </div>

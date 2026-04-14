@@ -1,7 +1,7 @@
 // NotificationContext — quản lý thông báo realtime
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead } from '../firebase/firestore';
+import { subscribeToNotifications, markNotificationRead, markNotificationUnread, markAllNotificationsRead } from '../firebase/firestore';
 
 const NotificationContext = createContext(null);
 
@@ -38,12 +38,16 @@ export const NotificationProvider = ({ children }) => {
     await markNotificationRead(notifId);
   };
 
+  const markUnread = async (notifId) => {
+    await markNotificationUnread(notifId);
+  };
+
   const markAllRead = async () => {
     await markAllNotificationsRead(notifications);
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, loading, markRead, markAllRead }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, loading, markRead, markUnread, markAllRead }}>
       {children}
     </NotificationContext.Provider>
   );
