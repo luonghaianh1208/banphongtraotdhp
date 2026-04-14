@@ -79,7 +79,7 @@ const FilePreviewModal = ({ file, onClose }) => {
           )}
           {isWord && (
             <iframe
-              src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`}
               className="w-full h-full border-0"
               title={`Preview: ${file.name}`}
             />
