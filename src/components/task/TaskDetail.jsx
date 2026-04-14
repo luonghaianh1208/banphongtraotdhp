@@ -174,10 +174,18 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {task.editHistory.map((entry, i) => {
               const editorName = users.find(u => u.id === entry.editedBy)?.displayName || '?';
+              
+              // Map tiếng Anh sang tiếng Việt
+              let actionText = '';
+              if (entry.action === 'edit' && entry.field === 'multiple') actionText = 'đã cập nhật thông tin công việc';
+              else if (entry.action === 'approve' && entry.field === 'isCompleted') actionText = 'đã duyệt hoàn thành';
+              else if (entry.action === 'extend' && entry.field === 'deadline') actionText = 'đã gia hạn deadline';
+              else actionText = `đã ${entry.action} ${entry.field}`;
+
               return (
                 <div key={i} className="text-xs text-gray-500 flex items-start gap-2">
                   <span className="text-gray-300 mt-0.5">•</span>
-                  <span><strong>{editorName}</strong> {entry.action} {entry.field} — {formatRelative(entry.editedAt)}</span>
+                  <span><strong>{editorName}</strong> {actionText} — {formatRelative(entry.editedAt)}</span>
                 </div>
               );
             })}
