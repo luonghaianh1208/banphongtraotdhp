@@ -158,9 +158,9 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
           <label className="btn btn-secondary cursor-pointer">
             <MdUploadFile size={18} />
             Chọn file
-            <input type="file" multiple onChange={handleFileChange} className="hidden" accept=".pdf,.docx,.jpg,.jpeg,.png" />
+            <input type="file" multiple onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar,.txt,.csv" />
           </label>
-          <span className="text-xs text-gray-500">PDF, Word, ảnh (tối đa 10MB/file)</span>
+          <span className="text-xs text-gray-500">PDF, Word, Excel, PowerPoint, ảnh, ZIP, TXT, CSV (tối đa 10MB/file)</span>
         </div>
         {/* Preview files */}
         {files.length > 0 && (

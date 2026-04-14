@@ -1,6 +1,6 @@
-// FilePreviewModal — xem trước file đính kèm (PDF/ảnh) bên trong app
+// FilePreviewModal — xem trước file đính kèm (PDF/ảnh/Word/Excel/PPT) bên trong app
 import { useEffect } from 'react';
-import { MdClose, MdDownload, MdOpenInNew } from 'react-icons/md';
+import { MdClose, MdDownload, MdOpenInNew, MdPerson } from 'react-icons/md';
 
 const FilePreviewModal = ({ file, onClose }) => {
   useEffect(() => {
@@ -15,9 +15,25 @@ const FilePreviewModal = ({ file, onClose }) => {
 
   if (!file) return null;
 
-  const isPdf = file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
-  const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
-  const isWord = file.type?.includes('wordprocessingml') || file.type?.includes('msword') || /\.(doc|docx)$/i.test(file.name);
+  const name = file.name?.toLowerCase() || '';
+  const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
+  const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+  const isWord = file.type?.includes('wordprocessingml') || file.type?.includes('msword') || /\.(doc|docx)$/i.test(name);
+  const isExcel = file.type?.includes('spreadsheetml') || file.type?.includes('ms-excel') || /\.(xls|xlsx)$/i.test(name);
+  const isPpt = file.type?.includes('presentationml') || file.type?.includes('ms-powerpoint') || /\.(ppt|pptx)$/i.test(name);
+  // Word, Excel, PPT đều xem qua Google Docs Viewer
+  const useGoogleViewer = isWord || isExcel || isPpt;
+
+  const getTypeBadge = () => {
+    if (isPdf) return { label: 'PDF', cls: 'bg-red-100 text-red-700' };
+    if (isWord) return { label: 'Word', cls: 'bg-blue-100 text-blue-700' };
+    if (isExcel) return { label: 'Excel', cls: 'bg-green-100 text-green-700' };
+    if (isPpt) return { label: 'PPT', cls: 'bg-orange-100 text-orange-700' };
+    if (isImage) return { label: 'Ảnh', cls: 'bg-emerald-100 text-emerald-700' };
+    return { label: 'File', cls: 'bg-gray-100 text-gray-700' };
+  };
+
+  const typeBadge = getTypeBadge();
 
   return (
     <div
@@ -28,10 +44,8 @@ const FilePreviewModal = ({ file, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-3 min-w-0">
-            <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${
-              isPdf ? 'bg-red-100 text-red-700' : isWord ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
-            }`}>
-              {isPdf ? 'PDF' : isWord ? 'Word' : 'Ảnh'}
+            <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${typeBadge.cls}`}>
+              {typeBadge.label}
             </span>
             <h3 className="text-sm font-medium text-gray-900 truncate">{file.name}</h3>
             {file.size && (
@@ -77,7 +91,7 @@ const FilePreviewModal = ({ file, onClose }) => {
               title={`Preview: ${file.name}`}
             />
           )}
-          {isWord && (
+          {useGoogleViewer && (
             <iframe
               src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`}
               className="w-full h-full border-0"
@@ -93,7 +107,7 @@ const FilePreviewModal = ({ file, onClose }) => {
               />
             </div>
           )}
-          {!isPdf && !isImage && !isWord && (
+          {!isPdf && !isImage && !useGoogleViewer && (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-gray-500">
               <p className="text-lg font-medium">Không thể xem trước loại file này</p>
               <a

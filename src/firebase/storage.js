@@ -29,23 +29,35 @@ export const deleteFile = async (filePath) => {
   return deleteObject(storageRef);
 };
 
-// Kiểm tra file hợp lệ (chỉ cho phép PDF, Word, ảnh)
+// Kiểm tra file hợp lệ — hỗ trợ nhiều loại file văn phòng phổ biến
 const ALLOWED_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-powerpoint',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-rar-compressed',
+  'text/plain',
+  'text/csv',
   'image/jpeg',
   'image/png',
   'image/jpg',
+  'image/gif',
+  'image/webp',
 ];
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const validateFile = (file) => {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return { valid: false, error: 'Chỉ chấp nhận file PDF, Word (.docx), hoặc ảnh (jpg/png)' };
+    return { valid: false, error: `Loại file "${file.name}" không được hỗ trợ. Chấp nhận: PDF, Word, Excel, PowerPoint, ảnh, ZIP, TXT, CSV` };
   }
   if (file.size > MAX_SIZE) {
-    return { valid: false, error: 'File không được vượt quá 10MB' };
+    return { valid: false, error: `File "${file.name}" vượt quá 10MB` };
   }
   return { valid: true };
 };

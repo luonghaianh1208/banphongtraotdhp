@@ -1,10 +1,11 @@
-// TaskDetail — modal chi tiết task: notes, attachments, history, approve
-import { useState } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive } from 'react-icons/md';
+// TaskDetail — modal chi tiết task: notes, attachments (upload cho mọi người), history, approve
+import { useState, useRef } from 'react';
+import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDateTime, formatRelative, formatForInput } from '../../utils/dateUtils';
-import { addNote, updateTask, deleteTask, removeOverduePenaltiesForTask } from '../../firebase/firestore';
+import { addNote, updateTask, deleteTask, removeOverduePenaltiesForTask, addNotification } from '../../firebase/firestore';
+import { uploadFile, validateFile } from '../../firebase/storage';
 import { handleApproveTask, handleExtendDeadline, handleRevertApproveTask, handleRemindTask } from '../../hooks/useTaskActions';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskConfig } from '../../context/TaskConfigContext';
@@ -23,6 +24,8 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   if (!task) return null;
 
@@ -34,6 +37,84 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const canEdit = canManageTasks || task.createdBy === currentUser?.uid;
   // Người dùng được giao task này?
   const isAssignee = task.assignees?.includes(currentUser?.uid);
+  // Cho phép upload: assignee hoặc admin/manager
+  const canUploadFile = isAssignee || canManageTasks;
+
+  // Helper: lấy tên người upload từ uid
+  const getUploaderName = (uid) => {
+    if (!uid) return 'Không rõ';
+    const user = users.find(u => u.id === uid);
+    return user?.displayName || 'Không rõ';
+  };
+
+  // Helper: icon theo loại file
+  const getFileTypeLabel = (file) => {
+    const name = file.name?.toLowerCase() || '';
+    if (name.endsWith('.pdf')) return { label: 'PDF', cls: 'bg-red-100 text-red-700' };
+    if (name.endsWith('.doc') || name.endsWith('.docx')) return { label: 'Word', cls: 'bg-blue-100 text-blue-700' };
+    if (name.endsWith('.xls') || name.endsWith('.xlsx')) return { label: 'Excel', cls: 'bg-green-100 text-green-700' };
+    if (name.endsWith('.ppt') || name.endsWith('.pptx')) return { label: 'PPT', cls: 'bg-orange-100 text-orange-700' };
+    if (/\.(jpg|jpeg|png|gif|webp)$/.test(name)) return { label: 'Ảnh', cls: 'bg-emerald-100 text-emerald-700' };
+    if (name.endsWith('.zip') || name.endsWith('.rar')) return { label: 'ZIP', cls: 'bg-purple-100 text-purple-700' };
+    return { label: 'File', cls: 'bg-gray-100 text-gray-700' };
+  };
+
+  // Upload file đính kèm từ TaskDetail
+  const handleFileUpload = async (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length === 0) return;
+
+    // Validate tất cả file trước
+    for (const file of selectedFiles) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        toast.error(validation.error);
+        return;
+      }
+    }
+
+    setUploading(true);
+    try {
+      const uploadedFiles = [];
+      for (const file of selectedFiles) {
+        const uploaded = await uploadFile(file, task.id, currentUser.uid);
+        uploadedFiles.push(uploaded);
+      }
+
+      // Cập nhật attachments trong Firestore
+      const currentAttachments = task.attachments || [];
+      const newAttachments = [...currentAttachments, ...uploadedFiles];
+
+      await updateTask(task.id, {
+        attachments: newAttachments,
+      }, currentUser.uid, {
+        action: 'upload',
+        field: 'attachments',
+        oldValue: `${currentAttachments.length} file`,
+        newValue: `${newAttachments.length} file`,
+      });
+
+      // Gửi thông báo cho người tạo task (tổ trưởng)
+      const fileNames = uploadedFiles.map(f => f.name).join(', ');
+      if (task.createdBy && task.createdBy !== currentUser.uid) {
+        await addNotification(
+          task.createdBy,
+          'Nhân viên nộp tài liệu',
+          `${userProfile.displayName} đã nộp ${uploadedFiles.length} file cho công việc "${task.title}": ${fileNames}`,
+          'info',
+          task.id
+        );
+      }
+
+      toast.success(`Đã tải lên ${uploadedFiles.length} file thành công`);
+    } catch (err) {
+      toast.error('Lỗi tải file: ' + err.message);
+    } finally {
+      setUploading(false);
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   // Thêm ghi chú
   const handleAddNote = async () => {
@@ -156,25 +237,68 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         </div>
       </div>
 
-      {/* File đính kèm */}
-      {task.attachments?.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><MdAttachFile /> File đính kèm</h4>
-          <div className="space-y-1.5">
-            {task.attachments.map((file, i) => (
-              <button
-                key={i}
-                onClick={() => setPreviewFile(file)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700 hover:bg-gray-100 transition-colors w-full text-left cursor-pointer"
-              >
-                <MdAttachFile size={16} className="text-gray-400" />
-                <span className="truncate flex-1">{file.name}</span>
-                <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">{(file.size / 1024).toFixed(0)} KB</span>
-              </button>
-            ))}
+      {/* File đính kèm — hiển thị luôn, kèm thông tin người upload */}
+      <div>
+        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+          <MdAttachFile /> Tài liệu đính kèm
+          {task.attachments?.length > 0 && (
+            <span className="text-xs font-normal text-gray-400">({task.attachments.length} file)</span>
+          )}
+        </h4>
+
+        {/* Danh sách file hiện có */}
+        {task.attachments?.length > 0 ? (
+          <div className="space-y-2 mb-3">
+            {task.attachments.map((file, i) => {
+              const typeInfo = getFileTypeLabel(file);
+              return (
+                <button
+                  key={i}
+                  onClick={() => setPreviewFile(file)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50 text-sm text-gray-700 hover:bg-gray-100 transition-colors w-full text-left cursor-pointer group"
+                >
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${typeInfo.cls}`}>
+                    {typeInfo.label}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-medium text-gray-800 group-hover:text-primary-700 transition-colors">{file.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {getUploaderName(file.uploadedBy)}
+                      {file.uploadedAt && ` • ${formatRelative(file.uploadedAt)}`}
+                      {file.size && ` • ${(file.size / 1024).toFixed(0)} KB`}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-400 italic mb-3">Chưa có tài liệu nào</p>
+        )}
+
+        {/* Nút upload file — cho assignee và admin/manager */}
+        {canUploadFile && (
+          <div className="flex items-center gap-3">
+            <label className={`btn btn-secondary cursor-pointer text-sm ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+              {uploading ? (
+                <><MdCloudUpload size={18} className="animate-pulse" /> Đang tải lên...</>
+              ) : (
+                <><MdUploadFile size={18} /> Tải tài liệu lên</>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar,.txt,.csv"
+                disabled={uploading}
+              />
+            </label>
+            <span className="text-xs text-gray-400">Chọn nhiều file cùng lúc • Tối đa 10MB/file</span>
+          </div>
+        )}
+      </div>
 
       {/* Ghi chú */}
       <div>
@@ -220,6 +344,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
               if (entry.action === 'edit' && entry.field === 'multiple') actionText = 'đã cập nhật thông tin công việc';
               else if (entry.action === 'approve' && entry.field === 'isCompleted') actionText = 'đã duyệt hoàn thành';
               else if (entry.action === 'extend' && entry.field === 'deadline') actionText = 'đã gia hạn deadline';
+              else if (entry.action === 'upload' && entry.field === 'attachments') actionText = `đã tải lên tài liệu (${entry.newValue})`;
               else actionText = `đã ${entry.action} ${entry.field}`;
 
               return (
