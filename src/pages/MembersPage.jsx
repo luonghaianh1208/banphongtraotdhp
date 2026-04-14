@@ -171,7 +171,7 @@ const MembersPage = () => {
           </div>
           <div>
             <label className="label">Mật khẩu <span className="text-red-500">*</span></label>
-            <input type="text" value={formData.password} onChange={e => setFormData(p => ({ ...p, password: e.target.value }))} className="input" placeholder="Tối thiểu 6 ký tự" />
+            <input type="password" value={formData.password} onChange={e => setFormData(p => ({ ...p, password: e.target.value }))} className="input" placeholder="Tối thiểu 6 ký tự" />
           </div>
           <div>
             <label className="label">Vai trò</label>

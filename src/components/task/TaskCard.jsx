@@ -1,5 +1,5 @@
 // TaskCard — card hiển thị task trên danh sách
-import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2 } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
@@ -66,7 +66,8 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove }) => {
       {task.notes?.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-50">
           <p className="text-xs text-gray-400 italic truncate">
-            📝 {task.notes[task.notes.length - 1].content}
+            <MdStickyNote2 size={12} className="inline text-amber-500 mr-1" />
+            {task.notes[task.notes.length - 1].content}
           </p>
         </div>
       )}

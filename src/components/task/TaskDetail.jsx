@@ -1,11 +1,11 @@
 // TaskDetail — modal chi tiết task: notes, attachments, history, approve
 import { useState } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2 } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDateTime, formatRelative, formatForInput } from '../../utils/dateUtils';
 import { addNote, updateTask, deleteTask } from '../../firebase/firestore';
-import { approveTask, extendDeadline } from '../../firebase/functions';
+import { handleApproveTask, handleExtendDeadline } from '../../hooks/useTaskActions';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../common/ConfirmDialog';
@@ -52,23 +52,10 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await approveTask({ taskId: task.id });
-      toast.success('Đã duyệt hoàn thành');
+      await handleApproveTask(task.id, currentUser.uid);
       onClose();
     } catch (err) {
-      // Fallback: cập nhật trực tiếp nếu Cloud Function chưa deploy
-      try {
-        await updateTask(task.id, {
-          isCompleted: true,
-          status: 'completed',
-          completedAt: new Date(),
-          completedBy: currentUser.uid,
-        }, currentUser.uid, { action: 'approve', field: 'isCompleted', oldValue: false, newValue: true });
-        toast.success('Đã duyệt hoàn thành');
-        onClose();
-      } catch (e) {
-        toast.error('Lỗi: ' + e.message);
-      }
+      toast.error('Lỗi: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -79,22 +66,10 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
     if (!newDeadline) return toast.error('Vui lòng chọn deadline mới');
     setLoading(true);
     try {
-      await extendDeadline({ taskId: task.id, newDeadline: new Date(newDeadline).toISOString() });
-      toast.success('Đã gia hạn deadline');
+      await handleExtendDeadline(task, newDeadline, currentUser.uid);
       setShowExtend(false);
     } catch (err) {
-      // Fallback
-      try {
-        await updateTask(task.id, {
-          originalDeadline: task.originalDeadline || task.deadline,
-          deadline: new Date(newDeadline),
-          status: 'extended',
-        }, currentUser.uid, { action: 'extend', field: 'deadline', oldValue: formatDateTime(task.deadline), newValue: newDeadline });
-        toast.success('Đã gia hạn deadline');
-        setShowExtend(false);
-      } catch (e) {
-        toast.error('Lỗi: ' + e.message);
-      }
+      toast.error('Lỗi: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -157,7 +132,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
 
       {/* Ghi chú */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">📝 Ghi chú</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><MdStickyNote2 size={16} className="text-amber-500" /> Ghi chú</h4>
         <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
           {!task.notes?.length && <p className="text-sm text-gray-400 italic">Chưa có ghi chú nào</p>}
           {(task.notes || []).map((note, i) => (

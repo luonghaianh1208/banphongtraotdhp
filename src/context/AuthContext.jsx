@@ -1,7 +1,8 @@
 // AuthContext — quản lý trạng thái đăng nhập & user profile
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, firebaseConfigured } from '../firebase/config';
+import { doc, setDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
+import { auth, db, firebaseConfigured } from '../firebase/config';
 import { getUserProfile } from '../firebase/auth';
 
 const AuthContext = createContext(null);
@@ -16,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
 
   useEffect(() => {
     // Nếu Firebase chưa cấu hình, hiện login ngay
@@ -26,13 +28,43 @@ export const AuthProvider = ({ children }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      setProfileError(false);
 
       if (user) {
         try {
-          const profile = await getUserProfile(user.uid);
+          let profile = await getUserProfile(user.uid);
+
+          // Nếu chưa có profile trong Firestore, tự tạo từ thông tin Auth
+          if (!profile) {
+            // Kiểm tra xem đã có admin nào chưa — nếu chưa, user đầu tiên thành admin
+            const usersSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
+            const isFirstUser = usersSnap.empty;
+
+            const newProfile = {
+              email: user.email,
+              displayName: user.displayName || user.email.split('@')[0],
+              role: isFirstUser ? 'admin' : 'member',
+              isActive: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              avatar: user.photoURL || null,
+            };
+            await setDoc(doc(db, 'users', user.uid), newProfile);
+            profile = { id: user.uid, ...newProfile };
+          }
+
           setUserProfile(profile);
         } catch (err) {
-          console.error('Lỗi lấy profile:', err);
+          console.error('Lỗi lấy/tạo profile:', err);
+          // Tạo profile tạm từ Firebase Auth để app không bị kẹt
+          setUserProfile({
+            id: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email.split('@')[0],
+            role: 'member',
+            isActive: true,
+          });
+          setProfileError(true);
         }
       } else {
         setUserProfile(null);
@@ -56,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     userProfile,
     loading,
+    profileError,
     isAdmin,
     isManager,
     isMember,

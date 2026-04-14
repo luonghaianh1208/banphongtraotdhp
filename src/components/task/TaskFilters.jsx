@@ -39,25 +39,25 @@ const TaskFilters = ({ filters, setFilters, users }) => {
         <select value={filters.status} onChange={e => handleChange('status', e.target.value)} className="input w-auto min-w-[150px]">
           <option value="">Tất cả trạng thái</option>
           <option value="active">Đang thực hiện</option>
-          <option value="notDue">🟢 Chưa đến hạn</option>
-          <option value="nearDue">🟡 Gần đến hạn</option>
-          <option value="urgent">🔴 Cần hoàn thành gấp</option>
-          <option value="overdue">⚫ Quá hạn</option>
-          <option value="extended">🔵 Gia hạn</option>
-          <option value="completed">✅ Hoàn thành</option>
+          <option value="notDue">● Chưa đến hạn</option>
+          <option value="nearDue">● Gần đến hạn</option>
+          <option value="urgent">● Cần hoàn thành gấp</option>
+          <option value="overdue">● Quá hạn</option>
+          <option value="extended">● Gia hạn</option>
+          <option value="completed">● Hoàn thành</option>
         </select>
 
         {/* Ưu tiên */}
         <select value={filters.priority} onChange={e => handleChange('priority', e.target.value)} className="input w-auto min-w-[120px]">
           <option value="">Tất cả ưu tiên</option>
-          <option value="high">🔴 Cao</option>
-          <option value="medium">🟡 Trung bình</option>
-          <option value="low">🔵 Thấp</option>
+          <option value="high">● Cao</option>
+          <option value="medium">● Trung bình</option>
+          <option value="low">● Thấp</option>
         </select>
 
         {/* Date range */}
-        <input type="date" value={filters.dateFrom} onChange={e => handleChange('dateFrom', e.target.value)} className="input w-auto" title="Từ ngày" />
-        <input type="date" value={filters.dateTo} onChange={e => handleChange('dateTo', e.target.value)} className="input w-auto" title="Đến ngày" />
+        <input type="date" value={filters.dateFrom} onChange={e => handleChange('dateFrom', e.target.value)} className="input w-auto" title="Từ ngày" aria-label="Lọc từ ngày" />
+        <input type="date" value={filters.dateTo} onChange={e => handleChange('dateTo', e.target.value)} className="input w-auto" title="Đến ngày" aria-label="Lọc đến ngày" />
 
         {/* Clear */}
         {hasActiveFilters && (

@@ -1,18 +1,38 @@
-// Firestore helper functions — CRUD operations cho tasks và users
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs,
-  query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion
+  query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion, writeBatch, limit
 } from 'firebase/firestore';
 import { db } from './config';
 
 // === TASKS ===
 
-// Lắng nghe realtime tất cả tasks
-export const subscribeToTasks = (callback) => {
-  const q = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'));
+// Lắng nghe realtime tất cả tasks (có giới hạn)
+export const subscribeToTasks = (callback, onError, maxItems = 500) => {
+  const q = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(maxItems));
   return onSnapshot(q, (snapshot) => {
     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(tasks);
+  }, (error) => {
+    console.error('Lỗi lắng nghe tasks:', error);
+    if (onError) onError(error);
+    callback([]);
+  });
+};
+
+// Lắng nghe realtime tasks của 1 user (member chỉ cần load task của mình)
+export const subscribeToMyTasks = (userId, callback, onError) => {
+  const q = query(
+    collection(db, 'tasks'),
+    where('assignees', 'array-contains', userId),
+    orderBy('createdAt', 'desc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(tasks);
+  }, (error) => {
+    console.error('Lỗi lắng nghe my tasks:', error);
+    if (onError) onError(error);
+    callback([]);
   });
 };
 
@@ -72,11 +92,15 @@ export const deleteTask = async (taskId) => {
 // === USERS ===
 
 // Lắng nghe realtime danh sách users
-export const subscribeToUsers = (callback) => {
+export const subscribeToUsers = (callback, onError) => {
   const q = query(collection(db, 'users'), orderBy('displayName'));
   return onSnapshot(q, (snapshot) => {
     const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(users);
+  }, (error) => {
+    console.error('Lỗi lắng nghe users:', error);
+    if (onError) onError(error);
+    callback([]);
   });
 };
 
@@ -90,7 +114,7 @@ export const getUser = async (userId) => {
 // === NOTIFICATIONS ===
 
 // Lắng nghe thông báo của user hiện tại
-export const subscribeToNotifications = (userId, callback) => {
+export const subscribeToNotifications = (userId, callback, onError) => {
   const q = query(
     collection(db, 'notifications'),
     where('userId', '==', userId),
@@ -99,6 +123,10 @@ export const subscribeToNotifications = (userId, callback) => {
   return onSnapshot(q, (snapshot) => {
     const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(notifs);
+  }, (error) => {
+    console.error('Lỗi lắng nghe notifications:', error);
+    if (onError) onError(error);
+    callback([]);
   });
 };
 
@@ -109,8 +137,12 @@ export const markNotificationRead = async (notifId) => {
 
 // Đánh dấu tất cả đã đọc
 export const markAllNotificationsRead = async (notifications) => {
-  const promises = notifications
-    .filter(n => !n.isRead)
-    .map(n => updateDoc(doc(db, 'notifications', n.id), { isRead: true }));
-  return Promise.all(promises);
+  const unread = notifications.filter(n => !n.isRead);
+  if (unread.length === 0) return;
+
+  const batch = writeBatch(db);
+  unread.forEach(n => {
+    batch.update(doc(db, 'notifications', n.id), { isRead: true });
+  });
+  return batch.commit();
 };

@@ -18,12 +18,12 @@ export const PRIORITIES = {
 
 // Trạng thái hiển thị task (tính từ deadline)
 export const TASK_DISPLAY_STATUS = {
-  NOT_DUE: { label: 'Chưa đến hạn', color: 'green', emoji: '🟢', badgeClass: 'badge-green' },
-  NEAR_DUE: { label: 'Gần đến hạn', color: 'yellow', emoji: '🟡', badgeClass: 'badge-yellow' },
-  URGENT: { label: 'Cần hoàn thành gấp', color: 'red', emoji: '🔴', badgeClass: 'badge-red' },
-  OVERDUE: { label: 'Quá hạn', color: 'black', emoji: '⚫', badgeClass: 'badge-black' },
-  EXTENDED: { label: 'Gia hạn', color: 'blue', emoji: '🔵', badgeClass: 'badge-blue' },
-  COMPLETED: { label: 'Hoàn thành', color: 'complete', emoji: '✅', badgeClass: 'badge-complete' },
+  NOT_DUE: { label: 'Chưa đến hạn', color: 'green', iconName: 'schedule', badgeClass: 'badge-green' },
+  NEAR_DUE: { label: 'Gần đến hạn', color: 'yellow', iconName: 'timelapse', badgeClass: 'badge-yellow' },
+  URGENT: { label: 'Cần hoàn thành gấp', color: 'red', iconName: 'warning', badgeClass: 'badge-red' },
+  OVERDUE: { label: 'Quá hạn', color: 'black', iconName: 'error', badgeClass: 'badge-black' },
+  EXTENDED: { label: 'Gia hạn', color: 'blue', iconName: 'update', badgeClass: 'badge-blue' },
+  COMPLETED: { label: 'Hoàn thành', color: 'complete', iconName: 'checkCircle', badgeClass: 'badge-complete' },
 };
 
 // Sidebar navigation items

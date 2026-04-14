@@ -10,22 +10,26 @@ export const loginWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
   
-  // Kiểm tra xem user đã có trong Firestore chưa
-  const docRef = doc(db, 'users', user.uid);
-  const docSnap = await getDoc(docRef);
-  
-  if (!docSnap.exists()) {
-    // Nếu chưa có (user mới), tạo document mặc định với role: 'member'
-    // Lưu ý: User đầu tiên có thể cần sửa thủ công thành 'admin' trong Firestore Console
-    await setDoc(docRef, {
-      email: user.email,
-      displayName: user.displayName || user.email.split('@')[0],
-      role: 'member',
-      isActive: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      avatar: user.photoURL || null,
-    });
+  // Tạo user document trong Firestore nếu chưa có
+  try {
+    const docRef = doc(db, 'users', user.uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      await setDoc(docRef, {
+        email: user.email,
+        displayName: user.displayName || user.email.split('@')[0],
+        role: 'member',
+        isActive: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        avatar: user.photoURL || null,
+      });
+    }
+  } catch (firestoreError) {
+    // Nếu Firestore rules chặn ghi, vẫn cho phép login thành công
+    // Admin sẽ cần cập nhật rules hoặc tạo user document thủ công
+    console.warn('Không thể tạo user profile trong Firestore:', firestoreError.message);
   }
   
   return result;

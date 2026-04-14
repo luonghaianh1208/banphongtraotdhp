@@ -4,8 +4,8 @@ import { MdAdd, MdFileDownload, MdPictureAsPdf } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { createTask, updateTask } from '../firebase/firestore';
-import { approveTask } from '../firebase/functions';
+import { createTask } from '../firebase/firestore';
+import { handleApproveTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
@@ -39,16 +39,7 @@ const AllTasksPage = () => {
   };
 
   const handleApprove = async (taskId) => {
-    try {
-      await approveTask({ taskId });
-      toast.success('Đã duyệt hoàn thành');
-    } catch {
-      await updateTask(taskId, {
-        isCompleted: true, status: 'completed',
-        completedAt: new Date(), completedBy: currentUser.uid,
-      }, currentUser.uid, { action: 'approve', field: 'isCompleted', oldValue: false, newValue: true });
-      toast.success('Đã duyệt hoàn thành');
-    }
+    await handleApproveTask(taskId, currentUser.uid);
   };
 
   if (loading) return <LoadingSpinner />;

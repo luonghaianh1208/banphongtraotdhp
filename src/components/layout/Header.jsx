@@ -1,5 +1,5 @@
 // Header — thanh trên cùng với search, notification, user info
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MdSearch, MdNotifications, MdMenu, MdClose } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -9,6 +9,24 @@ const Header = ({ title, onToggleSidebar }) => {
   const { userProfile } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
+  const notifRef = useRef(null);
+
+  // Click outside hoặc Escape để đóng dropdown
+  useEffect(() => {
+    if (!showNotifs) return;
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifs(false);
+      }
+    };
+    const handleEsc = (e) => { if (e.key === 'Escape') setShowNotifs(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [showNotifs]);
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -27,7 +45,7 @@ const Header = ({ title, onToggleSidebar }) => {
         {/* Right: notifications */}
         <div className="flex items-center gap-2">
           {/* Notification bell */}
-          <div className="relative">
+          <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifs(!showNotifs)}
               className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"

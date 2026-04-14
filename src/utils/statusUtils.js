@@ -4,10 +4,10 @@ import { TASK_DISPLAY_STATUS } from './constants';
 
 // Tính trạng thái hiển thị dựa trên deadline và trạng thái task
 export const getTaskDisplayStatus = (task) => {
-  // Đã hoàn thành → luôn hiển thị ✅
+  // Đã hoàn thành
   if (task.isCompleted) return TASK_DISPLAY_STATUS.COMPLETED;
 
-  // Đã gia hạn → hiển thị 🔵
+  // Đã gia hạn
   if (task.status === 'extended') return TASK_DISPLAY_STATUS.EXTENDED;
 
   const now = new Date();
@@ -15,16 +15,16 @@ export const getTaskDisplayStatus = (task) => {
   const hoursLeft = differenceInHours(deadline, now);
   const daysLeft = differenceInDays(deadline, now);
 
-  // Đã qua deadline → ⚫
+  // Đã qua deadline
   if (hoursLeft < 0) return TASK_DISPLAY_STATUS.OVERDUE;
 
-  // Còn dưới 24 giờ → 🔴
+  // Còn dưới 24 giờ
   if (hoursLeft < 24) return TASK_DISPLAY_STATUS.URGENT;
 
-  // Còn 1-3 ngày → 🟡
+  // Còn 1-3 ngày
   if (daysLeft <= 3) return TASK_DISPLAY_STATUS.NEAR_DUE;
 
-  // Còn hơn 3 ngày → 🟢
+  // Còn hơn 3 ngày
   return TASK_DISPLAY_STATUS.NOT_DUE;
 };
 

@@ -32,7 +32,7 @@ const MainLayout = () => {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="relative h-full w-64 slide-in-right">
+          <div className="relative h-full w-64 slide-in-left">
             <Sidebar onClose={() => setSidebarOpen(false)} />
           </div>
         </div>
