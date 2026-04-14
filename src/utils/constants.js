@@ -23,6 +23,7 @@ export const TASK_DISPLAY_STATUS = {
   URGENT: { label: 'Cần hoàn thành gấp', color: 'red', iconName: 'warning', badgeClass: 'badge-red' },
   OVERDUE: { label: 'Quá hạn', color: 'black', iconName: 'error', badgeClass: 'badge-black' },
   EXTENDED: { label: 'Gia hạn', color: 'blue', iconName: 'update', badgeClass: 'badge-blue' },
+  PENDING_APPROVAL: { label: 'Chờ duyệt', color: 'purple', iconName: 'hourglass', badgeClass: 'badge-purple' },
   COMPLETED: { label: 'Hoàn thành', color: 'complete', iconName: 'checkCircle', badgeClass: 'badge-complete' },
 };
 

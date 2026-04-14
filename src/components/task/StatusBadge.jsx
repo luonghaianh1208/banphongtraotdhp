@@ -1,5 +1,5 @@
 // StatusBadge — hiển thị badge trạng thái task với icon SVG + màu tương ứng
-import { MdSchedule, MdTimelapse, MdWarning, MdError, MdUpdate, MdCheckCircle } from 'react-icons/md';
+import { MdSchedule, MdTimelapse, MdWarning, MdError, MdUpdate, MdCheckCircle, MdHourglassTop } from 'react-icons/md';
 import { getTaskDisplayStatus } from '../../utils/statusUtils';
 
 const iconMap = {
@@ -9,6 +9,7 @@ const iconMap = {
   error: MdError,
   update: MdUpdate,
   checkCircle: MdCheckCircle,
+  hourglass: MdHourglassTop,
 };
 
 const StatusBadge = ({ task }) => {

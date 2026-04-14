@@ -1,6 +1,6 @@
 // TaskDetail — modal chi tiết task: notes, attachments (upload cho mọi người), history, approve
 import { useState, useRef } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload, MdHourglassTop } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDateTime, formatRelative, formatForInput } from '../../utils/dateUtils';
@@ -143,6 +143,62 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
       });
       setNewNote('');
       toast.success('Đã thêm ghi chú');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gửi duyệt (assignee gửi cho tổ trưởng)
+  const handleSubmitForApproval = async () => {
+    setLoading(true);
+    try {
+      await updateTask(task.id, {
+        status: 'pending_approval',
+        submittedBy: currentUser.uid,
+        submittedAt: new Date().toISOString(),
+      }, currentUser.uid, {
+        action: 'submit',
+        field: 'status',
+        oldValue: task.status || 'active',
+        newValue: 'pending_approval',
+      });
+
+      // Thông báo cho tổ trưởng
+      if (task.createdBy && task.createdBy !== currentUser.uid) {
+        await addNotification(
+          task.createdBy,
+          'Nhân viên gửi duyệt',
+          `${userProfile.displayName} đã gửi duyệt công việc "${task.title}"`,
+          'info',
+          task.id
+        );
+      }
+
+      toast.success('Đã gửi duyệt thành công!');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Hủy gửi duyệt (assignee thu hồi)
+  const handleCancelSubmission = async () => {
+    setLoading(true);
+    try {
+      await updateTask(task.id, {
+        status: 'active',
+        submittedBy: null,
+        submittedAt: null,
+      }, currentUser.uid, {
+        action: 'cancel_submit',
+        field: 'status',
+        oldValue: 'pending_approval',
+        newValue: 'active',
+      });
+      toast.success('Đã thu hồi gửi duyệt');
     } catch (err) {
       toast.error('Lỗi: ' + err.message);
     } finally {
@@ -360,6 +416,9 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
               else if (entry.action === 'approve' && entry.field === 'isCompleted') actionText = 'đã duyệt hoàn thành';
               else if (entry.action === 'extend' && entry.field === 'deadline') actionText = 'đã gia hạn deadline';
               else if (entry.action === 'upload' && entry.field === 'attachments') actionText = `đã tải lên tài liệu (${entry.newValue})`;
+              else if (entry.action === 'submit') actionText = 'đã gửi duyệt công việc';
+              else if (entry.action === 'cancel_submit') actionText = 'đã thu hồi gửi duyệt';
+              else if (entry.action === 'revert') actionText = 'đã hủy duyệt, khôi phục hoạt động';
               else actionText = `đã ${entry.action} ${entry.field}`;
 
               return (
@@ -388,6 +447,20 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         {canApprove && task.isCompleted && (
           <button onClick={handleRevertApprove} disabled={loading} className="btn btn-secondary text-amber-600 border-amber-200 hover:bg-amber-50">
             <MdUndo size={18} /> Hủy duyệt (Khôi phục hoạt động)
+          </button>
+        )}
+
+        {/* Gửi duyệt — cho assignee khi task chưa hoàn thành và chưa gửi duyệt */}
+        {isAssignee && !canManageTasks && !task.isCompleted && task.status !== 'pending_approval' && (
+          <button onClick={handleSubmitForApproval} disabled={loading} className="btn bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
+            <MdHourglassTop size={18} /> Gửi duyệt
+          </button>
+        )}
+
+        {/* Thu hồi gửi duyệt — chỉ người đã gửi duyệt mới thu hồi được */}
+        {isAssignee && !canManageTasks && task.status === 'pending_approval' && task.submittedBy === currentUser?.uid && (
+          <button onClick={handleCancelSubmission} disabled={loading} className="btn btn-secondary text-violet-600 border-violet-200 hover:bg-violet-50">
+            <MdUndo size={18} /> Thu hồi gửi duyệt
           </button>
         )}
 

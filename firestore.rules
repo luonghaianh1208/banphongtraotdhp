@@ -9,6 +9,13 @@ service cloud.firestore {
     function isAuthenticated() { return request.auth != null; }
     function isAdminOrManager() { return isAdmin() || isManager(); }
 
+    // Kiểm tra assignee chỉ sửa các field được phép
+    function isAssigneeAllowedUpdate() {
+      let allowed = ['notes', 'attachments', 'status', 'submittedBy', 'submittedAt', 'updatedAt', 'editHistory'];
+      return request.auth.uid in resource.data.assignees
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
@@ -19,7 +26,11 @@ service cloud.firestore {
     match /tasks/{taskId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && (isAdminOrManager() || request.resource.data.createdBy == request.auth.uid);
-      allow update: if isAuthenticated() && (isAdminOrManager() || resource.data.createdBy == request.auth.uid);
+      allow update: if isAuthenticated() && (
+        isAdminOrManager()
+        || resource.data.createdBy == request.auth.uid
+        || isAssigneeAllowedUpdate()
+      );
       allow delete: if isAdmin();
     }
 

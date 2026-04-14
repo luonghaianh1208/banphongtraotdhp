@@ -7,6 +7,9 @@ export const getTaskDisplayStatus = (task) => {
   // Đã hoàn thành
   if (task.isCompleted) return TASK_DISPLAY_STATUS.COMPLETED;
 
+  // Chờ duyệt
+  if (task.status === 'pending_approval') return TASK_DISPLAY_STATUS.PENDING_APPROVAL;
+
   // Đã gia hạn
   if (task.status === 'extended') return TASK_DISPLAY_STATUS.EXTENDED;
 
@@ -36,6 +39,7 @@ export const countTasksByStatus = (tasks) => {
     urgent: 0,
     overdue: 0,
     extended: 0,
+    pendingApproval: 0,
     completed: 0,
     total: tasks.length,
   };
@@ -48,6 +52,7 @@ export const countTasksByStatus = (tasks) => {
       case TASK_DISPLAY_STATUS.URGENT: counts.urgent++; break;
       case TASK_DISPLAY_STATUS.OVERDUE: counts.overdue++; break;
       case TASK_DISPLAY_STATUS.EXTENDED: counts.extended++; break;
+      case TASK_DISPLAY_STATUS.PENDING_APPROVAL: counts.pendingApproval++; break;
       case TASK_DISPLAY_STATUS.COMPLETED: counts.completed++; break;
     }
   });
@@ -97,6 +102,7 @@ export const filterTasks = (tasks, filters) => {
       if (filters.status === 'nearDue' && displayStatus !== TASK_DISPLAY_STATUS.NEAR_DUE) return false;
       if (filters.status === 'notDue' && displayStatus !== TASK_DISPLAY_STATUS.NOT_DUE) return false;
       if (filters.status === 'extended' && displayStatus !== TASK_DISPLAY_STATUS.EXTENDED) return false;
+      if (filters.status === 'pendingApproval' && displayStatus !== TASK_DISPLAY_STATUS.PENDING_APPROVAL) return false;
       if (filters.status === 'active' && displayStatus === TASK_DISPLAY_STATUS.COMPLETED) return false;
     }
 

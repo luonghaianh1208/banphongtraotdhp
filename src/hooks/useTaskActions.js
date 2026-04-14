@@ -42,7 +42,7 @@ export const handleRevertApproveTask = async (taskId, currentUserUid) => {
   try {
     await updateTask(taskId, {
       isCompleted: false,
-      status: 'in_progress',
+      status: 'active',
       completedAt: null,
       completedBy: null,
     }, currentUserUid, {
