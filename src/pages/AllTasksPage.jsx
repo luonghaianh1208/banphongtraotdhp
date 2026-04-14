@@ -4,7 +4,7 @@ import { MdAdd, MdFileDownload, MdPictureAsPdf } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { createTask } from '../firebase/firestore';
+import { createTask, updateTask } from '../firebase/firestore';
 import { handleApproveTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
