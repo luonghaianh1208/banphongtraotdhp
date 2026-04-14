@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { TaskConfigProvider } from './context/TaskConfigContext';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/LoginPage';
 import TodayPage from './pages/TodayPage';
@@ -10,6 +11,7 @@ import AllTasksPage from './pages/AllTasksPage';
 import DashboardPage from './pages/DashboardPage';
 import MembersPage from './pages/MembersPage';
 import TrashPage from './pages/TrashPage';
+import TaskConfigPage from './pages/TaskConfigPage';
 import SettingsPage from './pages/SettingsPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
@@ -58,6 +60,9 @@ const AppRoutes = () => {
         <Route path="trash" element={
           <ProtectedRoute roles={['admin']}><TrashPage /></ProtectedRoute>
         } />
+        <Route path="task-config" element={
+          <ProtectedRoute roles={['admin']}><TaskConfigPage /></ProtectedRoute>
+        } />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
@@ -70,18 +75,20 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <NotificationProvider>
-          <AppRoutes />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: { borderRadius: '12px', background: '#1f2937', color: '#fff', fontSize: '14px' },
-              success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-              error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-            }}
-          />
-        </NotificationProvider>
+        <TaskConfigProvider>
+          <NotificationProvider>
+            <AppRoutes />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: { borderRadius: '12px', background: '#1f2937', color: '#fff', fontSize: '14px' },
+                success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+                error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+              }}
+            />
+          </NotificationProvider>
+        </TaskConfigProvider>
       </AuthProvider>
     </BrowserRouter>
   );

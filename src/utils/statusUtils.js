@@ -82,6 +82,12 @@ export const filterTasks = (tasks, filters) => {
     // Lọc theo người thực hiện
     if (filters.assignee && !task.assignees?.includes(filters.assignee)) return false;
 
+    // Lọc theo phân loại
+    if (filters.category) {
+      const taskCat = task.category || 'other';
+      if (taskCat !== filters.category) return false;
+    }
+
     // Lọc theo trạng thái
     if (filters.status) {
       const displayStatus = getTaskDisplayStatus(task);

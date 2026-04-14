@@ -29,5 +29,10 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow delete: if false;
     }
+
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
   }
 }

@@ -1,13 +1,16 @@
 // TaskFilters — bộ lọc task: search, assignee, status, priority, date range
 import { MdSearch, MdFilterList, MdClear } from 'react-icons/md';
+import { useTaskConfig } from '../../context/TaskConfigContext';
 
 const TaskFilters = ({ filters, setFilters, users }) => {
+  const { categories, priorities } = useTaskConfig();
+
   const handleChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
-    setFilters({ search: '', assignee: '', status: '', priority: '', dateFrom: '', dateTo: '' });
+    setFilters({ search: '', assignee: '', status: '', priority: '', category: '', dateFrom: '', dateTo: '' });
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v !== '');
@@ -50,9 +53,17 @@ const TaskFilters = ({ filters, setFilters, users }) => {
         {/* Ưu tiên */}
         <select value={filters.priority} onChange={e => handleChange('priority', e.target.value)} className="input w-auto min-w-[120px]">
           <option value="">Tất cả ưu tiên</option>
-          <option value="high">● Cao</option>
-          <option value="medium">● Trung bình</option>
-          <option value="low">● Thấp</option>
+          {priorities.map(p => (
+            <option key={p.id} value={p.id}>● {p.name}</option>
+          ))}
+        </select>
+
+        {/* Phân loại */}
+        <select value={filters.category || ''} onChange={e => handleChange('category', e.target.value)} className="input w-auto min-w-[130px]">
+          <option value="">Tất cả phân loại</option>
+          {categories.map(c => (
+            <option key={c.id} value={c.id}>● {c.name}</option>
+          ))}
         </select>
 
         {/* Date range */}

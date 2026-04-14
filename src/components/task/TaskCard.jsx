@@ -2,9 +2,12 @@
 import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
+import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
 
 const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect }) => {
+  const { getCategoryById } = useTaskConfig();
+  const cat = getCategoryById(task.category);
   // Tìm tên người thực hiện
   const assigneeNames = (task.assignees || [])
     .map(uid => users.find(u => u.id === uid)?.displayName || '?')
@@ -57,6 +60,11 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <PriorityBadge priority={task.priority} />
+          {cat && cat.id !== 'other' && (
+            <span className="badge text-xs" style={{ backgroundColor: cat.color + '20', color: cat.color }}>
+              {cat.name}
+            </span>
+          )}
           <span className="text-xs text-gray-400">• Giao bởi {creatorName}</span>
         </div>
 

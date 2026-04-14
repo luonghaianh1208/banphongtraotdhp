@@ -30,7 +30,7 @@ const AllTasksPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [filters, setFilters] = useState({
-    search: '', assignee: '', status: '', priority: '', dateFrom: '', dateTo: ''
+    search: '', assignee: '', status: '', priority: '', category: '', dateFrom: '', dateTo: ''
   });
 
   const loading = tasksLoading || usersLoading;

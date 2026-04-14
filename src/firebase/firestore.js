@@ -1,9 +1,61 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, setDoc,
   query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion, writeBatch, limit
 } from 'firebase/firestore';
 import { db } from './config';
 import { deleteFile } from './storage';
+
+// === TASK CONFIG (categories & priorities) ===
+
+const DEFAULT_CATEGORIES = [
+  { id: 'other', name: 'Khác', color: '#9CA3AF' },
+];
+
+const DEFAULT_PRIORITIES = [
+  { id: 'high', name: 'Cao', color: '#EF4444', order: 1 },
+  { id: 'medium', name: 'Trung bình', color: '#F59E0B', order: 2 },
+  { id: 'low', name: 'Thấp', color: '#3B82F6', order: 3 },
+];
+
+// Lắng nghe realtime phân loại công việc
+export const subscribeToCategories = (callback, onError) => {
+  return onSnapshot(doc(db, 'config', 'categories'), (snap) => {
+    if (snap.exists()) {
+      callback(snap.data().items || DEFAULT_CATEGORIES);
+    } else {
+      callback(DEFAULT_CATEGORIES);
+    }
+  }, (error) => {
+    console.error('Lỗi lắng nghe categories:', error);
+    if (onError) onError(error);
+    callback(DEFAULT_CATEGORIES);
+  });
+};
+
+// Lắng nghe realtime mức độ ưu tiên
+export const subscribeToPriorities = (callback, onError) => {
+  return onSnapshot(doc(db, 'config', 'priorities'), (snap) => {
+    if (snap.exists()) {
+      callback(snap.data().items || DEFAULT_PRIORITIES);
+    } else {
+      callback(DEFAULT_PRIORITIES);
+    }
+  }, (error) => {
+    console.error('Lỗi lắng nghe priorities:', error);
+    if (onError) onError(error);
+    callback(DEFAULT_PRIORITIES);
+  });
+};
+
+// Lưu danh sách categories (admin)
+export const saveCategories = async (items) => {
+  return setDoc(doc(db, 'config', 'categories'), { items, updatedAt: serverTimestamp() });
+};
+
+// Lưu danh sách priorities (admin)
+export const savePriorities = async (items) => {
+  return setDoc(doc(db, 'config', 'priorities'), { items, updatedAt: serverTimestamp() });
+};
 
 // === TASKS ===
 

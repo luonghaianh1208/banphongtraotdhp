@@ -1,16 +1,18 @@
 // TaskForm — form tạo/sửa task
 import { useState } from 'react';
 import { MdSave, MdClose, MdUploadFile } from 'react-icons/md';
-import { PRIORITIES } from '../../utils/constants';
+import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatForInput } from '../../utils/dateUtils';
 import { uploadFile, validateFile } from '../../firebase/storage';
 import toast from 'react-hot-toast';
 
 const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
   const isEdit = !!task;
+  const { categories, priorities } = useTaskConfig();
   const [title, setTitle] = useState(task?.title || '');
   const [assignees, setAssignees] = useState(task?.assignees || []);
-  const [priority, setPriority] = useState(task?.priority || 'medium');
+  const [priority, setPriority] = useState(task?.priority || (priorities[0]?.id || 'medium'));
+  const [category, setCategory] = useState(task?.category || '');
   const [deadline, setDeadline] = useState(task ? formatForInput(task.deadline) : '');
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,7 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         title: title.trim(),
         assignees,
         priority,
+        category: category || 'other',
         deadline: new Date(deadline),
         attachments: uploadedFiles,
         createdBy: task?.createdBy || currentUser.uid,
@@ -115,13 +118,22 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         </div>
       </div>
 
-      {/* Row: Ưu tiên + Deadline */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Row: Ưu tiên + Phân loại + Deadline */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="label">Độ ưu tiên</label>
           <select value={priority} onChange={e => setPriority(e.target.value)} className="input">
-            {Object.entries(PRIORITIES).map(([key, data]) => (
-              <option key={key} value={key}>{data.label}</option>
+            {priorities.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Phân loại</label>
+          <select value={category} onChange={e => setCategory(e.target.value)} className="input">
+            <option value="">-- Chọn phân loại --</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>

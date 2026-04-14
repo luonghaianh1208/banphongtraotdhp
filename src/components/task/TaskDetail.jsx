@@ -7,12 +7,14 @@ import { formatDateTime, formatRelative, formatForInput } from '../../utils/date
 import { addNote, updateTask, deleteTask } from '../../firebase/firestore';
 import { handleApproveTask, handleExtendDeadline } from '../../hooks/useTaskActions';
 import { useAuth } from '../../context/AuthContext';
+import { useTaskConfig } from '../../context/TaskConfigContext';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../common/ConfirmDialog';
 import FilePreviewModal from '../common/FilePreviewModal';
 
 const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const { currentUser, userProfile, canApprove, canManageTasks } = useAuth();
+  const { getCategoryById } = useTaskConfig();
   const [newNote, setNewNote] = useState('');
   const [showExtend, setShowExtend] = useState(false);
   const [newDeadline, setNewDeadline] = useState('');
@@ -100,6 +102,12 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
           <span className="flex items-center gap-1.5"><MdPerson size={16} /> Giao bởi: <strong>{creatorName}</strong></span>
           <span className="flex items-center gap-1.5"><MdAccessTime size={16} /> Hạn: <strong>{formatDateTime(task.deadline)}</strong></span>
           <PriorityBadge priority={task.priority} />
+          {(() => {
+            const cat = getCategoryById(task.category);
+            return cat && cat.id !== 'other' ? (
+              <span className="badge text-xs" style={{ backgroundColor: cat.color + '20', color: cat.color }}>{cat.name}</span>
+            ) : null;
+          })()}
         </div>
       </div>
 
