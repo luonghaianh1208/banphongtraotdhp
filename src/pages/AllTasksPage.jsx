@@ -11,6 +11,7 @@ import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
 import TaskFilters from '../components/task/TaskFilters';
 import Modal from '../components/common/Modal';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import EmptyState from '../components/common/EmptyState';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { filterTasks } from '../utils/statusUtils';
