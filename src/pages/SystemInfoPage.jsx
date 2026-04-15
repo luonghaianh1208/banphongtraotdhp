@@ -51,6 +51,7 @@ const FEATURES = [
       { name: 'Thông báo nhắc nhở', desc: 'Nhân viên nhận thông báo nhắc nhở từ tổ trưởng', isNew: false },
       { name: 'Thông báo gửi duyệt', desc: 'Tổ trưởng nhận thông báo khi nhân viên gửi duyệt công việc', isNew: true },
       { name: 'Thông báo tải file', desc: 'Thông báo hai chiều khi tổ trưởng hoặc nhân viên tải file lên', isNew: true },
+      { name: 'Nhắc việc tự động', desc: 'Hệ thống tự động nhắc nhở tổng hợp các công việc gần hạn, quá hạn hoặc cần gấp mỗi ngày', isNew: true },
     ],
   },
   {
@@ -59,7 +60,8 @@ const FEATURES = [
       { name: 'Đăng nhập Google', desc: 'Xác thực an toàn qua tài khoản Google', isNew: false },
       { name: 'Phê duyệt tài khoản', desc: 'Tổ trưởng duyệt thành viên mới trước khi vào hệ thống', isNew: false },
       { name: 'Phân quyền vai trò', desc: 'Gán vai trò Tổ trưởng / Phụ trách / Nhân viên cho từng thành viên', isNew: false },
-      { name: 'Quản lý phạt', desc: 'Theo dõi và quản lý chế độ phạt khi công việc quá hạn', isNew: false },
+      { name: 'Quản lý phạt', desc: 'Theo dõi và xử lý danh sách phạt khi công việc vi phạm', isNew: false },
+      { name: 'Tự động tạo phiếu phạt', desc: 'Hệ thống quét tự động lập phiếu phạt khi công việc bị quá hạn (theo cấu hình lỗi)', isNew: true },
     ],
   },
   {
