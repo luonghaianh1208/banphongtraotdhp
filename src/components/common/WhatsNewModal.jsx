@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { MdNewReleases, MdCheckCircle } from 'react-icons/md';
-
-const APP_VERSION = '3.1.2';
-
+const APP_VERSION_LABEL = '3.1.2';
+const APP_VERSION_KEY = '3.1.2-rev1'; // Đổi key nội bộ để ép hiển thị lại cho những ai lỡ tắt trước đó
 const WhatsNewModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -11,7 +10,7 @@ const WhatsNewModal = () => {
     // Đợi 1 chút để UI load mượt, sau đó check version
     const timer = setTimeout(() => {
       const lastSeenVersion = localStorage.getItem('lastSeenVersion');
-      if (lastSeenVersion !== APP_VERSION) {
+      if (lastSeenVersion !== APP_VERSION_KEY) {
         setIsOpen(true);
       }
     }, 1500);
@@ -24,19 +23,19 @@ const WhatsNewModal = () => {
   };
 
   const handleConfirm = () => {
-    localStorage.setItem('lastSeenVersion', APP_VERSION);
+    localStorage.setItem('lastSeenVersion', APP_VERSION_KEY);
     setIsOpen(false);
   };
 
   if (!isOpen) return null;
 
   return (
-    <Modal title={`Có gì mới trong bản ${APP_VERSION}?`} onClose={handleDismiss}>
+    <Modal title={`Có gì mới trong bản ${APP_VERSION_LABEL}?`} onClose={handleDismiss}>
       <div className="space-y-4 text-gray-700">
         <div className="flex items-center gap-3 text-primary-600 bg-primary-50 p-3 rounded-lg border border-primary-100">
           <MdNewReleases size={28} className="shrink-0" />
           <div>
-            <h3 className="font-bold text-lg leading-tight">Cập nhật lớn phiên bản {APP_VERSION}</h3>
+            <h3 className="font-bold text-lg leading-tight">Cập nhật lớn phiên bản {APP_VERSION_LABEL}</h3>
             <p className="text-sm mt-1">Hệ thống vừa cập nhật những tính năng cực kỳ xịn xò để quản lý công việc hiệu quả và tiện lợi hơn!</p>
           </div>
         </div>
