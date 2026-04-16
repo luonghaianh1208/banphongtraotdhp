@@ -29,11 +29,11 @@ const TodayPage = () => {
 
   const loading = tasksLoading || usersLoading;
 
-  // Lọc task của user hiện tại
-  const myTasks = tasks.filter(t => t.assignees?.includes(currentUser?.uid) && !t.isCompleted);
+  // Admin/Manager sẽ xem được TẤT CẢ các task đang làm, Member xem của riêng mình (do hook useTasks đã lọc ngầm)
+  const activeTasks = tasks.filter(t => !t.isCompleted);
 
   // Lọc theo view mode
-  const filteredTasks = myTasks.filter(task => {
+  const filteredTasks = activeTasks.filter(task => {
     const deadline = task.deadline?.toDate ? task.deadline.toDate() : new Date(task.deadline);
     switch (viewMode) {
       case 'today': return isToday(deadline);
@@ -57,7 +57,7 @@ const TodayPage = () => {
   });
 
   // Đếm task urgent/overdue
-  const urgentCount = myTasks.filter(t => {
+  const urgentCount = activeTasks.filter(t => {
     const s = getTaskDisplayStatus(t);
     return s === TASK_DISPLAY_STATUS.URGENT || s === TASK_DISPLAY_STATUS.OVERDUE;
   }).length;
@@ -90,7 +90,7 @@ const TodayPage = () => {
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div className="card p-3 text-center">
-          <p className="text-2xl font-bold text-gray-900">{myTasks.length}</p>
+          <p className="text-2xl font-bold text-gray-900">{activeTasks.length}</p>
           <p className="text-xs text-gray-500">Tổng đang làm</p>
         </div>
         <div className="card p-3 text-center border-red-200 bg-red-50/50">
@@ -99,13 +99,13 @@ const TodayPage = () => {
         </div>
         <div className="card p-3 text-center">
           <p className="text-2xl font-bold text-primary-600">
-            {myTasks.filter(t => isToday(t.deadline?.toDate ? t.deadline.toDate() : new Date(t.deadline))).length}
+            {activeTasks.filter(t => isToday(t.deadline?.toDate ? t.deadline.toDate() : new Date(t.deadline))).length}
           </p>
           <p className="text-xs text-gray-500">Hôm nay</p>
         </div>
         <div className="card p-3 text-center">
           <p className="text-2xl font-bold text-blue-600">
-            {tasks.filter(t => t.isCompleted && t.assignees?.includes(currentUser?.uid)).length}
+            {tasks.filter(t => t.isCompleted).length}
           </p>
           <p className="text-xs text-gray-500">Đã xong</p>
         </div>
