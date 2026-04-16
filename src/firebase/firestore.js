@@ -82,6 +82,28 @@ export const savePenaltyTypes = async (items) => {
   return setDoc(doc(db, 'config', 'penaltyTypes'), { items, updatedAt: serverTimestamp() });
 };
 
+// Lắng nghe realtime cấu hình nhắc việc tự động (reminders)
+const DEFAULT_REMINDER_CONFIG = { enabled: false, time: '08:00' };
+
+export const subscribeToReminderConfig = (callback, onError) => {
+  return onSnapshot(doc(db, 'config', 'reminders'), (snap) => {
+    if (snap.exists()) {
+      callback({ ...DEFAULT_REMINDER_CONFIG, ...snap.data() });
+    } else {
+      callback(DEFAULT_REMINDER_CONFIG);
+    }
+  }, (error) => {
+    console.error('Lỗi lắng nghe reminderConfig:', error);
+    if (onError) onError(error);
+    callback(DEFAULT_REMINDER_CONFIG);
+  });
+};
+
+// Lưu cấu hình nhắc việc tự động
+export const saveReminderConfig = async (config) => {
+  return setDoc(doc(db, 'config', 'reminders'), { ...config, updatedAt: serverTimestamp() });
+};
+
 // === TASKS ===
 
 // Lắng nghe realtime tất cả tasks ACTIVE (không gồm đã xóa)

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { useAutoOverduePenalties } from '../../hooks/useAutoOverduePenalties';
+import { useAutoReminder } from '../../hooks/useAutoReminder';
 
 // Map route → tên trang hiển thị
 const PAGE_TITLES = {
@@ -16,6 +18,12 @@ const PAGE_TITLES = {
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Tự động kiểm tra task quá hạn và tạo phiếu phạt (chỉ chạy khi admin đăng nhập)
+  useAutoOverduePenalties();
+
+  // Tự động nhắc việc cho nhân viên theo lịch cấu hình (chỉ chạy khi admin đăng nhập)
+  useAutoReminder();
   const location = useLocation();
   const pageTitle = PAGE_TITLES[location.pathname] || 'Quản lý công việc';
 

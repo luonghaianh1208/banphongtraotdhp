@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { subscribeToCategories, subscribeToPriorities, subscribeToPenaltyTypes } from '../firebase/firestore';
+import { subscribeToCategories, subscribeToPriorities, subscribeToPenaltyTypes, subscribeToReminderConfig } from '../firebase/firestore';
 
 const TaskConfigContext = createContext(null);
 
@@ -13,13 +13,15 @@ export const TaskConfigProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [penaltyTypes, setPenaltyTypes] = useState([]);
+  const [reminderConfig, setReminderConfig] = useState({ enabled: false, time: '08:00' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let catLoaded = false;
     let priLoaded = false;
     let penLoaded = false;
-    const checkDone = () => { if (catLoaded && priLoaded && penLoaded) setLoading(false); };
+    let remLoaded = false;
+    const checkDone = () => { if (catLoaded && priLoaded && penLoaded && remLoaded) setLoading(false); };
 
     const unsubCat = subscribeToCategories((items) => {
       setCategories(items);
@@ -39,7 +41,13 @@ export const TaskConfigProvider = ({ children }) => {
       checkDone();
     });
 
-    return () => { unsubCat(); unsubPri(); unsubPen(); };
+    const unsubRem = subscribeToReminderConfig((config) => {
+      setReminderConfig(config);
+      remLoaded = true;
+      checkDone();
+    });
+
+    return () => { unsubCat(); unsubPri(); unsubPen(); unsubRem(); };
   }, []);
 
   // Helper: tìm category theo id
@@ -59,7 +67,7 @@ export const TaskConfigProvider = ({ children }) => {
   };
 
   return (
-    <TaskConfigContext.Provider value={{ categories, priorities, penaltyTypes, loading, getCategoryById, getPriorityById, getPenaltyTypeById }}>
+    <TaskConfigContext.Provider value={{ categories, priorities, penaltyTypes, reminderConfig, loading, getCategoryById, getPriorityById, getPenaltyTypeById }}>
       {children}
     </TaskConfigContext.Provider>
   );

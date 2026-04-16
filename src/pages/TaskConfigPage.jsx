@@ -1,8 +1,8 @@
 // TaskConfigPage — trang cấu hình phân loại & mức độ ưu tiên (admin only)
 import { useState } from 'react';
-import { MdAdd, MdEdit, MdDelete, MdSave, MdClose, MdArrowUpward, MdArrowDownward, MdTune, MdLabel, MdFlag, MdGavel } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdSave, MdClose, MdArrowUpward, MdArrowDownward, MdTune, MdLabel, MdFlag, MdGavel, MdNotificationsActive, MdAccessTime } from 'react-icons/md';
 import { useTaskConfig } from '../context/TaskConfigContext';
-import { saveCategories, savePriorities, savePenaltyTypes } from '../firebase/firestore';
+import { saveCategories, savePriorities, savePenaltyTypes, saveReminderConfig } from '../firebase/firestore';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ const generateId = (name) => {
 };
 
 const TaskConfigPage = () => {
-  const { categories, priorities, penaltyTypes } = useTaskConfig();
+  const { categories, priorities, penaltyTypes, reminderConfig } = useTaskConfig();
   
   // Category state
   const [catName, setCatName] = useState('');
@@ -354,6 +354,71 @@ const TaskConfigPage = () => {
             <MdAdd size={18} /> Thêm
           </button>
         </div>
+      </div>
+
+      {/* === CẤU HÌNH NHẮC VIỆC TỰ ĐỘNG === */}
+      <div className="card p-6 border-l-4 border-amber-500">
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-2">
+          <MdNotificationsActive size={20} className="text-amber-500" /> Nhắc việc tự động
+        </h3>
+        <p className="text-sm text-gray-500 mb-5">
+          Khi bật, hệ thống sẽ tự động gửi nhắc nhở cho tất cả nhân viên có công việc quá hạn, cần gấp hoặc gần hạn khi Tổ trưởng mở app sau giờ đã chọn. Mỗi ngày chỉ nhắc 1 lần.
+        </p>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Toggle switch */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await saveReminderConfig({ ...reminderConfig, enabled: !reminderConfig.enabled });
+                  toast.success(reminderConfig.enabled ? 'Đã TẮT nhắc việc tự động' : 'Đã BẬT nhắc việc tự động');
+                } catch (err) {
+                  toast.error('Lỗi: ' + err.message);
+                }
+              }}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                reminderConfig.enabled ? 'bg-amber-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  reminderConfig.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className={`text-sm font-semibold ${reminderConfig.enabled ? 'text-amber-600' : 'text-gray-400'}`}>
+              {reminderConfig.enabled ? 'Đang bật' : 'Đang tắt'}
+            </span>
+          </div>
+
+          {/* Time picker */}
+          <div className={`flex items-center gap-2 ${!reminderConfig.enabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <MdAccessTime size={18} className="text-gray-500" />
+            <label className="text-sm text-gray-600">Giờ nhắc mỗi ngày:</label>
+            <input
+              type="time"
+              value={reminderConfig.time || '08:00'}
+              onChange={async (e) => {
+                try {
+                  await saveReminderConfig({ ...reminderConfig, time: e.target.value });
+                  toast.success(`Đã đổi giờ nhắc sang ${e.target.value}`);
+                } catch (err) {
+                  toast.error('Lỗi: ' + err.message);
+                }
+              }}
+              className="input text-sm px-3 py-1.5 w-28"
+            />
+          </div>
+        </div>
+
+        {reminderConfig.enabled && (
+          <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            💡 <strong>Lưu ý:</strong> Nhắc việc chỉ được gửi khi Tổ trưởng mở app sau <strong>{reminderConfig.time || '08:00'}</strong>. 
+            Nếu Tổ trưởng mở app sau giờ này, hệ thống sẽ nhắc ngay lập tức (1 lần/ngày).
+          </div>
+        )}
       </div>
 
       {/* === DANH MỤC LỖI VI PHẠM (PENALTIES) === */}
