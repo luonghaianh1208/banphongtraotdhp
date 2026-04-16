@@ -19,6 +19,7 @@ export const handleApproveTask = async (task, currentUserUid) => {
     status: 'completed',
     completedAt: new Date(),
     completedBy: currentUserUid,
+    isReminded: false,
   }, currentUserUid, {
     action: 'approve',
     field: 'isCompleted',

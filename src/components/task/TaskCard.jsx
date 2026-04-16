@@ -19,7 +19,7 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
     <div
       onClick={() => onClick(task)}
       className={`card cursor-pointer group transition-all duration-200 ${
-        task.isReminded
+        task.isReminded && !task.isCompleted
           ? 'border-2 border-red-500 animate-blink-border shadow-lg shadow-red-200/60 ring-1 ring-red-300'
           : 'hover:shadow-lg hover:border-primary-200'
       }`}
