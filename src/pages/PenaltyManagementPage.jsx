@@ -15,13 +15,14 @@ const PenaltyManagementPage = () => {
   const { penalties, loading: penaltiesLoading } = useAllPenalties();
   const { tasks } = useTasks();
   const { penaltyTypes } = useTaskConfig();
-  const { markPenaltyPaid, removePenalty, isProcessing } = usePenaltyActions();
+  const { markPenaltyPaid, removePenalty, undoPenaltyPaid, isProcessing } = usePenaltyActions();
   const [users, setUsers] = useState([]);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, unpaid, paid
   
   const [confirmPaidId, setConfirmPaidId] = useState(null);
+  const [confirmUndoId, setConfirmUndoId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -81,6 +82,17 @@ const PenaltyManagementPage = () => {
       toast.error('Lỗi: ' + err.message);
     } finally {
       setConfirmPaidId(null);
+    }
+  };
+
+  const handleUndoPaid = async () => {
+    try {
+      await undoPenaltyPaid(confirmUndoId);
+      toast.success('Đã thu hồi thao tác (Chưa đóng tiền)');
+    } catch (err) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setConfirmUndoId(null);
     }
   };
 
@@ -229,7 +241,18 @@ const PenaltyManagementPage = () => {
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        {p.status !== 'paid' && (
+                        {p.status === 'paid' ? (
+                          <div className="flex gap-2 justify-end">
+                            <button 
+                              disabled={isProcessing} 
+                              onClick={() => setConfirmUndoId(p.id)}
+                              className="btn btn-ghost text-amber-600 px-2 py-1 text-xs"
+                              title="Hoàn tác trạng thái nợ"
+                            >
+                              Thu hồi 
+                            </button>
+                          </div>
+                        ) : (
                           <div className="flex gap-2 justify-end">
                             <button 
                               disabled={isProcessing} 
@@ -275,6 +298,15 @@ const PenaltyManagementPage = () => {
         message="Bạn chắc chắn muốn gỡ bỏ lỗi này? Lịch sử vi phạm sẽ bị xóa hoàn toàn."
         confirmText="Gỡ bỏ"
         danger
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmUndoId}
+        onClose={() => setConfirmUndoId(null)}
+        onConfirm={handleUndoPaid}
+        title="Xác nhận thu hồi"
+        message="Bạn muốn thu hồi trạng thái Đã nộp? Phiếu phạt này sẽ quay về trạng thái Đang nợ."
+        confirmText="Xác nhận thu hồi"
       />
 
       <Modal

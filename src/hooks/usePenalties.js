@@ -85,10 +85,28 @@ export const usePenaltyActions = () => {
     }
   };
 
+  const undoPenaltyPaid = async (penaltyId) => {
+    setIsProcessing(true);
+    try {
+      await updatePenalty(penaltyId, {
+        paidAmount: 0,
+        status: 'unpaid',
+        paidAt: null
+      });
+      return true;
+    } catch (error) {
+      console.error('Error undoing penalty payment:', error);
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return {
     addPenalty,
     removePenalty,
     markPenaltyPaid,
+    undoPenaltyPaid,
     isProcessing
   };
 };
