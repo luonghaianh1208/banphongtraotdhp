@@ -6,6 +6,7 @@ import { formatForInput, parseVNTime } from '../../utils/dateUtils';
 import { validateFile } from '../../firebase/storage';
 import toast from 'react-hot-toast';
 import DateTimePicker from '../common/DateTimePicker';
+import TimePicker from '../common/TimePicker';
 
 const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
   const isEdit = !!task;
@@ -178,11 +179,11 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
           <div className="flex items-center gap-2 pt-2 border-t border-amber-200/60">
             <MdAccessTime size={16} className="text-amber-600" />
             <label className="text-sm text-gray-600">Giờ nhắc hàng ngày:</label>
-            <input
-              type="time"
+            <TimePicker
               value={autoReminderTime}
-              onChange={e => setAutoReminderTime(e.target.value)}
-              className="input text-sm px-3 py-1.5 w-28"
+              onChange={setAutoReminderTime}
+              placeholder="08:00"
+              className="input text-sm px-3 py-1.5 w-24"
             />
           </div>
         )}
