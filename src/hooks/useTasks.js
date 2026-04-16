@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { subscribeToTasks, subscribeToMyTasks } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { sortTasksProactively } from '../utils/statusUtils';
 import toast from 'react-hot-toast';
 
 export const useTasks = () => {
@@ -22,7 +23,7 @@ export const useTasks = () => {
     setError(null);
 
     const handleData = (data) => {
-      setTasks(data);
+      setTasks(sortTasksProactively(data));
       setLoading(false);
     };
 

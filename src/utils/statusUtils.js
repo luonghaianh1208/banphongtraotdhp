@@ -128,3 +128,49 @@ export const filterTasks = (tasks, filters) => {
     return true;
   });
 };
+
+// Sắp xếp công việc theo mức độ cấp bách để thúc đẩy tiến độ
+export const sortTasksProactively = (tasks) => {
+  // Trọng số trạng thái (càng nhỏ càng ưu tiên nổi lên trên)
+  const getStatusWeight = (task) => {
+    const status = getTaskDisplayStatus(task);
+    if (status === TASK_DISPLAY_STATUS.OVERDUE) return 1;
+    if (status === TASK_DISPLAY_STATUS.URGENT) return 2;
+    if (status === TASK_DISPLAY_STATUS.NEAR_DUE) return 3;
+    if (status === TASK_DISPLAY_STATUS.PENDING_APPROVAL) return 4;
+    // EXTENDED cũng coi như NOT_DUE nhưng ít gấp hơn xíu => 5. NOT_DUE thì 5
+    if (status === TASK_DISPLAY_STATUS.NOT_DUE) return 5;
+    if (status === TASK_DISPLAY_STATUS.EXTENDED) return 6;
+    if (status === TASK_DISPLAY_STATUS.COMPLETED) return 7;
+    return 99;
+  };
+
+  // Trọng số Priority
+  const getPriorityWeight = (priorityStr) => {
+    if (priorityStr === 'high') return 1;
+    if (priorityStr === 'medium') return 2;
+    return 3;
+  };
+
+  return [...tasks].sort((a, b) => {
+    // Ưu tiên 1: Trạng thái bấp bênh thời gian
+    const swA = getStatusWeight(a);
+    const swB = getStatusWeight(b);
+    if (swA !== swB) return swA - swB;
+
+    // Ưu tiên 2: Mức độ ưu tiên của cấu hình (Cao -> Trung Bình -> Thấp)
+    const pwA = getPriorityWeight(a.priority);
+    const pwB = getPriorityWeight(b.priority);
+    if (pwA !== pwB) return pwA - pwB;
+
+    // Ưu tiên 3: Nếu cùng mức độ, thằng nào có deadline sớm hơn thì đưa lên
+    const dlA = a.deadline?.toMillis ? a.deadline.toMillis() : new Date(a.deadline || 0).getTime();
+    const dlB = b.deadline?.toMillis ? b.deadline.toMillis() : new Date(b.deadline || 0).getTime();
+    if (dlA !== dlB && dlA > 0 && dlB > 0) return dlA - dlB;
+
+    // Default: mới tạo nhất nằm trên
+    const caA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+    const caB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+    return caB - caA;
+  });
+};
