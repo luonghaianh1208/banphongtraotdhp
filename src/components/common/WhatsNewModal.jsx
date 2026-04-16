@@ -27,10 +27,8 @@ const WhatsNewModal = () => {
     setIsOpen(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <Modal title={`Có gì mới trong bản ${APP_VERSION_LABEL}?`} onClose={handleDismiss}>
+    <Modal isOpen={isOpen} title={`Có gì mới trong bản ${APP_VERSION_LABEL}?`} onClose={handleDismiss}>
       <div className="space-y-4 text-gray-700">
         <div className="flex items-center gap-3 text-primary-600 bg-primary-50 p-3 rounded-lg border border-primary-100">
           <MdNewReleases size={28} className="shrink-0" />
