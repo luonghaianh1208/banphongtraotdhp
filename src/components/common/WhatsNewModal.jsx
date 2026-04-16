@@ -19,7 +19,11 @@ const WhatsNewModal = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleClose = () => {
+  const handleDismiss = () => {
+    setIsOpen(false);
+  };
+
+  const handleConfirm = () => {
     localStorage.setItem('lastSeenVersion', APP_VERSION);
     setIsOpen(false);
   };
@@ -27,7 +31,7 @@ const WhatsNewModal = () => {
   if (!isOpen) return null;
 
   return (
-    <Modal title={`Có gì mới trong bản ${APP_VERSION}?`} onClose={handleClose}>
+    <Modal title={`Có gì mới trong bản ${APP_VERSION}?`} onClose={handleDismiss}>
       <div className="space-y-4 text-gray-700">
         <div className="flex items-center gap-3 text-primary-600 bg-primary-50 p-3 rounded-lg border border-primary-100">
           <MdNewReleases size={28} className="shrink-0" />
@@ -53,9 +57,12 @@ const WhatsNewModal = () => {
           ))}
         </ul>
 
-        <div className="pt-4 flex justify-end">
-          <button onClick={handleClose} className="btn btn-primary w-full sm:w-auto mt-2">
-            Trải nghiệm ngay
+        <div className="pt-4 flex justify-end gap-3 flex-wrap">
+          <button onClick={handleDismiss} className="btn bg-gray-100 text-gray-700 hover:bg-gray-200">
+            Xem sau
+          </button>
+          <button onClick={handleConfirm} className="btn btn-primary">
+            Đã hiểu & Trải nghiệm ngay
           </button>
         </div>
       </div>
