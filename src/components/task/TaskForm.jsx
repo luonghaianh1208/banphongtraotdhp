@@ -1,6 +1,6 @@
 // TaskForm — form tạo/sửa task
 import { useState } from 'react';
-import { MdSave, MdClose, MdUploadFile } from 'react-icons/md';
+import { MdSave, MdClose, MdUploadFile, MdNotificationsActive, MdAccessTime } from 'react-icons/md';
 import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatForInput, parseVNTime } from '../../utils/dateUtils';
 import { validateFile } from '../../firebase/storage';
@@ -19,6 +19,10 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
   const [deadline, setDeadline] = useState(initialDeadline);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Nhắc việc tự động per-task
+  const [autoReminder, setAutoReminder] = useState(task?.autoReminder || false);
+  const [autoReminderTime, setAutoReminderTime] = useState(task?.autoReminderTime || '08:00');
 
   const handleAssigneeToggle = (userId) => {
     setAssignees(prev =>
@@ -59,6 +63,8 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
         existingAttachments: task?.attachments || [],
         pendingFiles: files,
         createdBy: task?.createdBy || currentUser.uid,
+        autoReminder,
+        autoReminderTime: autoReminder ? autoReminderTime : null,
       });
 
       toast.success(isEdit ? 'Đã cập nhật công việc' : 'Đã tạo công việc mới');
@@ -141,6 +147,45 @@ const TaskForm = ({ task, users, currentUser, onSubmit, onClose }) => {
             className="input"
           />
         </div>
+      </div>
+
+      {/* Nhắc việc tự động per-task */}
+      <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+        <div className="flex items-center justify-between mb-1">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+            <MdNotificationsActive size={18} className="text-amber-500" />
+            Nhắc việc tự động
+          </label>
+          <button
+            type="button"
+            onClick={() => setAutoReminder(!autoReminder)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+              autoReminder ? 'bg-amber-500' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                autoReminder ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Khi bật, hệ thống sẽ tự động nhắc nhở người thực hiện mỗi ngày vào giờ đã chọn cho đến khi công việc hoàn thành.
+        </p>
+
+        {autoReminder && (
+          <div className="flex items-center gap-2 pt-2 border-t border-amber-200/60">
+            <MdAccessTime size={16} className="text-amber-600" />
+            <label className="text-sm text-gray-600">Giờ nhắc hàng ngày:</label>
+            <input
+              type="time"
+              value={autoReminderTime}
+              onChange={e => setAutoReminderTime(e.target.value)}
+              className="input text-sm px-3 py-1.5 w-28"
+            />
+          </div>
+        )}
       </div>
 
       {/* File đính kèm */}

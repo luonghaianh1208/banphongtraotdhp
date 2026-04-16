@@ -4,7 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAutoOverduePenalties } from '../../hooks/useAutoOverduePenalties';
-import { useAutoReminder } from '../../hooks/useAutoReminder';
+import { usePerTaskReminder } from '../../hooks/usePerTaskReminder';
 
 // Map route → tên trang hiển thị
 const PAGE_TITLES = {
@@ -22,8 +22,8 @@ const MainLayout = () => {
   // Tự động kiểm tra task quá hạn và tạo phiếu phạt (chỉ chạy khi admin đăng nhập)
   useAutoOverduePenalties();
 
-  // Tự động nhắc việc cho nhân viên theo lịch cấu hình (chỉ chạy khi admin đăng nhập)
-  useAutoReminder();
+  // Tự động nhắc việc per-task: quét task có autoReminder=true, nhắc hàng ngày
+  usePerTaskReminder();
   const location = useLocation();
   const pageTitle = PAGE_TITLES[location.pathname] || 'Quản lý công việc';
 

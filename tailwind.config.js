@@ -30,7 +30,17 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
+      keyframes: {
+        'blink-border': {
+          '0%, 100%': { borderColor: '#EF4444', boxShadow: '0 0 0 0 rgba(239, 68, 68, 0)' },
+          '50%': { borderColor: '#DC2626', boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.35)' },
+        },
+      },
+      animation: {
+        'blink-border': 'blink-border 1.5s ease-in-out infinite',
+      },
     },
   },
   plugins: [],
 }
+
