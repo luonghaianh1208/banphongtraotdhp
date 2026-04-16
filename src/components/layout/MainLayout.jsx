@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import WhatsNewModal from '../common/WhatsNewModal';
 import { useAutoOverduePenalties } from '../../hooks/useAutoOverduePenalties';
 
 // Map route → tên trang hiển thị
@@ -55,6 +56,9 @@ const MainLayout = () => {
           <Outlet />
         </main>
       </div>
+      
+      {/* Tính năng thông báo version mới */}
+      <WhatsNewModal />
     </div>
   );
 };

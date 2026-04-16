@@ -14,8 +14,11 @@ const FEATURES = [
       { name: 'Gia hạn deadline', desc: 'Tổ trưởng có thể gia hạn deadline cho công việc khi cần thiết', isNew: false },
       { name: 'Duyệt hoàn thành', desc: 'Tổ trưởng duyệt công việc khi nhân viên đã hoàn thành', isNew: false },
       { name: 'Khôi phục công việc', desc: 'Hủy duyệt hoàn thành, đưa công việc về trạng thái hoạt động', isNew: false },
+      { name: 'Khôi phục công việc', desc: 'Hủy duyệt hoàn thành, đưa công việc về trạng thái hoạt động', isNew: false },
       { name: 'Lịch sử chỉnh sửa', desc: 'Ghi lại toàn bộ thay đổi: ai sửa, sửa gì, lúc nào', isNew: false },
       { name: 'Nhắc nhở tiến độ', desc: 'Tổ trưởng nhắc nhở nhân viên đẩy nhanh tiến độ công việc', isNew: false },
+      { name: 'Tab "Hôm nay" bao quát', desc: 'Tổ trưởng xem toàn bộ công việc toàn tổ chức cần làm trong hôm nay', isNew: true },
+      { name: 'Sắp xếp thông minh', desc: 'Tất cả công việc tự động đổi logic sắp xếp ưu tiên đẩy nhanh tiến độ (Quá hạn -> Gấp -> Gần hạn...)', isNew: true },
     ],
   },
   {
@@ -30,8 +33,8 @@ const FEATURES = [
   {
     category: 'Tài liệu & File',
     items: [
-      { name: 'Tải nhiều file cùng lúc', desc: 'Chọn và tải lên nhiều file cùng một lúc, hỗ trợ đa định dạng', isNew: true },
-      { name: 'Đa loại file', desc: 'Hỗ trợ PDF, Word, Excel, PowerPoint, ảnh JPG/PNG và nhiều định dạng khác', isNew: true },
+      { name: 'Tải nhiều file 2 chiều', desc: 'Nhân viên và tổ trưởng có thể chọn và tải cùng lúc nhiều file qua lại, hỗ trợ đa định dạng', isNew: true },
+      { name: 'Đa loại file', desc: 'Hỗ trợ PDF, Word, Excel, PowerPoint, ảnh JPG/PNG và nhiều định dạng khác', isNew: false },
       { name: 'Xem trước file', desc: 'Preview file trực tiếp, hiển thị tên người tải và thời gian', isNew: false },
       { name: 'File theo task', desc: 'Mỗi công việc có khu vực tài liệu riêng, ghi rõ ai tải lên', isNew: false },
     ],
@@ -260,7 +263,7 @@ const AboutTab = () => (
       <div className="space-y-3 border-t border-gray-100 pt-4">
         <div className="flex items-center">
           <span className="w-36 text-sm text-gray-500">Phiên bản:</span>
-          <span className="text-sm font-medium text-gray-900">2.1.0</span>
+          <span className="text-sm font-medium text-gray-900">3.1.2</span>
           <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase">Stable</span>
         </div>
         <div className="flex items-center">
