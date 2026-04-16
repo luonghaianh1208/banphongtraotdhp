@@ -188,8 +188,11 @@ exports.disableUser = onCall(async (request) => {
   return { message: "Đã vô hiệu hóa tài khoản" };
 });
 
-// === 6. GỬI EMAIL NHẮC DEADLINE (Scheduled — chạy hàng ngày lúc 8h sáng) ===
-exports.sendDeadlineReminders = onSchedule("every day 08:00", async () => {
+// === 6. GỬI EMAIL NHẮC DEADLINE (Scheduled — chạy hàng ngày lúc 8h sáng VN) ===
+exports.sendDeadlineReminders = onSchedule({
+  schedule: "every day 08:00",
+  timeZone: "Asia/Ho_Chi_Minh",
+}, async () => {
   // Cấu hình SMTP (thay bằng thông tin thật khi deploy)
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -252,4 +255,98 @@ exports.sendDeadlineReminders = onSchedule("every day 08:00", async () => {
       }
     }
   }
+});
+
+// === 7. NHẮC VIỆC TỰ ĐỘNG PER-TASK (Scheduled — chạy mỗi giờ) ===
+// Quét tất cả task có autoReminder=true, chưa hoàn thành
+// So sánh giờ hiện tại với autoReminderTime của task
+// Nếu đúng giờ + chưa nhắc hôm nay → gửi notification cho assignees
+// Dùng field lastAutoRemindedDate trên Firestore chống trùng (multi-user safe)
+exports.autoTaskReminder = onSchedule({
+  schedule: "every 1 hours",
+  timeZone: "Asia/Ho_Chi_Minh",
+}, async () => {
+  // Lấy ngày giờ hiện tại theo timezone VN
+  const now = new Date();
+  const vnNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+  const currentHour = vnNow.getHours();
+  const todayStr = `${vnNow.getFullYear()}-${String(vnNow.getMonth() + 1).padStart(2, "0")}-${String(vnNow.getDate()).padStart(2, "0")}`;
+
+  console.log(`[AutoTaskReminder] Bắt đầu quét — ${todayStr} ${currentHour}:00 VN`);
+
+  // Query: tasks có autoReminder=true, chưa hoàn thành, chưa xoá
+  const tasksSnap = await db.collection("tasks")
+    .where("autoReminder", "==", true)
+    .where("isCompleted", "==", false)
+    .get();
+
+  let remindedCount = 0;
+  let skippedCount = 0;
+
+  for (const taskDoc of tasksSnap.docs) {
+    const task = taskDoc.data();
+
+    // Skip nếu task đã bị xoá mềm
+    if (task.isDeleted) {
+      skippedCount++;
+      continue;
+    }
+
+    // Đã nhắc hôm nay → skip
+    if (task.lastAutoRemindedDate === todayStr) {
+      skippedCount++;
+      continue;
+    }
+
+    // Parse autoReminderTime — validate format
+    const timeStr = task.autoReminderTime || "08:00";
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) {
+      console.warn(`[AutoTaskReminder] Task ${taskDoc.id} có autoReminderTime không hợp lệ: "${timeStr}"`);
+      skippedCount++;
+      continue;
+    }
+
+    const reminderHour = parseInt(match[1], 10);
+
+    // Chỉ nhắc khi giờ hiện tại >= giờ cấu hình
+    if (currentHour < reminderHour) {
+      skippedCount++;
+      continue;
+    }
+
+    // OK, nhắc task này!
+    const assignees = task.assignees || [];
+    if (assignees.length === 0) {
+      skippedCount++;
+      continue;
+    }
+
+    try {
+      // Gửi notification cho TẤT CẢ assignee
+      for (const userId of assignees) {
+        await db.collection("notifications").add({
+          userId,
+          taskId: taskDoc.id,
+          title: "⏰ Nhắc việc tự động",
+          type: "warning",
+          message: `Nhắc nhở hàng ngày: Công việc "${task.title}" cần được hoàn thành. Vui lòng kiểm tra và cập nhật tiến độ!`,
+          isRead: false,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Đánh dấu đã nhắc hôm nay trên Firestore (chống trùng)
+      await db.collection("tasks").doc(taskDoc.id).update({
+        lastAutoRemindedDate: todayStr,
+        isReminded: true,
+      });
+
+      remindedCount++;
+    } catch (err) {
+      console.error(`[AutoTaskReminder] Lỗi nhắc task ${taskDoc.id}:`, err);
+    }
+  }
+
+  console.log(`[AutoTaskReminder] Hoàn thành — nhắc ${remindedCount}, bỏ qua ${skippedCount}`);
 });
