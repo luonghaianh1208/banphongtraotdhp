@@ -7,6 +7,7 @@ import { uploadFile } from '../firebase/storage';
 export const useTaskCRUD = (currentUser) => {
     // Tạo task mới kèm upload file
     const handleCreateTask = useCallback(async (data) => {
+        if (!currentUser?.uid) return;
         const { pendingFiles, existingAttachments, ...taskData } = data;
         const docRef = await createTask({ ...taskData, attachments: existingAttachments || [] });
 
@@ -24,6 +25,7 @@ export const useTaskCRUD = (currentUser) => {
 
     // Sửa task kèm upload file mới
     const handleEditTask = useCallback(async (taskId, data) => {
+        if (!currentUser?.uid) return;
         const { pendingFiles, existingAttachments, ...taskData } = data;
         let allAttachments = existingAttachments || [];
 

@@ -99,24 +99,24 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <TaskConfigProvider>
-          <NotificationProvider>
-            <ErrorBoundary>
+        <ErrorBoundary>
+          <TaskConfigProvider>
+            <NotificationProvider>
               <Suspense fallback={<LoadingSpinner fullScreen />}>
                 <AppRoutes />
               </Suspense>
-            </ErrorBoundary>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3000,
-                style: { borderRadius: '12px', background: '#1f2937', color: '#fff', fontSize: '14px' },
-                success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-                error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-              }}
-            />
-          </NotificationProvider>
-        </TaskConfigProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3000,
+                  style: { borderRadius: '12px', background: '#1f2937', color: '#fff', fontSize: '14px' },
+                  success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+                  error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+                }}
+              />
+            </NotificationProvider>
+          </TaskConfigProvider>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );

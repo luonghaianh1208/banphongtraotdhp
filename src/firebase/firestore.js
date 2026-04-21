@@ -108,7 +108,8 @@ export const subscribeToMyTasks = (userId, callback, onError) => {
   const q = query(
     collection(db, 'tasks'),
     where('assignees', 'array-contains', userId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(500)
   );
   return onSnapshot(q, (snapshot) => {
     // Client-side filter isDeleted vì Firestore không cho 2 field filter + array-contains
