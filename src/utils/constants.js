@@ -1,6 +1,6 @@
 // Hằng số & label tiếng Việt cho toàn app
 
-export const ORG_NAME = import.meta.env.VITE_ORG_NAME || 'Ban Phong Trào Thành Đoàn Hải Phòng';
+export const ORG_NAME = import.meta.env.VITE_ORG_NAME || 'Ban PT TĐHP';
 
 // Vai trò người dùng
 export const ROLES = {

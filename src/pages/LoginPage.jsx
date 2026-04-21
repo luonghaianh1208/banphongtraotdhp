@@ -34,7 +34,7 @@ const LoginPage = () => {
             <span className="group-hover:rotate-12 transition-transform duration-300">PT</span>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-            Quản lý công việc
+            HubConnect
           </h1>
           <div className="mt-2 flex items-center justify-center gap-2">
             <span className="h-px w-8 bg-primary-300 dark:bg-primary-800"></span>

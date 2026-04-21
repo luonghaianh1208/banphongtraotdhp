@@ -69,7 +69,7 @@ const Sidebar = ({ onClose }) => {
             PT
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">Hệ Thống Phê Duyệt</h1>
+            <h1 className="text-sm font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">HubConnect</h1>
             <p className="text-[10px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-400 truncate opacity-80">{ORG_NAME}</p>
           </div>
         </div>
