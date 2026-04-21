@@ -7,6 +7,7 @@ export const ROLES = {
   admin: { label: 'Tổ trưởng', color: 'red' },
   manager: { label: 'Phụ trách', color: 'amber' },
   member: { label: 'Nhân viên', color: 'blue' },
+  unit: { label: 'Đơn vị cơ sở', color: 'teal' },
 };
 
 // Độ ưu tiên (fallback mặc định khi Firestore chưa load)
@@ -34,6 +35,9 @@ export const NAV_ITEMS = [
   { path: '/dashboard', icon: 'MdDashboard', label: 'Dashboard', roles: ['admin', 'manager'] },
   { path: '/penalties', icon: 'MdGavel', label: 'Quản lý Phạt', roles: ['admin', 'manager'] },
   { path: '/members', icon: 'MdGroup', label: 'Quản lý thành viên', roles: ['admin'] },
+  { path: '/units', icon: 'MdCorporateFare', label: 'Quản lý Đơn vị', roles: ['admin'] },
+  { path: '/criteria', icon: 'MdFactCheck', label: 'Chỉ tiêu', roles: ['admin', 'manager', 'member'] },
+  { path: '/plans', icon: 'MdArticle', label: 'Kế hoạch', roles: ['admin', 'manager', 'member'] },
   { path: '/task-config', icon: 'MdTune', label: 'Cấu hình công việc', roles: ['admin'] },
   { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },
   { path: '/settings', icon: 'MdPerson', label: 'Hồ sơ', roles: ['admin', 'manager', 'member'] },

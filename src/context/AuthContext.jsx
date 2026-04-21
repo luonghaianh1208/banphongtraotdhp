@@ -66,7 +66,8 @@ export const AuthProvider = ({ children }) => {
           setUserProfile(profile);
 
           // Subscribe realtime vào profile để khi admin duyệt → tự động cập nhật
-          unsubProfile = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+          const targetCollection = profile.role === 'unit' ? 'units' : 'users';
+          unsubProfile = onSnapshot(doc(db, targetCollection, user.uid), (snap) => {
             if (snap.exists()) {
               const data = { id: snap.id, ...snap.data() };
               if (!data.status) {
@@ -107,6 +108,8 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = isApproved && userProfile?.role === 'admin';
   const isManager = isApproved && userProfile?.role === 'manager';
   const isMember = isApproved && userProfile?.role === 'member';
+  const isUnit = isApproved && userProfile?.role === 'unit';
+
   const canManageTasks = isAdmin || isManager;
   const canApprove = isAdmin;
   const canManageUsers = isAdmin;
@@ -121,6 +124,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isManager,
     isMember,
+    isUnit,
     canManageTasks,
     canApprove,
     canManageUsers,

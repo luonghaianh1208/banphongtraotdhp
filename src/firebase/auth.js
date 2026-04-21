@@ -9,12 +9,12 @@ const googleProvider = new GoogleAuthProvider();
 export const loginWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
-  
+
   // Tạo user document trong Firestore nếu chưa có
   try {
     const docRef = doc(db, 'users', user.uid);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       await setDoc(docRef, {
         email: user.email,
@@ -31,7 +31,7 @@ export const loginWithGoogle = async () => {
     // Admin sẽ cần cập nhật rules hoặc tạo user document thủ công
     console.warn('Không thể tạo user profile trong Firestore:', firestoreError.message);
   }
-  
+
   return result;
 };
 
@@ -50,10 +50,19 @@ export const changePassword = (newPassword) => {
 
 // Lấy thông tin user profile từ Firestore
 export const getUserProfile = async (uid) => {
-  const docRef = doc(db, 'users', uid);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
+  // Ưu tiên check bảng users trước
+  const userDocRef = doc(db, 'users', uid);
+  const userDocSnap = await getDoc(userDocRef);
+  if (userDocSnap.exists()) {
+    return { id: userDocSnap.id, ...userDocSnap.data() };
   }
+
+  // Bảng users không có thì check bảng units
+  const unitDocRef = doc(db, 'units', uid);
+  const unitDocSnap = await getDoc(unitDocRef);
+  if (unitDocSnap.exists()) {
+    return { id: unitDocSnap.id, ...unitDocSnap.data() };
+  }
+
   return null;
 };

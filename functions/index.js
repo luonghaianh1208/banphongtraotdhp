@@ -350,3 +350,205 @@ exports.autoTaskReminder = onSchedule({
 
   console.log(`[AutoTaskReminder] Hoàn thành — nhắc ${remindedCount}, bỏ qua ${skippedCount}`);
 });
+
+// === 8. QUÉT VÀ PHẠT QUÁ HẠN TỰ ĐỘNG (Scheduled — chạy mỗi giờ) ===
+exports.autoOverduePenalty = onSchedule({
+  schedule: "every 1 hours",
+  timeZone: "Asia/Ho_Chi_Minh",
+}, async () => {
+  const now = new Date();
+  console.log(`[AutoPenalty] Bắt đầu quét phạt lúc ${now.toLocaleString("vi-VN")}`);
+
+  // Tìm task chưa hoàn thành và đã qua deadline
+  const tasksSnap = await db.collection("tasks")
+    .where("isCompleted", "==", false)
+    .where("deadline", "<", now)
+    .get();
+
+  let penalizedCount = 0;
+
+  for (const taskDoc of tasksSnap.docs) {
+    const task = taskDoc.data();
+
+    // Bỏ qua nếu task bị xóa mềm hoặc đã phát phạt rồi
+    if (task.isDeleted || task.isPenalized) continue;
+    if (!task.assignees || task.assignees.length === 0) continue;
+
+    // Lấy số tiền phạt từ task, nếu không có mặc định 10,000 VND
+    const amount = task.money || 10000;
+    const batch = db.batch();
+
+    // 1. Phạt từng người thực hiện
+    for (const uid of task.assignees) {
+      // Double check xem user này đối với task này đã bị phạt hay chưa
+      const penaltyCheck = await db.collection("penalties")
+        .where("taskId", "==", taskDoc.id)
+        .where("userId", "==", uid)
+        .get();
+
+      if (!penaltyCheck.empty) continue;
+
+      // Tạo record phạt ở collection penalties
+      const newPenaltyRef = db.collection("penalties").doc();
+      batch.set(newPenaltyRef, {
+        taskId: taskDoc.id,
+        taskTitle: task.title,
+        userId: uid,
+        amount,
+        status: "unpaid",
+        reason: "Quá hạn công việc",
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      // Tạo thông báo cho user
+      const newNotifRef = db.collection("notifications").doc();
+      batch.set(newNotifRef, {
+        userId: uid,
+        taskId: taskDoc.id,
+        title: "⚠️ Bị phạt tự động",
+        type: "error",
+        message: `Bạn bị phạt ${amount.toLocaleString("vi-VN")}đ do quá hạn công việc "${task.title}".`,
+        isRead: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // 2. Cập nhật trạng thái task đã phạt (để chu trình sau không phát phạt lại)
+    batch.update(taskDoc.ref, {
+      isPenalized: true,
+      updatedAt: FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    penalizedCount++;
+  }
+
+  console.log(`[AutoPenalty] Hoàn thành — đã phát phạt đối với ${penalizedCount} tasks quá hạn.`);
+});
+
+// === 9. DỌN RÁC TỰ ĐỘNG (DATA RETENTION) (Scheduled — chạy mỗi ngày 02:00 sáng) ===
+// Quét các task có isDeleted = true và deletedAt quá 30 ngày.
+// Xóa vĩnh viễn task document và xóa các file đính kèm trên Firebase Storage.
+exports.autoDataRetention = onSchedule({
+  schedule: "every day 02:00",
+  timeZone: "Asia/Ho_Chi_Minh",
+}, async () => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  console.log(`[DataRetention] Bắt đầu dọn dẹp các task bị xóa trước ngày ${thirtyDaysAgo.toISOString()}`);
+
+  const tasksSnap = await db.collection("tasks")
+    .where("isDeleted", "==", true)
+    .where("deletedAt", "<=", thirtyDaysAgo)
+    .get();
+
+  const bucket = require("firebase-admin/storage").getStorage().bucket();
+
+  let deletedTasksCount = 0;
+  let deletedFilesCount = 0;
+
+  for (const taskDoc of tasksSnap.docs) {
+    const task = taskDoc.data();
+
+    // 1. Xóa tất cả file đính kèm của task trên Storage (nếu có)
+    if (task.attachments && task.attachments.length > 0) {
+      for (const fileObj of task.attachments) {
+        if (fileObj.path) {
+          try {
+            await bucket.file(fileObj.path).delete();
+            deletedFilesCount++;
+          } catch (err) {
+            console.warn(`[DataRetention] Lỗi khi xóa file ${fileObj.path}:`, err);
+          }
+        }
+      }
+    }
+
+    // 2. Xóa tất cả thông báo (notifications) liên quan đến task này
+    const notifsSnap = await db.collection("notifications").where("taskId", "==", taskDoc.id).get();
+    const batch = db.batch();
+    for (const notifDoc of notifsSnap.docs) {
+      batch.delete(notifDoc.ref);
+    }
+
+    // 3. Xóa tất cả lỗi phạt (penalties) liên quan đến task này
+    const penaltiesSnap = await db.collection("penalties").where("taskId", "==", taskDoc.id).get();
+    for (const penDoc of penaltiesSnap.docs) {
+      batch.delete(penDoc.ref);
+    }
+
+    // 4. Xóa chính document task
+    batch.delete(taskDoc.ref);
+    await batch.commit();
+
+    deletedTasksCount++;
+  }
+
+  console.log(`[DataRetention] Hoàn thành dọn dẹp — Xóa sạch ${deletedTasksCount} tasks và ${deletedFilesCount} files đính kèm.`);
+});
+
+// === 10. TẠO TÀI KHOẢN ĐƠN VỊ (UNIT) ===
+exports.createUnit = onCall(async (request) => {
+  const { email, password, unitName, unitCode } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdmin(callerUid); // Chỉ Tổ trưởng được tạo Unit
+
+  try {
+    // Tạo Firebase Auth user
+    const userRecord = await getAuth().createUser({
+      email,
+      password,
+      displayName: unitName,
+    });
+
+    // Tạo document trong Firestore collection "units"
+    await db.collection("units").doc(userRecord.uid).set({
+      email,
+      unitName,
+      unitCode,
+      role: "unit",
+      isActive: true,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return { uid: userRecord.uid, message: `Đã tạo tài khoản đơn vị cho ${unitName}` };
+  } catch (error) {
+    throw new HttpsError("internal", `Không thể tạo tài khoản đơn vị: ${error.message}`);
+  }
+});
+
+// === 11. KHÓA ĐỢT BÁO CÁO (SUBMISSION PERIOD) ===
+exports.lockSubmissionPeriod = onCall(async (request) => {
+  const { periodId } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdminOrManager(callerUid); // Admin hoặc Manager
+
+  await db.collection("submissionPeriods").doc(periodId).update({
+    status: "locked",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { message: "Đã khóa đợt báo cáo" };
+});
+
+// === 12. CÔNG BỐ KẾT QUẢ ĐỢT BÁO CÁO ===
+exports.publishPeriodResults = onCall(async (request) => {
+  const { periodId } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdminOrManager(callerUid); // Admin hoặc Manager
+
+  await db.collection("submissionPeriods").doc(periodId).update({
+    status: "published",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { message: "Đã công bố kết quả của đợt báo cáo" };
+});

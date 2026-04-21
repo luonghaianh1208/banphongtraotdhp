@@ -2,12 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      // Check if user exists in users collection first
+      let isUser = exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isUser ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
     }
     function isAdmin() { return getUserRole() == 'admin'; }
     function isManager() { return getUserRole() == 'manager'; }
     function isAuthenticated() { return request.auth != null; }
     function isAdminOrManager() { return isAdmin() || isManager(); }
+    
+    function isUnit() {
+      return exists(/databases/$(database)/documents/units/$(request.auth.uid));
+    }
 
     // Kiểm tra assignee chỉ sửa các field được phép
     function isAssigneeAllowedUpdate() {
@@ -51,6 +57,40 @@ service cloud.firestore {
     match /config/{configId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    match /units/{unitId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /criteriaSets/{setId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminOrManager();
+    }
+
+    match /submissionPeriods/{periodId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminOrManager();
+    }
+
+    match /submissions/{subId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
+      allow delete: if isAdminOrManager();
+    }
+
+    match /plans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminOrManager();
+    }
+
+    match /contestEntries/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
+      allow delete: if isAdminOrManager();
     }
   }
 }

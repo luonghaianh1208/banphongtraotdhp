@@ -22,12 +22,30 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PenaltyManagementPage = lazy(() => import('./pages/PenaltyManagementPage'));
 const SystemInfoPage = lazy(() => import('./pages/SystemInfoPage'));
 
+// Lazy-load module Chỉ tiêu / Cơ sở (Unit)
+import UnitLayout from './components/unit/UnitLayout';
+const UnitDashboard = lazy(() => import('./components/unit/UnitDashboard'));
+const UnitSubmissionsList = lazy(() => import('./components/unit/UnitSubmissionsList'));
+const UnitSubmitPage = lazy(() => import('./components/unit/UnitSubmitPage'));
+const UnitPlansList = lazy(() => import('./components/unit/UnitPlansList'));
+const UnitPlanDetail = lazy(() => import('./components/unit/UnitPlanDetail'));
+
+// Lazy-load module Quản lý nội bộ (Internal)
+const CriteriaSetsPage = lazy(() => import('./components/criteria/CriteriaSetsPage'));
+const PeriodsManagePage = lazy(() => import('./components/criteria/PeriodsManagePage'));
+const CriteriaOverviewPage = lazy(() => import('./components/criteria/CriteriaOverviewPage'));
+const CriteriaDetailPage = lazy(() => import('./components/criteria/CriteriaDetailPage'));
+const PlansManagePage = lazy(() => import('./components/criteria/PlansManagePage'));
+const PlanDetailPage = lazy(() => import('./components/criteria/PlanDetailPage'));
+const UnitsPage = lazy(() => import('./components/criteria/UnitsPage'));
+
 // Route bảo vệ — yêu cầu đăng nhập
 const ProtectedRoute = ({ children, roles }) => {
-  const { currentUser, userProfile, loading, isPending } = useAuth();
+  const { currentUser, userProfile, isUnit, loading, isPending } = useAuth();
 
   if (loading) return <LoadingSpinner fullScreen />;
   if (!currentUser) return <Navigate to="/login" replace />;
+  if (isUnit) return <Navigate to="/unit/dashboard" replace />;
   if (!userProfile) return <LoadingSpinner fullScreen />;
 
   // User chờ duyệt → chuyển sang trang chờ
@@ -43,9 +61,11 @@ const ProtectedRoute = ({ children, roles }) => {
 
 // Route cho trang login — nếu đã login thì redirect về home
 const PublicRoute = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, isUnit, loading } = useAuth();
   if (loading) return <LoadingSpinner fullScreen />;
-  if (currentUser) return <Navigate to="/" replace />;
+  if (currentUser) {
+    return isUnit ? <Navigate to="/unit/dashboard" replace /> : <Navigate to="/" replace />;
+  }
   return children;
 };
 
@@ -56,6 +76,17 @@ const PendingRoute = () => {
   if (!currentUser) return <Navigate to="/login" replace />;
   if (!isPending) return <Navigate to="/" replace />;
   return <PendingPage />;
+};
+
+// Route bảo vệ dành riêng cho Unit
+const UnitRoute = ({ children }) => {
+  const { currentUser, isUnit, loading } = useAuth();
+
+  if (loading) return <LoadingSpinner fullScreen />;
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (!isUnit) return <Navigate to="/" replace />;
+
+  return children;
 };
 
 const AppRoutes = () => {
@@ -88,6 +119,38 @@ const AppRoutes = () => {
         } />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="system-info" element={<SystemInfoPage />} />
+
+        {/* Module Chỉ tiêu & Kế hoạch (Admin/Manager) */}
+        <Route path="criteria-sets" element={
+          <ProtectedRoute roles={['admin', 'manager']}><CriteriaSetsPage /></ProtectedRoute>
+        } />
+        <Route path="periods" element={
+          <ProtectedRoute roles={['admin', 'manager']}><PeriodsManagePage /></ProtectedRoute>
+        } />
+        <Route path="criteria-overview/:periodId" element={
+          <ProtectedRoute roles={['admin', 'manager']}><CriteriaOverviewPage /></ProtectedRoute>
+        } />
+        <Route path="criteria-detail/:periodId/:submissionId" element={
+          <ProtectedRoute roles={['admin', 'manager']}><CriteriaDetailPage /></ProtectedRoute>
+        } />
+        <Route path="plans-manage" element={
+          <ProtectedRoute roles={['admin', 'manager']}><PlansManagePage /></ProtectedRoute>
+        } />
+        <Route path="plans/:planId" element={
+          <ProtectedRoute roles={['admin', 'manager']}><PlanDetailPage /></ProtectedRoute>
+        } />
+        <Route path="units" element={
+          <ProtectedRoute roles={['admin', 'manager']}><UnitsPage /></ProtectedRoute>
+        } />
+      </Route>
+
+      {/* ====== ROUTES CHO CƠ SỞ (UNIT) ====== */}
+      <Route path="/unit" element={<UnitRoute><UnitLayout /></UnitRoute>}>
+        <Route path="dashboard" element={<UnitDashboard />} />
+        <Route path="submissions" element={<UnitSubmissionsList />} />
+        <Route path="submit/:periodId" element={<UnitSubmitPage />} />
+        <Route path="plans" element={<UnitPlansList />} />
+        <Route path="plans/:planId" element={<UnitPlanDetail />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

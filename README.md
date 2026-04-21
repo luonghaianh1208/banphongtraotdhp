@@ -145,9 +145,19 @@ npx netlify-cli deploy --prod --dir=dist
 | 🟢 | Chưa đến hạn | Còn > 3 ngày |
 | 🟡 | Gần đến hạn | Còn 1-3 ngày |
 | 🔴 | Cần hoàn thành gấp | Còn < 24 giờ |
+| 🔴 | Cần hoàn thành gấp | Còn < 24 giờ |
 | ⚫ | Quá hạn | Đã qua deadline |
 | 🔵 | Gia hạn | Đã gia hạn deadline |
 | ✅ | Hoàn thành | Tổ trưởng đã duyệt |
+
+## 📊 Module Chỉ tiêu & Kế hoạch (Mới)
+
+Bản cập nhật v2 hỗ trợ cấp Cơ sở nộp và quản lý Chỉ tiêu/Kế hoạch:
+- **Cơ sở (Unit)**: Đăng nhập tại `/login` bằng tài khoản Unit. Nộp minh chứng và điểm số tự chấm dựa trên các Bộ Tiêu Chí (Criteria Sets) hoặc nộp danh sách Kế Hoạch/Hội Thi.
+- **Nội bộ (Admin/Manager)**:
+  - Cấu hình khung điểm Bộ Tiêu Chí, mở đợt chấm điểm.
+  - Quản trị Kế hoạch & Hồ sơ dự thi từ các trường/liên đội gửi lên.
+  - Chấm điểm thẩm định.
 
 ## 📁 Cấu trúc dự án
 
