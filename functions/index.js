@@ -488,38 +488,7 @@ exports.autoDataRetention = onSchedule({
   console.log(`[DataRetention] Hoàn thành dọn dẹp — Xóa sạch ${deletedTasksCount} tasks và ${deletedFilesCount} files đính kèm.`);
 });
 
-// === 10. TẠO TÀI KHOẢN ĐƠN VỊ (UNIT) ===
-exports.createUnit = onCall(async (request) => {
-  const { email, password, unitName, unitCode } = request.data;
-  const callerUid = request.auth?.uid;
-  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
-
-  await requireAdmin(callerUid); // Chỉ Tổ trưởng được tạo Unit
-
-  try {
-    // Tạo Firebase Auth user
-    const userRecord = await getAuth().createUser({
-      email,
-      password,
-      displayName: unitName,
-    });
-
-    // Tạo document trong Firestore collection "units"
-    await db.collection("units").doc(userRecord.uid).set({
-      email,
-      unitName,
-      unitCode,
-      role: "unit",
-      isActive: true,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    return { uid: userRecord.uid, message: `Đã tạo tài khoản đơn vị cho ${unitName}` };
-  } catch (error) {
-    throw new HttpsError("internal", `Không thể tạo tài khoản đơn vị: ${error.message}`);
-  }
-});
+// === 10. (ĐÃ GỘP VÀO MỤC 13 BÊN DƯỚI) ===
 
 // === 11. KHÓA ĐỢT BÁO CÁO (SUBMISSION PERIOD) ===
 exports.lockSubmissionPeriod = onCall(async (request) => {
