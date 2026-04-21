@@ -30,9 +30,13 @@ export const deleteUnit = async (unitId) => {
 };
 
 export const batchDeleteUnits = async (unitIds) => {
-    const batch = writeBatch(db);
-    unitIds.forEach(id => batch.delete(doc(db, 'units', id)));
-    return batch.commit();
+    const BATCH_LIMIT = 500;
+    for (let i = 0; i < unitIds.length; i += BATCH_LIMIT) {
+        const chunk = unitIds.slice(i, i + BATCH_LIMIT);
+        const batch = writeBatch(db);
+        chunk.forEach(id => batch.delete(doc(db, 'units', id)));
+        await batch.commit();
+    }
 };
 
 // ======================================
@@ -271,9 +275,13 @@ export const deletePlan = async (planId) => {
 };
 
 export const batchDeletePlans = async (planIds) => {
-    const batch = writeBatch(db);
-    planIds.forEach(id => batch.delete(doc(db, 'plans', id)));
-    return batch.commit();
+    const BATCH_LIMIT = 500;
+    for (let i = 0; i < planIds.length; i += BATCH_LIMIT) {
+        const chunk = planIds.slice(i, i + BATCH_LIMIT);
+        const batch = writeBatch(db);
+        chunk.forEach(id => batch.delete(doc(db, 'plans', id)));
+        await batch.commit();
+    }
 };
 
 // ======================================

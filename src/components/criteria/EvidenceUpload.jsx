@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { MdCloudUpload, MdInsertDriveFile, MdDelete, MdCheckCircle, MdErrorOutline } from 'react-icons/md';
 
@@ -10,6 +11,12 @@ const EvidenceUpload = ({ files = [], onChange, readOnly = false }) => {
         if (readOnly) return;
         const fileList = Array.from(e.target.files);
         if (!fileList.length) return;
+
+        const oversized = fileList.find(f => f.size > 25 * 1024 * 1024);
+        if (oversized) {
+            toast.error(`File "${oversized.name}" quá 25MB. Vui lòng chọn file nhỏ hơn.`);
+            return;
+        }
 
         setUploading(true);
         setProgress(0);
@@ -46,7 +53,7 @@ const EvidenceUpload = ({ files = [], onChange, readOnly = false }) => {
             onChange([...files, ...newUploadedFiles]);
         } catch (error) {
             console.error('Lỗi upload file:', error);
-            alert('Không thể tải file lên. Vui lòng thử lại.');
+            toast.error('Không thể tải file lên. Vui lòng thử lại.');
         } finally {
             setUploading(false);
             setProgress(0);

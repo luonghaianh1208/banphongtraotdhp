@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { MdAssignment, MdAccessTime, MdSave, MdSend, MdArrowBack, MdInfo, MdCheckCircle } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { getSubmissionPeriod, getCriteriaSet, createOrUpdateDraftSubmission, submitSubmission } from '../../firebase/criteriaFirestore';
@@ -27,7 +28,7 @@ const UnitSubmitPage = () => {
             try {
                 const pData = await getSubmissionPeriod(periodId);
                 if (!pData) {
-                    alert('Không tìm thấy đợt báo cáo!');
+                    toast.error('Không tìm thấy đợt báo cáo!');
                     navigate('/unit/submissions');
                     return;
                 }
@@ -91,10 +92,10 @@ const UnitSubmitPage = () => {
                 { unitName: user.unitName, unitCode: user.unitCode },
                 responses
             );
-            alert('Đã lưu bản nháp thành công!');
+            toast.success('Đã lưu bản nháp thành công!');
         } catch (err) {
             console.error('Lỗi lưu bản nháp:', err);
-            alert('Có lỗi xảy ra khi lưu bản nháp.');
+            toast.error('Có lỗi xảy ra khi lưu bản nháp.');
         } finally {
             setSaving(false);
         }
@@ -117,14 +118,14 @@ const UnitSubmitPage = () => {
 
             if (submission?.id) {
                 await submitSubmission(submission.id);
-                alert('Đã nộp báo cáo chính thức thành công!');
+                toast.success('Đã nộp báo cáo chính thức thành công!');
                 navigate('/unit/submissions');
             } else {
-                alert('Vui lòng lưu bản nháp một lần trước khi nộp chính thức.');
+                toast.error('Vui lòng lưu bản nháp một lần trước khi nộp chính thức.');
             }
         } catch (err) {
             console.error('Lỗi khi nộp báo cáo:', err);
-            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }
@@ -178,12 +179,12 @@ const UnitSubmitPage = () => {
                         <div className="flex-1 sm:w-64">
                             <div className="flex justify-between mb-2">
                                 <span className="text-xs font-black uppercase tracking-widest text-primary-600 dark:text-primary-400">Hoàn tất</span>
-                                <span className="text-xs font-black text-gray-900 dark:text-white">{Math.round((currentTotalScore / criteriaSet.totalMaxScore) * 100)}%</span>
+                                <span className="text-xs font-black text-gray-900 dark:text-white">{Math.round((currentTotalScore / (criteriaSet.totalMaxScore || 1)) * 100)}%</span>
                             </div>
                             <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5">
                                 <div
                                     className="h-full bg-primary-600 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(5,150,105,0.5)]"
-                                    style={{ width: `${Math.min(100, (currentTotalScore / criteriaSet.totalMaxScore) * 100)}%` }}
+                                    style={{ width: `${Math.min(100, (currentTotalScore / (criteriaSet.totalMaxScore || 1)) * 100)}%` }}
                                 ></div>
                             </div>
                         </div>

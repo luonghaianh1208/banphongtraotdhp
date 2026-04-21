@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useUnitContestEntry } from '../../hooks/useContestEntries';
 import {
@@ -29,7 +30,7 @@ const UnitPlanDetail = () => {
             try {
                 const pData = await getPlan(planId);
                 if (!pData) {
-                    alert('Không tìm thấy Kế hoạch/Hội thi này!');
+                    toast.error('Không tìm thấy Kế hoạch/Hội thi này!');
                     navigate('/unit/plans');
                     return;
                 }
@@ -72,10 +73,10 @@ const UnitPlanDetail = () => {
                 { unitName: user.unitName, unitCode: user.unitCode },
                 docsData
             );
-            alert('Đã lưu bản nháp thành công!');
+            toast.success('Đã lưu bản nháp thành công!');
         } catch (err) {
             console.error('Lỗi lưu bản nháp hồ sơ:', err);
-            alert('Có lỗi xảy ra khi lưu bản nháp.');
+            toast.error('Có lỗi xảy ra khi lưu bản nháp.');
         } finally {
             setSaving(false);
         }
@@ -84,7 +85,7 @@ const UnitPlanDetail = () => {
     const handleSubmit = async () => {
         if (!user) return;
         if (docsData.length === 0) {
-            alert('Vui lòng đính kèm ít nhất 1 hồ sơ hoặc minh chứng trước khi nộp.');
+            toast.error('Vui lòng đính kèm ít nhất 1 hồ sơ hoặc minh chứng trước khi nộp.');
             return;
         }
 
@@ -105,14 +106,14 @@ const UnitPlanDetail = () => {
             // 2. Submit (phải có entryId. Nếu chưa có là do hook chưa kịp cập nhật, ta cần đợi hoặc fallback)
             if (entry?.id) {
                 await submitContestEntry(entry.id);
-                alert('Đã nộp hồ sơ chính thức thành công!');
+                toast.success('Đã nộp hồ sơ chính thức thành công!');
                 navigate('/unit/plans');
             } else {
-                alert('Hệ thống đang đồng bộ, vui lòng bấm lưu nháp trước rồi mới nộp.');
+                toast.error('Hệ thống đang đồng bộ, vui lòng bấm lưu nháp trước rồi mới nộp.');
             }
         } catch (err) {
             console.error('Lỗi khi nộp hồ sơ:', err);
-            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }

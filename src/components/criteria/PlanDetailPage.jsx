@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { usePlans } from '../../hooks/usePlans';
 import { useContestEntries } from '../../hooks/useContestEntries';
 import { updatePlan } from '../../firebase/criteriaFirestore';
@@ -36,11 +37,11 @@ const PlanDetailPage = () => {
                 reviewNote: reviewNote,
                 reviewedAt: new Date().toISOString()
             });
-            alert(`Đã cập nhật trạng thái: ${newStatus === 'reviewed' ? 'Đã duyệt' : 'Cần sửa'}`);
+            toast.success(`Đã cập nhật trạng thái: ${newStatus === 'reviewed' ? 'Đã duyệt' : 'Cần sửa'}`);
             navigate('/plans-manage');
         } catch (err) {
             console.error(err);
-            alert('Lỗi cập nhật');
+            toast.error('Lỗi cập nhật');
         } finally {
             setIsSaving(false);
         }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useSubmissions } from '../../hooks/useSubmissions';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { updateSubmission } from '../../firebase/criteriaFirestore';
@@ -70,11 +71,11 @@ const CriteriaDetailPage = () => {
                 totalGradedScore: total,
                 status: 'graded'
             });
-            alert('Đã lưu điểm thẩm định thành công!');
+            toast.success('Đã lưu điểm thẩm định thành công!');
             navigate(`/criteria-overview/${periodId}`);
         } catch (error) {
             console.error(error);
-            alert('Lỗi khi lưu điểm!');
+            toast.error('Lỗi khi lưu điểm!');
         } finally {
             setIsSaving(false);
         }

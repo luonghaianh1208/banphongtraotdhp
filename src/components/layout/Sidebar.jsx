@@ -87,6 +87,7 @@ const Sidebar = ({ onClose }) => {
                 to={item.path}
                 end={item.path === '/'}
                 onClick={onClose}
+                aria-label={item.label}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-black transition-all duration-300 group ${isActive
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 translate-x-1'

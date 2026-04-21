@@ -237,8 +237,8 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {overdueByMember.map(({ user, tasks: overTasks }, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-all duration-300 group">
+                {overdueByMember.map(({ user, tasks: overTasks }) => (
+                  <tr key={user.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-all duration-300 group">
                     <td className="py-6 px-8">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform duration-500">

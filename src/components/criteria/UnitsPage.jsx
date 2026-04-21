@@ -396,7 +396,7 @@ const UnitsPage = () => {
 
                         <form onSubmit={handleCreateUnit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tên cơ sở cơ sở</label>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tên cơ sở</label>
                                 <input
                                     required
                                     value={formData.unitName}
