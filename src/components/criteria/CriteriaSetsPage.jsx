@@ -106,7 +106,7 @@ const CriteriaSetsPage = () => {
                     <button onClick={exportCriteriaTemplate} className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
                         <MdDownload size={16} /> Tải mẫu Excel
                     </button>
-                    <button onClick={() => setShowModal(true)} className="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded text-sm font-medium">
+                    <button onClick={() => setShowModal(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-medium">
                         + Tạo Bộ Tiêu Chí
                     </button>
                     {selected.length > 0 && (
@@ -207,7 +207,7 @@ const CriteriaSetsPage = () => {
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50" disabled={isSubmitting}>Hủy</button>
-                                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark" disabled={isSubmitting}>
+                                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" disabled={isSubmitting}>
                                     {isSubmitting ? 'Đang tạo...' : 'Tạo mới'}
                                 </button>
                             </div>

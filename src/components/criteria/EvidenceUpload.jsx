@@ -72,14 +72,14 @@ const EvidenceUpload = ({ files = [], onChange, readOnly = false }) => {
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-semibold
-              file:bg-primary file:text-white
-              hover:file:bg-primary-dark
+              file:bg-indigo-600 file:text-white
+              hover:file:bg-indigo-700
               disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors cursor-pointer"
                     />
                     {uploading && (
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-                            <div className="bg-primary h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                            <div className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
                         </div>
                     )}
                 </div>
@@ -93,7 +93,7 @@ const EvidenceUpload = ({ files = [], onChange, readOnly = false }) => {
                                 href={file.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-primary hover:text-primary-dark hover:underline truncate max-w-[80%] font-medium flex items-center"
+                                className="text-indigo-600 hover:text-indigo-700 hover:underline truncate max-w-[80%] font-medium flex items-center"
                                 title={file.name}
                             >
                                 <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>

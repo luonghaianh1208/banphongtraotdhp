@@ -103,7 +103,7 @@ const CriteriaOverviewPage = () => {
                                         {data.submission ? (
                                             <Link
                                                 to={`/criteria-detail/${periodId}/${data.submission.id}`}
-                                                className="text-white bg-primary hover:bg-primary-dark px-3 py-1.5 rounded transition-colors"
+                                                className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded transition-colors"
                                             >
                                                 Chấm điểm
                                             </Link>

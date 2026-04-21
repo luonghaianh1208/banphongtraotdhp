@@ -178,7 +178,7 @@ const UnitsPage = () => {
                         <MdUpload size={16} /> Import Excel
                         <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} />
                     </label>
-                    <button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
+                    <button onClick={() => setShowAddModal(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
                         <MdCorporateFare size={16} /> Thêm thủ công
                     </button>
                     {selected.length > 0 && (
@@ -318,7 +318,7 @@ const UnitsPage = () => {
                             <div className="flex justify-end gap-3 pt-4 border-t">
                                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50">Hủy</button>
                                 <button type="submit" disabled={isSubmitting}
-                                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-60">
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-60">
                                     {isSubmitting ? 'Đang tạo...' : 'Tạo đơn vị'}
                                 </button>
                             </div>

@@ -146,7 +146,7 @@ const PlansManagePage = () => {
                     <input type="text" placeholder="Tìm kiếm..." value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         className="border rounded-md px-3 py-2 text-sm w-48" />
-                    <button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
+                    <button onClick={() => setShowAddModal(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
                         <MdAdd size={16} /> Thêm Kế hoạch
                     </button>
                     {selected.length > 0 && (

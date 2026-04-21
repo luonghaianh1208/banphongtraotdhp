@@ -71,7 +71,7 @@ const PeriodsManagePage = () => {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded shadow-sm font-medium transition-colors"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow-sm font-medium transition-colors"
                 >
                     + Mở Đợt Mới
                 </button>
@@ -105,8 +105,8 @@ const PeriodsManagePage = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${period.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                    period.status === 'locked' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-blue-100 text-blue-800'
+                                                period.status === 'locked' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-blue-100 text-blue-800'
                                                 }`}>
                                                 {period.status === 'active' ? 'Đang mở nộp' :
                                                     period.status === 'locked' ? 'Đã khóa nộp' : 'Đã công bố điểm'}
@@ -211,7 +211,7 @@ const PeriodsManagePage = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-primary-dark transition-colors flex items-center"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors flex items-center"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting && <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full mr-2"></span>}
