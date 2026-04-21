@@ -39,23 +39,32 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserProfile(user.uid);
 
-          // Nếu chưa có profile → tự tạo
+          // Nếu chưa có profile → kiểm tra xem email có trong bảng units không
           if (!profile) {
-            const usersSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
-            const isFirstUser = usersSnap.empty;
+            // Check xem email có thuộc đơn vị nào không
+            const unitsSnap = await getDocs(query(collection(db, 'units'), where('email', '==', user.email)));
+            if (!unitsSnap.empty) {
+              // Email thuộc đơn vị → dùng profile từ units (không tạo member rác)
+              const unitDoc = unitsSnap.docs[0];
+              profile = { id: unitDoc.id, ...unitDoc.data() };
+            } else {
+              // Không phải unit → tạo user profile bình thường
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
+              const isFirstUser = usersSnap.empty;
 
-            const newProfile = {
-              email: user.email,
-              displayName: user.displayName || user.email.split('@')[0],
-              role: isFirstUser ? 'admin' : 'member',
-              isActive: isFirstUser ? true : false, // User mới phải chờ duyệt!
-              status: isFirstUser ? 'approved' : 'pending',
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-              avatar: user.photoURL || null,
-            };
-            await setDoc(doc(db, 'users', user.uid), newProfile);
-            profile = { id: user.uid, ...newProfile };
+              const newProfile = {
+                email: user.email,
+                displayName: user.displayName || user.email.split('@')[0],
+                role: isFirstUser ? 'admin' : 'member',
+                isActive: isFirstUser ? true : false,
+                status: isFirstUser ? 'approved' : 'pending',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                avatar: user.photoURL || null,
+              };
+              await setDoc(doc(db, 'users', user.uid), newProfile);
+              profile = { id: user.uid, ...newProfile };
+            }
           }
 
           // Nếu user cũ chưa có field status → coi như approved

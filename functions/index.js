@@ -552,3 +552,41 @@ exports.publishPeriodResults = onCall(async (request) => {
 
   return { message: "Đã công bố kết quả của đợt báo cáo" };
 });
+
+// === 13. TẠO TÀI KHOẢN ĐƠN VỊ CƠ SỞ (UNIT) ===
+exports.createUnit = onCall(async (request) => {
+  const { email, password, unitName, blockId, blockName, typeId, typeName } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdmin(callerUid);
+
+  if (!email || !password || !unitName) {
+    throw new HttpsError("invalid-argument", "Thiếu thông tin bắt buộc (email, password, unitName)");
+  }
+
+  // Tạo Firebase Auth user cho đơn vị
+  const userRecord = await getAuth().createUser({
+    email,
+    password,
+    displayName: unitName,
+  });
+
+  // Tạo document trong collection `units` với uid làm doc ID
+  await db.collection("units").doc(userRecord.uid).set({
+    email,
+    unitName,
+    displayName: unitName,
+    role: "unit",
+    blockId: blockId || "",
+    blockName: blockName || "",
+    typeId: typeId || "",
+    typeName: typeName || "",
+    isActive: true,
+    status: "approved",
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, uid: userRecord.uid, message: `Đã tạo đơn vị: ${unitName}` };
+});

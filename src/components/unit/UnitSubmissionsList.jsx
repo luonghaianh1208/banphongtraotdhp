@@ -1,9 +1,21 @@
-import React from 'react';
 import { useSubmissionPeriods } from '../../hooks/useSubmissionPeriods';
+import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const UnitSubmissionsList = () => {
     const { periods, loading } = useSubmissionPeriods();
+    const { userProfile } = useAuth();
+
+    const unitBlockId = userProfile?.blockId;
+    const unitTypeId = userProfile?.typeId;
+    const unitTypeKey = `${unitBlockId}:${unitTypeId}`;
+
+    const isPeriodVisible = (period) => {
+        if (!period.targetBlocks?.length) return true;
+        if (!period.targetBlocks.includes(unitBlockId)) return false;
+        if (period.targetTypes?.length > 0 && !period.targetTypes.includes(unitTypeKey)) return false;
+        return true;
+    };
 
     if (loading) {
         return (
@@ -13,7 +25,9 @@ const UnitSubmissionsList = () => {
         );
     }
 
-    const activePeriods = periods.filter(p => ['active', 'published', 'locked'].includes(p.status));
+    const activePeriods = periods.filter(p =>
+        ['active', 'published', 'locked'].includes(p.status) && isPeriodVisible(p)
+    );
 
     return (
         <div className="max-w-5xl mx-auto">

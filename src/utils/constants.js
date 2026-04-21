@@ -28,6 +28,45 @@ export const TASK_DISPLAY_STATUS = {
   COMPLETED: { label: 'Hoàn thành', color: 'complete', iconName: 'checkCircle', badgeClass: 'badge-complete' },
 };
 
+// === UNIT BLOCKS & TYPES (Khối và Loại đơn vị cơ sở) ===
+export const UNIT_BLOCKS = [
+  {
+    id: 'xa-phuong',
+    name: 'Xã/Phường',
+    types: [
+      { id: 'th', name: 'Trung học' },
+      { id: 'thcs', name: 'Trung học Cơ sở' },
+      { id: 'mam-non', name: 'Mầm non' },
+      { id: 'thpt', name: 'Trung học Phổ thông' },
+    ]
+  },
+  {
+    id: 'dai-hoc-cao-dang',
+    name: 'Đại học/Cao đẳng',
+    types: [
+      { id: 'dh', name: 'Đại học' },
+      { id: 'cd', name: 'Cao đẳng' },
+      { id: 'trc', name: 'Trung cấp' },
+    ]
+  },
+  {
+    id: 'cong-nhan-vien-chuc',
+    name: 'Công nhân viên chức',
+    types: [
+      { id: 'co-quan', name: 'Cơ quan nhà nước' },
+      { id: 'doanh-nghiep', name: 'Doanh nghiệp' },
+    ]
+  },
+  {
+    id: 'luc-luong-vu-trang',
+    name: 'Lực lượng vũ trang',
+    types: [
+      { id: 'quan-su', name: 'Quân sự' },
+      { id: 'cong-an', name: 'Công an' },
+    ]
+  },
+];
+
 // Sidebar navigation items
 export const NAV_ITEMS = [
   { path: '/', icon: 'MdToday', label: 'Hôm nay', roles: ['admin', 'manager', 'member'] },
@@ -36,8 +75,8 @@ export const NAV_ITEMS = [
   { path: '/penalties', icon: 'MdGavel', label: 'Quản lý Phạt', roles: ['admin', 'manager'] },
   { path: '/members', icon: 'MdGroup', label: 'Quản lý thành viên', roles: ['admin'] },
   { path: '/units', icon: 'MdCorporateFare', label: 'Quản lý Đơn vị', roles: ['admin'] },
-  { path: '/criteria', icon: 'MdFactCheck', label: 'Chỉ tiêu', roles: ['admin', 'manager', 'member'] },
-  { path: '/plans', icon: 'MdArticle', label: 'Kế hoạch', roles: ['admin', 'manager', 'member'] },
+  { path: '/criteria-sets', icon: 'MdFactCheck', label: 'Chỉ tiêu', roles: ['admin', 'manager', 'member'] },
+  { path: '/plans-manage', icon: 'MdArticle', label: 'Kế hoạch', roles: ['admin', 'manager', 'member'] },
   { path: '/task-config', icon: 'MdTune', label: 'Cấu hình công việc', roles: ['admin'] },
   { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },
   { path: '/settings', icon: 'MdPerson', label: 'Hồ sơ', roles: ['admin', 'manager', 'member'] },

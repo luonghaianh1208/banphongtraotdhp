@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { MdDownload, MdUpload, MdCorporateFare } from 'react-icons/md';
 import { useUnits } from '../../hooks/useUnits';
 import { httpsCallable, getFunctions } from 'firebase/functions';
-import { functions } from '../../firebase/config';
 import app from '../../firebase/config';
+import { UNIT_BLOCKS } from '../../utils/constants';
+import { exportUnitTemplate } from '../../utils/exportExcel';
+import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
 
 const UnitsPage = () => {
     const { units, loading, error } = useUnits();
@@ -11,9 +15,39 @@ const UnitsPage = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        unitName: ''
+        unitName: '',
+        blockId: '',
+        blockName: '',
+        typeId: '',
+        typeName: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Options cho dropdown
+    const selectedBlock = useMemo(
+        () => UNIT_BLOCKS.find(b => b.id === formData.blockId),
+        [formData.blockId]
+    );
+
+    const handleBlockChange = (e) => {
+        const block = UNIT_BLOCKS.find(b => b.id === e.target.value);
+        setFormData(prev => ({
+            ...prev,
+            blockId: e.target.value,
+            blockName: block?.name || '',
+            typeId: '',
+            typeName: '',
+        }));
+    };
+
+    const handleTypeChange = (e) => {
+        const type = selectedBlock?.types.find(t => t.id === e.target.value);
+        setFormData(prev => ({
+            ...prev,
+            typeId: e.target.value,
+            typeName: type?.name || '',
+        }));
+    };
 
     const handleCreateUnit = async (e) => {
         e.preventDefault();
@@ -21,31 +55,67 @@ const UnitsPage = () => {
             alert("Vui lòng điền đầy đủ thông tin");
             return;
         }
+        if (!formData.blockId || !formData.typeId) {
+            alert("Vui lòng chọn Khối và Loại");
+            return;
+        }
 
         setIsSubmitting(true);
         try {
-            const fns = getFunctions(app, 'asia-southeast1'); // or default region if not specified
+            const fns = getFunctions(app, 'asia-southeast1');
             const createUnitFn = httpsCallable(fns, 'createUnit');
 
             const result = await createUnitFn({
                 email: formData.email,
                 password: formData.password,
-                unitName: formData.unitName
+                unitName: formData.unitName,
+                blockId: formData.blockId,
+                blockName: formData.blockName,
+                typeId: formData.typeId,
+                typeName: formData.typeName,
             });
 
             if (result.data?.success) {
-                alert('Tạo tài khoản Cơ sở thành công!');
+                toast.success('Tạo tài khoản Cơ sở thành công!');
                 setShowAddModal(false);
-                setFormData({ email: '', password: '', unitName: '' });
+                setFormData({ email: '', password: '', unitName: '', blockId: '', blockName: '', typeId: '', typeName: '' });
             } else {
-                alert('Có lỗi xảy ra: ' + result.data?.error);
+                toast.error('Có lỗi xảy ra: ' + result.data?.error);
             }
         } catch (err) {
             console.error(err);
-            alert('Lỗi khi gọi Cloud Function tạo Unit: ' + err.message);
+            toast.error('Lỗi khi gọi Cloud Function tạo Unit: ' + err.message);
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleImportExcel = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                const validRows = rows.filter(r => r['Tên đơn vị'] && r['Email'] && r['Khối'] && r['Loại']);
+                toast.success(`Đọc được ${validRows.length} đơn vị hợp lệ. (Chức năng import đang phát triển)`);
+                console.log('[Import Excel]', validRows);
+            } catch (err) {
+                toast.error('Lỗi đọc file Excel: ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+    };
+
+    const getBlockLabel = (unit) => {
+        if (!unit.blockName) return '—';
+        return `${unit.blockName}${unit.typeName ? ` / ${unit.typeName}` : ''}`;
     };
 
     if (loading) {
@@ -67,12 +137,24 @@ const UnitsPage = () => {
                     <h2 className="text-2xl font-bold text-gray-800">Quản lý Đơn vị (Cơ sở)</h2>
                     <p className="text-gray-600">Danh sách các Liên đội / Trường / Cơ sở và tài khoản truy cập.</p>
                 </div>
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded shadow-sm font-medium transition-colors"
-                >
-                    + Thêm Cơ sở
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={exportUnitTemplate}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-sm font-medium transition-colors flex items-center gap-1"
+                    >
+                        <MdDownload size={18} /> Tải mẫu Excel
+                    </button>
+                    <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-sm font-medium transition-colors flex items-center gap-1 cursor-pointer">
+                        <MdUpload size={18} /> Import Excel
+                        <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} />
+                    </label>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded shadow-sm font-medium transition-colors flex items-center gap-1"
+                    >
+                        <MdCorporateFare size={18} /> Thêm Cơ sở
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -82,6 +164,7 @@ const UnitsPage = () => {
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên Cơ sở</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài khoản (Email)</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối / Loại</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                             </tr>
@@ -93,7 +176,10 @@ const UnitsPage = () => {
                                         <div className="text-sm font-medium text-gray-900">{unit.unitName}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500">{unit.contactEmail}</div>
+                                        <div className="text-sm text-gray-500">{unit.email}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        {getBlockLabel(unit)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {unit.createdAt ? new Date(unit.createdAt).toLocaleDateString('vi-VN') : '-'}
@@ -108,7 +194,7 @@ const UnitsPage = () => {
                             ))}
                             {units.length === 0 && (
                                 <tr className="border-t">
-                                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                                         Chưa có cơ sở nào hiển thị.
                                     </td>
                                 </tr>
@@ -135,6 +221,35 @@ const UnitsPage = () => {
                                     className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary"
                                     placeholder="VD: Liên đội TH Nguyễn Du"
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Khối</label>
+                                <select
+                                    required
+                                    value={formData.blockId}
+                                    onChange={handleBlockChange}
+                                    className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary bg-white"
+                                >
+                                    <option value="">— Chọn Khối —</option>
+                                    {UNIT_BLOCKS.map(block => (
+                                        <option key={block.id} value={block.id}>{block.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Loại</label>
+                                <select
+                                    required
+                                    value={formData.typeId}
+                                    onChange={handleTypeChange}
+                                    disabled={!formData.blockId}
+                                    className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary bg-white disabled:bg-gray-100"
+                                >
+                                    <option value="">— Chọn Loại —</option>
+                                    {selectedBlock?.types.map(type => (
+                                        <option key={type.id} value={type.id}>{type.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

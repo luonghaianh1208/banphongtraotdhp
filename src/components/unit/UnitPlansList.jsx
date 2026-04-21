@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
+import { useAuth } from '../../context/AuthContext';
 
 const UnitPlansList = () => {
     const [filter, setFilter] = useState('all');
     const { plans, loading } = usePlans();
+    const { userProfile } = useAuth();
+
+    // Lọc kế hoạch theo block/type của đơn vị đang đăng nhập
+    const unitBlockId = userProfile?.blockId;
+    const unitTypeId = userProfile?.typeId;
+    const unitTypeKey = `${unitBlockId}:${unitTypeId}`;
+
+    const isPlanVisible = (plan) => {
+        // Nếu không có target → hiển thị cho tất cả (backward compatible)
+        if (!plan.targetBlocks?.length) return true;
+        // Kiểm tra block khớp
+        if (!plan.targetBlocks.includes(unitBlockId)) return false;
+        // Kiểm tra type khớp (nếu có type được chọn)
+        if (plan.targetTypes?.length > 0 && !plan.targetTypes.includes(unitTypeKey)) return false;
+        return true;
+    };
 
     if (loading) {
         return (
@@ -14,8 +31,10 @@ const UnitPlansList = () => {
         );
     }
 
-    // Lọc kế hoạch đang hiển thị
-    const activePlans = plans.filter(p => ['published', 'active'].includes(p.status));
+    // Lọc kế hoạch đang hiển thị + filter theo block/type của đơn vị
+    const activePlans = plans.filter(p =>
+        ['published', 'active'].includes(p.status) && isPlanVisible(p)
+    );
     const filteredPlans = filter === 'all'
         ? activePlans
         : activePlans.filter(p => p.type === filter);

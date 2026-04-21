@@ -1,6 +1,6 @@
 // Auth helper functions
 import { signInWithEmailAndPassword, signOut, updatePassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, where, query, getDocs } from 'firebase/firestore';
 import { auth, db } from './config';
 
 const googleProvider = new GoogleAuthProvider();
@@ -10,8 +10,20 @@ export const loginWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
 
-  // Tạo user document trong Firestore nếu chưa có
+  // Kiểm tra xem email có trong bảng units không → gán role đúng
   try {
+    const unitsSnap = await getDocs(
+      query(collection(db, 'units'), where('email', '==', user.email))
+    );
+    const isUnitEmail = !unitsSnap.empty;
+
+    if (isUnitEmail) {
+      // Email khớp với đơn vị → không tạo trong bảng users
+      // AuthContext sẽ dùng getUserProfile để lấy profile từ bảng units
+      return result;
+    }
+
+    // Không phải unit → tạo profile trong bảng users (member)
     const docRef = doc(db, 'users', user.uid);
     const docSnap = await getDoc(docRef);
 
@@ -27,8 +39,6 @@ export const loginWithGoogle = async () => {
       });
     }
   } catch (firestoreError) {
-    // Nếu Firestore rules chặn ghi, vẫn cho phép login thành công
-    // Admin sẽ cần cập nhật rules hoặc tạo user document thủ công
     console.warn('Không thể tạo user profile trong Firestore:', firestoreError.message);
   }
 
