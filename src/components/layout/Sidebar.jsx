@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import {
   MdToday, MdAssignment, MdDashboard, MdGroup, MdSettings,
   MdLogout, MdDeleteSweep, MdTune, MdPerson, MdGavel, MdInfo,
-  MdAccountBalance, MdFactCheck, MdAssignmentTurnedIn, MdEventNote
+  MdAccountBalance, MdFactCheck, MdAssignmentTurnedIn, MdEventNote,
+  MdCorporateFare, MdArticle
 } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { logout } from '../../firebase/auth';
@@ -23,7 +24,9 @@ const iconMap = {
   MdAccountBalance: MdAccountBalance,
   MdFactCheck: MdFactCheck,
   MdAssignmentTurnedIn: MdAssignmentTurnedIn,
-  MdEventNote: MdEventNote
+  MdEventNote: MdEventNote,
+  MdCorporateFare: MdCorporateFare,
+  MdArticle: MdArticle
 };
 
 const Sidebar = ({ onClose }) => {
