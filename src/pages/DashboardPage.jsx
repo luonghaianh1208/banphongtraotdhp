@@ -49,7 +49,7 @@ const DashboardPage = () => {
             <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <MdTrendingUp size={32} />
             </div>
-            Tổng Quang Hệ Thống
+            Tổng Quan Hệ Thống
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium mt-2 max-w-2xl">
             Phân tích dữ liệu thời gian thực cho thấy hiệu suất và tiến độ của toàn bộ hệ thống quản lý.
