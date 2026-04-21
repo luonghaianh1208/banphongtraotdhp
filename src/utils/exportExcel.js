@@ -48,40 +48,48 @@ export const exportUnitTemplate = () => {
 
   rows.push({
     'STT': 'Hướng dẫn',
-    'Tên đơn vị': '(Nhập tên cơ sở)',
-    'Email': '(Email đăng nhập)',
+    'Tên đơn vị': '(Nhập tên cơ sở - VD: Đoàn TN xã An Hưng)',
+    'Email': '(Email đăng nhập Google)',
     'Mật khẩu': '(Mật khẩu khởi tạo)',
-    'Khối': '(Chọn: Xã/Phường / Đại học/Cao đẳng / Công nhân viên chức / Lực lượng vũ trang)',
+    'Khối': '(Chọn: Khối Xã, Phường, Đặc khu / Khối Đại học - Cao đẳng / Khối Công nhân viên chức / Khối Lực lượng vũ trang)',
     'Loại': '(Chọn theo Khối)',
     'Ghi chú': '',
   });
 
   rows.push({ 'STT': '', 'Tên đơn vị': '', 'Email': '', 'Mật khẩu': '', 'Khối': '', 'Loại': '', 'Ghi chú': '' });
 
-  // Sinh sample rows cho từng block × type
-  UNIT_BLOCKS.forEach(block => {
-    block.types.forEach(type => {
-      rows.push({
-        'STT': stt++,
-        'Tên đơn vị': `${type.name} - ${block.name}`,
-        'Email': '',
-        'Mật khẩu': '',
-        'Khối': block.name,
-        'Loại': type.name,
-        'Ghi chú': '',
-      });
+  // Mẫu dữ liệu thực tế
+  const sampleData = [
+    { name: 'Đoàn TN xã An Hưng', block: 'Khối Xã, Phường, Đặc khu', type: 'Xã' },
+    { name: 'Đoàn TN phường Nam Đồ Sơn', block: 'Khối Xã, Phường, Đặc khu', type: 'Phường' },
+    { name: 'Đoàn TN Đặc khu Bạch Long Vĩ', block: 'Khối Xã, Phường, Đặc khu', type: 'Đặc khu' },
+    { name: 'Đoàn TN Đại học Hàng Hải', block: 'Khối Đại học - Cao đẳng', type: 'Đại học' },
+    { name: 'Đoàn TN Cao đẳng Y tế', block: 'Khối Đại học - Cao đẳng', type: 'Cao đẳng' },
+    { name: 'Đoàn TN các cơ quan Đảng TP', block: 'Khối Công nhân viên chức', type: 'Công nhân viên chức' },
+    { name: 'Đoàn Bộ chỉ huy quân sự TP', block: 'Khối Lực lượng vũ trang', type: 'Lực lượng vũ trang' },
+  ];
+
+  sampleData.forEach(item => {
+    rows.push({
+      'STT': stt++,
+      'Tên đơn vị': item.name,
+      'Email': '',
+      'Mật khẩu': '',
+      'Khối': item.block,
+      'Loại': item.type,
+      'Ghi chú': '',
     });
   });
 
   const ws = XLSX.utils.json_to_sheet(rows);
   ws['!cols'] = [
     { wch: 6 },
-    { wch: 30 },
+    { wch: 38 },
     { wch: 30 },
     { wch: 20 },
-    { wch: 28 },
-    { wch: 28 },
-    { wch: 30 },
+    { wch: 35 },
+    { wch: 25 },
+    { wch: 20 },
   ];
 
   const wb = XLSX.utils.book_new();

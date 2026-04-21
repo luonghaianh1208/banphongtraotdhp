@@ -31,38 +31,34 @@ export const TASK_DISPLAY_STATUS = {
 // === UNIT BLOCKS & TYPES (Khối và Loại đơn vị cơ sở) ===
 export const UNIT_BLOCKS = [
   {
-    id: 'xa-phuong',
-    name: 'Xã/Phường',
+    id: 'xa-phuong-dac-khu',
+    name: 'Khối Xã, Phường, Đặc khu',
     types: [
-      { id: 'th', name: 'Trung học' },
-      { id: 'thcs', name: 'Trung học Cơ sở' },
-      { id: 'mam-non', name: 'Mầm non' },
-      { id: 'thpt', name: 'Trung học Phổ thông' },
+      { id: 'xa', name: 'Xã' },
+      { id: 'phuong', name: 'Phường' },
+      { id: 'dac-khu', name: 'Đặc khu' },
     ]
   },
   {
     id: 'dai-hoc-cao-dang',
-    name: 'Đại học/Cao đẳng',
+    name: 'Khối Đại học - Cao đẳng',
     types: [
-      { id: 'dh', name: 'Đại học' },
-      { id: 'cd', name: 'Cao đẳng' },
-      { id: 'trc', name: 'Trung cấp' },
+      { id: 'dai-hoc', name: 'Đại học' },
+      { id: 'cao-dang', name: 'Cao đẳng' },
     ]
   },
   {
     id: 'cong-nhan-vien-chuc',
-    name: 'Công nhân viên chức',
+    name: 'Khối Công nhân viên chức',
     types: [
-      { id: 'co-quan', name: 'Cơ quan nhà nước' },
-      { id: 'doanh-nghiep', name: 'Doanh nghiệp' },
+      { id: 'cnvc', name: 'Công nhân viên chức' },
     ]
   },
   {
     id: 'luc-luong-vu-trang',
-    name: 'Lực lượng vũ trang',
+    name: 'Khối Lực lượng vũ trang',
     types: [
-      { id: 'quan-su', name: 'Quân sự' },
-      { id: 'cong-an', name: 'Công an' },
+      { id: 'llvt', name: 'Lực lượng vũ trang' },
     ]
   },
 ];
