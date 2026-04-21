@@ -49,16 +49,14 @@ export const exportUnitTemplate = () => {
   rows.push({
     'STT': 'Hướng dẫn',
     'Tên đơn vị': '(Nhập tên cơ sở - VD: Đoàn TN xã An Hưng)',
-    'Email': '(Email đăng nhập Google)',
-    'Mật khẩu': '(Mật khẩu khởi tạo)',
+    'Email': '(Email Google để đăng nhập)',
     'Khối': '(Chọn: Khối Xã, Phường, Đặc khu / Khối Đại học - Cao đẳng / Khối Công nhân viên chức / Khối Lực lượng vũ trang)',
     'Loại': '(Chọn theo Khối)',
     'Ghi chú': '',
   });
 
-  rows.push({ 'STT': '', 'Tên đơn vị': '', 'Email': '', 'Mật khẩu': '', 'Khối': '', 'Loại': '', 'Ghi chú': '' });
+  rows.push({ 'STT': '', 'Tên đơn vị': '', 'Email': '', 'Khối': '', 'Loại': '', 'Ghi chú': '' });
 
-  // Mẫu dữ liệu thực tế
   const sampleData = [
     { name: 'Đoàn TN xã An Hưng', block: 'Khối Xã, Phường, Đặc khu', type: 'Xã' },
     { name: 'Đoàn TN phường Nam Đồ Sơn', block: 'Khối Xã, Phường, Đặc khu', type: 'Phường' },
@@ -74,7 +72,6 @@ export const exportUnitTemplate = () => {
       'STT': stt++,
       'Tên đơn vị': item.name,
       'Email': '',
-      'Mật khẩu': '',
       'Khối': item.block,
       'Loại': item.type,
       'Ghi chú': '',
@@ -86,7 +83,6 @@ export const exportUnitTemplate = () => {
     { wch: 6 },
     { wch: 38 },
     { wch: 30 },
-    { wch: 20 },
     { wch: 35 },
     { wch: 25 },
     { wch: 20 },

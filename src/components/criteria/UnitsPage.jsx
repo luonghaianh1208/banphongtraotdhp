@@ -14,7 +14,6 @@ const UnitsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        password: '',
         unitName: '',
         blockId: '',
         blockName: '',
@@ -51,7 +50,7 @@ const UnitsPage = () => {
 
     const handleCreateUnit = async (e) => {
         e.preventDefault();
-        if (!formData.email || !formData.password || !formData.unitName) {
+        if (!formData.email || !formData.unitName) {
             alert("Vui lòng điền đầy đủ thông tin");
             return;
         }
@@ -67,7 +66,6 @@ const UnitsPage = () => {
 
             const result = await createUnitFn({
                 email: formData.email,
-                password: formData.password,
                 unitName: formData.unitName,
                 blockId: formData.blockId,
                 blockName: formData.blockName,
@@ -78,7 +76,7 @@ const UnitsPage = () => {
             if (result.data?.success) {
                 toast.success('Tạo tài khoản Cơ sở thành công!');
                 setShowAddModal(false);
-                setFormData({ email: '', password: '', unitName: '', blockId: '', blockName: '', typeId: '', typeName: '' });
+                setFormData({ email: '', unitName: '', blockId: '', blockName: '', typeId: '', typeName: '' });
             } else {
                 toast.error('Có lỗi xảy ra: ' + result.data?.error);
             }
@@ -252,26 +250,16 @@ const UnitsPage = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Google</label>
                                 <input
                                     required
                                     type="email"
                                     value={formData.email}
                                     onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
                                     className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary"
-                                    placeholder="VD: thnguyendu@example.com"
+                                    placeholder="VD: doanthanhnien@gmail.com"
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu khởi tạo</label>
-                                <input
-                                    required
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={e => setFormData(p => ({ ...p, password: e.target.value }))}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary"
-                                    placeholder="********"
-                                />
+                                <p className="text-xs text-gray-400 mt-1">Đơn vị sẽ đăng nhập bằng Google với email này</p>
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t mt-6">

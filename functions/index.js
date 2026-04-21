@@ -555,20 +555,23 @@ exports.publishPeriodResults = onCall(async (request) => {
 
 // === 13. TẠO TÀI KHOẢN ĐƠN VỊ CƠ SỞ (UNIT) ===
 exports.createUnit = onCall(async (request) => {
-  const { email, password, unitName, blockId, blockName, typeId, typeName } = request.data;
+  const { email, unitName, blockId, blockName, typeId, typeName } = request.data;
   const callerUid = request.auth?.uid;
   if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
 
   await requireAdmin(callerUid);
 
-  if (!email || !password || !unitName) {
-    throw new HttpsError("invalid-argument", "Thiếu thông tin bắt buộc (email, password, unitName)");
+  if (!email || !unitName) {
+    throw new HttpsError("invalid-argument", "Thiếu thông tin bắt buộc (email, unitName)");
   }
+
+  // Tự sinh mật khẩu ngẫu nhiên (đơn vị chỉ đăng nhập bằng Google)
+  const randomPassword = require("crypto").randomBytes(16).toString("hex");
 
   // Tạo Firebase Auth user cho đơn vị
   const userRecord = await getAuth().createUser({
     email,
-    password,
+    password: randomPassword,
     displayName: unitName,
   });
 
