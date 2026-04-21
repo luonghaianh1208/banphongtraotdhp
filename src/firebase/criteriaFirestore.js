@@ -25,6 +25,16 @@ export const updateUnit = async (unitId, updates) => {
     return updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
 };
 
+export const deleteUnit = async (unitId) => {
+    return deleteDoc(doc(db, 'units', unitId));
+};
+
+export const batchDeleteUnits = async (unitIds) => {
+    const batch = writeBatch(db);
+    unitIds.forEach(id => batch.delete(doc(db, 'units', id)));
+    return batch.commit();
+};
+
 // ======================================
 // 2. CRITERIA SETS
 // ======================================
@@ -254,6 +264,16 @@ export const publishPlan = async (planId) => {
         publishedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     });
+};
+
+export const deletePlan = async (planId) => {
+    return deleteDoc(doc(db, 'plans', planId));
+};
+
+export const batchDeletePlans = async (planIds) => {
+    const batch = writeBatch(db);
+    planIds.forEach(id => batch.delete(doc(db, 'plans', id)));
+    return batch.commit();
 };
 
 // ======================================

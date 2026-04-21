@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MdAdd } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
+import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
@@ -14,11 +15,13 @@ const PlansManagePage = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selected, setSelected] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+    const [editTitle, setEditTitle] = useState('');
+
     const [formData, setFormData] = useState({
-        title: '',
-        category: '',
-        targetBlocks: [],
-        targetTypes: [],
+        title: '', type: 'plan', description: '', submissionDeadline: '',
+        targetBlocks: [], targetTypes: [],
     });
 
     const loading = plansLoading || unitsLoading;
@@ -29,14 +32,10 @@ const PlansManagePage = () => {
         return matchesSearch && matchesStatus;
     });
 
-    const getUnitName = (unitId) => {
-        const u = units.find(u => u.id === unitId);
-        return u ? u.unitName : 'Cơ sở không xác định';
-    };
-
     const getBlockLabel = (plan) => {
         if (!plan.targetBlocks?.length) return 'Tất cả khối';
-        return `${plan.targetBlocks.length} khối, ${plan.targetTypes?.length || 0} loại`;
+        const names = plan.targetBlocks.map(bId => UNIT_BLOCKS.find(b => b.id === bId)?.name || bId);
+        return names.join(', ');
     };
 
     const handleBlockToggle = (blockId) => {
@@ -60,70 +59,101 @@ const PlansManagePage = () => {
         });
     };
 
-    const isTypeSelected = (blockId, typeId) => {
-        return formData.targetTypes.includes(`${blockId}:${typeId}`);
-    };
+    const isTypeSelected = (blockId, typeId) => formData.targetTypes.includes(`${blockId}:${typeId}`);
 
+    // Tạo mới
     const handleCreate = async (e) => {
         e.preventDefault();
-        if (!formData.title) {
-            toast.error('Vui lòng nhập tên kế hoạch');
-            return;
-        }
+        if (!formData.title) { toast.error('Nhập tên kế hoạch'); return; }
         setIsSubmitting(true);
         try {
-            // TODO: gọi hàm tạo plan trong criteriaFirestore
-            console.log('[Create Plan]', formData);
-            toast.success('Tạo kế hoạch thành công! (Đang phát triển)');
+            await createPlan({
+                title: formData.title,
+                type: formData.type,
+                description: formData.description,
+                submissionDeadline: formData.submissionDeadline || null,
+                targetBlocks: formData.targetBlocks,
+                targetTypes: formData.targetTypes,
+                status: 'draft',
+            });
+            toast.success('Tạo kế hoạch thành công!');
             setShowAddModal(false);
-            setFormData({ title: '', category: '', targetBlocks: [], targetTypes: [] });
+            setFormData({ title: '', type: 'plan', description: '', submissionDeadline: '', targetBlocks: [], targetTypes: [] });
         } catch (err) {
-            toast.error('Lỗi tạo kế hoạch: ' + err.message);
+            toast.error('Lỗi: ' + err.message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
+    // Sửa tên inline
+    const startEdit = (plan) => { setEditingId(plan.id); setEditTitle(plan.title); };
+    const saveEdit = async () => {
+        if (!editTitle.trim()) return;
+        try {
+            await updatePlan(editingId, { title: editTitle.trim() });
+            toast.success('Đã cập nhật');
+            setEditingId(null);
+        } catch (err) { toast.error('Lỗi cập nhật.'); }
+    };
+
+    // Xóa đơn lẻ
+    const handleDelete = async (planId, name) => {
+        if (!confirm(`Xóa "${name}"?`)) return;
+        try {
+            await deletePlan(planId);
+            toast.success('Đã xóa');
+        } catch (err) { toast.error('Lỗi xóa.'); }
+    };
+
+    // Xóa hàng loạt
+    const handleBulkDelete = async () => {
+        if (!confirm(`Xóa ${selected.length} kế hoạch đã chọn?`)) return;
+        try {
+            for (const id of selected) await deletePlan(id);
+            setSelected([]);
+            toast.success(`Đã xóa ${selected.length} kế hoạch`);
+        } catch (err) { toast.error('Lỗi xóa hàng loạt.'); }
+    };
+
+    const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+    const toggleAll = () => setSelected(selected.length === filteredPlans.length ? [] : filteredPlans.map(p => p.id));
+
+    const statusMap = {
+        draft: { label: 'Nháp', cls: 'bg-gray-100 text-gray-700' },
+        published: { label: 'Đang mở', cls: 'bg-blue-100 text-blue-800' },
+        active: { label: 'Đang mở', cls: 'bg-green-100 text-green-800' },
+        closed: { label: 'Đã đóng', cls: 'bg-yellow-100 text-yellow-800' },
+    };
+
+    if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
     return (
         <div>
             <div className="mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Quản lý Kế hoạch & Hội thi</h2>
-                    <p className="text-gray-600">Xem và đánh giá các kế hoạch/hồ sơ hội thi do cơ sở nạp lên.</p>
+                    <p className="text-gray-600">Tổng: <strong>{plans.length}</strong> kế hoạch/hội thi</p>
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:ring-primary focus:border-primary bg-white"
-                    >
+                <div className="flex flex-wrap gap-2">
+                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+                        className="border rounded-md px-3 py-2 bg-white text-sm">
                         <option value="all">Tất cả trạng thái</option>
-                        <option value="submitted">Chờ duyệt (Đã nộp)</option>
-                        <option value="reviewed">Đã duyệt</option>
-                        <option value="rejected">Cần sửa (Từ chối)</option>
+                        <option value="draft">Nháp</option>
+                        <option value="published">Đang mở</option>
+                        <option value="closed">Đã đóng</option>
                     </select>
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo Tên kế hoạch..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full sm:w-64 border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary"
-                    />
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded shadow-sm font-medium transition-colors flex items-center gap-1 justify-center"
-                    >
-                        <MdAdd size={18} /> Thêm Kế hoạch
+                    <input type="text" placeholder="Tìm kiếm..." value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="border rounded-md px-3 py-2 text-sm w-48" />
+                    <button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
+                        <MdAdd size={16} /> Thêm Kế hoạch
                     </button>
+                    {selected.length > 0 && (
+                        <button onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center gap-1">
+                            <MdDelete size={16} /> Xóa ({selected.length})
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -132,115 +162,116 @@ const PlansManagePage = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên Kế hoạch / Hội thi</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn vị (Cơ sở)</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại (Category)</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giao cho</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                <th className="px-4 py-3 text-left">
+                                    <input type="checkbox" checked={selected.length === filteredPlans.length && filteredPlans.length > 0}
+                                        onChange={toggleAll} className="rounded border-gray-300" />
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên Kế hoạch / Hội thi</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giao cho</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hạn nộp</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredPlans.map(plan => (
-                                <tr key={plan.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="font-medium text-gray-900">{plan.title}</div>
-                                        <div className="text-xs text-gray-400">Nộp lúc: {plan.submittedAt ? new Date(plan.submittedAt).toLocaleDateString('vi-VN') : '-'}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        {getUnitName(plan.unitId)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 py-1 text-xs font-medium rounded bg-purple-50 text-purple-700">
-                                            {plan.category || 'Khác'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-blue-600">
-                                        {getBlockLabel(plan)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${plan.status === 'reviewed' ? 'bg-green-100 text-green-800' :
-                                                plan.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                            {plan.status === 'reviewed' ? 'Đã duyệt' :
-                                                plan.status === 'rejected' ? 'Cần sửa' : 'Chờ duyệt'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                        <Link
-                                            to={`/plans/${plan.id}`}
-                                            className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded transition-colors"
-                                        >
-                                            {plan.status === 'submitted' ? 'Duyệt bài' : 'Xem chi tiết'}
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
+                        <tbody className="divide-y divide-gray-200">
+                            {filteredPlans.map(plan => {
+                                const st = statusMap[plan.status] || statusMap.draft;
+                                return (
+                                    <tr key={plan.id} className={`hover:bg-gray-50 ${selected.includes(plan.id) ? 'bg-blue-50' : ''}`}>
+                                        <td className="px-4 py-3">
+                                            <input type="checkbox" checked={selected.includes(plan.id)}
+                                                onChange={() => toggleSelect(plan.id)} className="rounded border-gray-300" />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {editingId === plan.id ? (
+                                                <div className="flex items-center gap-1">
+                                                    <input value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                                                        className="border rounded px-2 py-1 text-sm w-full" />
+                                                    <button onClick={saveEdit} className="p-1 text-green-600"><MdCheck size={16} /></button>
+                                                    <button onClick={() => setEditingId(null)} className="p-1 text-gray-400"><MdClose size={16} /></button>
+                                                </div>
+                                            ) : (
+                                                <div className="font-medium text-gray-900 text-sm">{plan.title}</div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${plan.type === 'contest' ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
+                                                {plan.type === 'contest' ? 'Hội thi' : 'Kế hoạch'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-blue-600">{getBlockLabel(plan)}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {plan.submissionDeadline ? new Date(plan.submissionDeadline).toLocaleDateString('vi-VN') : '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${st.cls}`}>{st.label}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <button onClick={() => startEdit(plan)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Sửa"><MdEdit size={16} /></button>
+                                                <button onClick={() => handleDelete(plan.id, plan.title)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Xóa"><MdDelete size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {filteredPlans.length === 0 && (
-                                <tr className="border-t">
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                                        Không có kế hoạch nào.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan="7" className="px-6 py-8 text-center text-gray-500">Không có kế hoạch nào.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Modal tạo kế hoạch */}
+            {/* Modal tạo mới */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl shadow-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold mb-4">Thêm Kế hoạch / Hội thi Mới</h3>
+                        <h3 className="text-xl font-bold mb-4">Thêm Kế hoạch / Hội thi</h3>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tên kế hoạch / hội thi</label>
-                                <input
-                                    required
-                                    value={formData.title}
-                                    onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary"
-                                    placeholder="VD: Hội thi Dân vũ cấp huyện 2025"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
+                                <input required value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
+                                    className="w-full border rounded-md px-3 py-2" placeholder="VD: Hội thi Dân vũ 2025" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Loại (Category)</label>
-                                <input
-                                    value={formData.category}
-                                    onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-primary focus:border-primary"
-                                    placeholder="VD: Hội thi, Kế hoạch, Sinh hoạt"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Loại</label>
+                                <select value={formData.type} onChange={e => setFormData(p => ({ ...p, type: e.target.value }))}
+                                    className="w-full border rounded-md px-3 py-2 bg-white">
+                                    <option value="plan">Kế hoạch</option>
+                                    <option value="contest">Hội thi</option>
+                                </select>
                             </div>
-
-                            {/* Chọn Khối / Loại được nhận kế hoạch */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                                <textarea value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+                                    className="w-full border rounded-md px-3 py-2" rows={3} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Hạn nộp hồ sơ</label>
+                                <input type="date" value={formData.submissionDeadline}
+                                    onChange={e => setFormData(p => ({ ...p, submissionDeadline: e.target.value }))}
+                                    className="w-full border rounded-md px-3 py-2" />
+                            </div>
+                            {/* Khối / Loại */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Giao cho Khối/Loại nào</label>
-                                <p className="text-xs text-gray-500 mb-3">Để trống = áp dụng cho tất cả. Chọn cụ thể = chỉ cơ sở thuộc khối/loại đó mới thấy.</p>
+                                <p className="text-xs text-gray-500 mb-3">Để trống = tất cả.</p>
                                 <div className="space-y-3 border rounded-lg p-3 max-h-60 overflow-y-auto">
                                     {UNIT_BLOCKS.map(block => (
                                         <div key={block.id}>
                                             <label className="flex items-center gap-2 font-medium text-sm text-gray-700 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.targetBlocks.includes(block.id)}
-                                                    onChange={() => handleBlockToggle(block.id)}
-                                                    className="rounded text-primary"
-                                                />
+                                                <input type="checkbox" checked={formData.targetBlocks.includes(block.id)}
+                                                    onChange={() => handleBlockToggle(block.id)} className="rounded text-primary" />
                                                 {block.name}
                                             </label>
                                             {formData.targetBlocks.includes(block.id) && (
                                                 <div className="ml-6 mt-1 space-y-1">
                                                     {block.types.map(type => (
-                                                        <label key={type.id} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-gray-800">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isTypeSelected(block.id, type.id)}
-                                                                onChange={() => handleTypeToggle(block.id, type.id)}
-                                                                className="rounded text-primary"
-                                                            />
+                                                        <label key={type.id} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                                            <input type="checkbox" checked={isTypeSelected(block.id, type.id)}
+                                                                onChange={() => handleTypeToggle(block.id, type.id)} className="rounded text-primary" />
                                                             {type.name}
                                                         </label>
                                                     ))}
@@ -250,21 +281,9 @@ const PlansManagePage = () => {
                                     ))}
                                 </div>
                             </div>
-
-                            <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 hover:bg-gray-100 rounded-md text-gray-700 font-medium"
-                                    disabled={isSubmitting}
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-primary-dark"
-                                    disabled={isSubmitting}
-                                >
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50" disabled={isSubmitting}>Hủy</button>
+                                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark" disabled={isSubmitting}>
                                     {isSubmitting ? 'Đang tạo...' : 'Tạo kế hoạch'}
                                 </button>
                             </div>
