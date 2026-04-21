@@ -171,10 +171,22 @@ const App = () => {
               <Toaster
                 position="top-right"
                 toastOptions={{
-                  duration: 3000,
-                  style: { borderRadius: '12px', background: '#1f2937', color: '#fff', fontSize: '14px' },
-                  success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-                  error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+                  duration: 3500,
+                  className: 'dark:bg-gray-800 dark:text-white dark:border dark:border-gray-700',
+                  style: {
+                    borderRadius: '16px',
+                    background: 'var(--toast-bg, #ffffff)',
+                    color: 'var(--toast-color, #1f2937)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                  },
+                  success: {
+                    iconTheme: { primary: '#10b981', secondary: '#fff' },
+                  },
+                  error: {
+                    iconTheme: { primary: '#ef4444', secondary: '#fff' },
+                  },
                 }}
               />
             </NotificationProvider>

@@ -4,16 +4,15 @@ import { useUsers } from '../hooks/useUsers';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { countTasksByStatus, getOverdueByMember } from '../utils/statusUtils';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { MdAssignment, MdWarning, MdCheckCircle, MdPeople } from 'react-icons/md';
-import { formatDate } from '../utils/dateUtils';
+import { MdAssignment, MdWarning, MdCheckCircle, MdPeople, MdTrendingUp } from 'react-icons/md';
 
 const COLORS = {
-  notDue: '#10B981',
-  nearDue: '#F59E0B',
-  urgent: '#EF4444',
-  overdue: '#374151',
-  extended: '#3B82F6',
-  completed: '#059669',
+  notDue: '#10B981', // emerald-500
+  nearDue: '#F59E0B', // amber-500
+  urgent: '#EF4444', // red-500
+  overdue: '#64748b', // slate-500
+  extended: '#3B82F6', // blue-500
+  completed: '#059669', // emerald-600
 };
 
 const DashboardPage = () => {
@@ -25,7 +24,6 @@ const DashboardPage = () => {
   const counts = countTasksByStatus(tasks);
   const overdueByMember = getOverdueByMember(tasks, users);
 
-  // Dữ liệu cho biểu đồ tròn
   const pieData = [
     { name: 'Chưa đến hạn', value: counts.notDue, color: COLORS.notDue },
     { name: 'Gần đến hạn', value: counts.nearDue, color: COLORS.nearDue },
@@ -35,7 +33,6 @@ const DashboardPage = () => {
     { name: 'Hoàn thành', value: counts.completed, color: COLORS.completed },
   ].filter(d => d.value > 0);
 
-  // Dữ liệu cho biểu đồ cột theo thành viên
   const barData = users.filter(u => u.isActive !== false).map(user => {
     const userTasks = tasks.filter(t => t.assignees?.includes(user.id));
     const done = userTasks.filter(t => t.isCompleted).length;
@@ -44,81 +41,228 @@ const DashboardPage = () => {
   });
 
   return (
-    <div className="max-w-6xl mx-auto fade-in space-y-6">
+    <div className="max-w-7xl mx-auto space-y-10 pb-12 animate-fade-in">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <MdTrendingUp size={32} />
+            </div>
+            Tổng Quang Hệ Thống
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-2 max-w-2xl">
+            Phân tích dữ liệu thời gian thực cho thấy hiệu suất và tiến độ của toàn bộ hệ thống quản lý.
+          </p>
+        </div>
+      </div>
+
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={MdAssignment} label="Tổng công việc" value={counts.total} color="primary" />
-        <StatCard icon={MdWarning} label="Quá hạn" value={counts.overdue} color="red" />
-        <StatCard icon={MdCheckCircle} label="Hoàn thành" value={counts.completed} color="emerald" />
-        <StatCard icon={MdPeople} label="Thành viên" value={users.filter(u => u.isActive !== false).length} color="blue" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          icon={MdAssignment}
+          label="Tổng công việc"
+          value={counts.total}
+          color="emerald"
+          gradient="from-emerald-500/20 to-emerald-500/5"
+          iconColor="text-emerald-600"
+        />
+        <StatCard
+          icon={MdWarning}
+          label="Quá hạn"
+          value={counts.overdue}
+          color="rose"
+          gradient="from-rose-500/20 to-rose-500/5"
+          iconColor="text-rose-600"
+        />
+        <StatCard
+          icon={MdCheckCircle}
+          label="Hoàn thành"
+          value={counts.completed}
+          color="sky"
+          gradient="from-sky-500/20 to-sky-500/5"
+          iconColor="text-sky-600"
+        />
+        <StatCard
+          icon={MdPeople}
+          label="Thành viên"
+          value={users.filter(u => u.isActive !== false).length}
+          color="amber"
+          gradient="from-amber-500/20 to-amber-500/5"
+          iconColor="text-amber-600"
+        />
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Pie chart */}
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Phân bổ theo trạng thái</h3>
+        <div className="lg:col-span-2 glass-card p-8 border-white/40 dark:border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-colors duration-700" />
+          <h3 className="text-sm font-black text-slate-900 dark:text-white mb-8 uppercase tracking-[0.2em] flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Trạng thái nhiệm vụ
+          </h3>
           {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                  {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[340px] relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={110}
+                    paddingAngle={10}
+                    dataKey="value"
+                    stroke="none"
+                    animationBegin={200}
+                    animationDuration={1500}
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '20px',
+                      border: 'none',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      backdropFilter: 'blur(10px)',
+                      padding: '12px 16px'
+                    }}
+                    itemStyle={{ fontWeight: '900', fontSize: '12px' }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={40}
+                    iconType="circle"
+                    formatter={(value) => <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none mt-[-20px]">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-tight">Tổng cộng</p>
+                <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{counts.total}</p>
+              </div>
+            </div>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-16">Chưa có dữ liệu</p>
+            <div className="flex flex-col items-center justify-center h-[340px] text-slate-400 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+              <MdAssignment size={48} className="opacity-10 mb-4" />
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chưa có dữ liệu thống kê</p>
+            </div>
           )}
         </div>
 
         {/* Bar chart */}
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Công việc theo thành viên</h3>
+        <div className="lg:col-span-3 glass-card p-8 border-white/40 dark:border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -ml-16 -mt-16 group-hover:bg-blue-500/10 transition-colors duration-700" />
+          <h3 className="text-sm font-black text-slate-900 dark:text-white mb-8 uppercase tracking-[0.2em] flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            Hiệu suất thành viên
+          </h3>
           {barData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Hoàn thành" fill={COLORS.completed} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Đang làm" fill={COLORS.nearDue} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                  <XAxis
+                    dataKey="name"
+                    fontSize={10}
+                    fontWeight="900"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94a3b8' }}
+                    dy={10}
+                  />
+                  <YAxis
+                    fontSize={10}
+                    fontWeight="900"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94a3b8' }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(0,0,0,0.01)' }}
+                    contentStyle={{
+                      borderRadius: '20px',
+                      border: 'none',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      backdropFilter: 'blur(10px)',
+                      padding: '12px 16px'
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="rect"
+                    formatter={(value) => <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">{value}</span>}
+                  />
+                  <Bar dataKey="Hoàn thành" fill={COLORS.completed} radius={[6, 6, 0, 0]} barSize={16} animationDuration={2000} />
+                  <Bar dataKey="Đang làm" fill="#CBD5E1" radius={[6, 6, 0, 0]} barSize={16} animationDuration={2000} animationBegin={500} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-16">Chưa có dữ liệu</p>
+            <div className="flex flex-col items-center justify-center h-[340px] text-slate-400 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+              <MdPeople size={48} className="opacity-10 mb-4" />
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chưa có dữ liệu thành viên</p>
+            </div>
           )}
         </div>
       </div>
 
       {/* Overdue by member table */}
       {overdueByMember.length > 0 && (
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-red-700 mb-4 flex items-center gap-2">
-            <MdWarning size={18} /> Task quá hạn theo thành viên
-          </h3>
+        <div className="glass-card overflow-hidden border-rose-200/50 dark:border-rose-900/30 shadow-2xl shadow-rose-500/5 transition-all duration-500">
+          <div className="p-8 bg-gradient-to-r from-rose-50/80 to-transparent dark:from-rose-950/20 border-b border-rose-100 dark:border-rose-900/30 flex items-center justify-between">
+            <h3 className="text-sm font-black text-rose-700 dark:text-rose-400 uppercase tracking-[0.25em] flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-900/50 shadow-sm shadow-rose-500/10">
+                <MdWarning size={20} />
+              </div>
+              Phân tích công việc quá hạn
+            </h3>
+            <span className="px-4 py-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/30 animate-pulse">
+              Cảnh báo cao
+            </span>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2.5 px-3 font-semibold text-gray-600">Thành viên</th>
-                  <th className="text-center py-2.5 px-3 font-semibold text-gray-600">Số task quá hạn</th>
-                  <th className="text-left py-2.5 px-3 font-semibold text-gray-600">Chi tiết</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/30">
+                  <th className="text-left py-5 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 w-[25%]">Thành viên</th>
+                  <th className="text-center py-5 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 w-[15%]">Số lượng</th>
+                  <th className="text-left py-5 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Chi tiết nhiệm vụ</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {overdueByMember.map(({ user, tasks: overTasks }, i) => (
-                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-2.5 px-3 font-medium">{user.displayName}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <span className="badge badge-red">{overTasks.length}</span>
+                  <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-all duration-300 group">
+                    <td className="py-6 px-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform duration-500">
+                          {user.displayName?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 dark:text-white leading-none mb-1">{user.displayName}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Assignee</p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-2.5 px-3 text-gray-500">
-                      {overTasks.map(t => t.title).join(', ')}
+                    <td className="py-6 px-8 text-center text-center">
+                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 text-rose-600 font-black text-lg shadow-inner border border-rose-100 dark:border-rose-900/50">
+                        {overTasks.length}
+                      </span>
+                    </td>
+                    <td className="py-6 px-8">
+                      <div className="flex flex-wrap gap-2">
+                        {overTasks.map((t, idx) => (
+                          <span key={idx} className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/40 transition-colors">
+                            {t.title}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -131,23 +275,21 @@ const DashboardPage = () => {
   );
 };
 
-// Sub-component: stat card
-const StatCard = ({ icon: Icon, label, value, color }) => {
-  const colorClasses = {
-    primary: 'bg-primary-50 text-primary-600',
-    red: 'bg-red-50 text-red-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-  };
-
+const StatCard = ({ icon: Icon, label, value, gradient, iconColor }) => {
   return (
-    <div className="card p-4 flex items-center gap-4">
-      <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-        <Icon size={24} />
+    <div className={`glass-card p-6 group hover:scale-[1.02] transition-all duration-500 relative overflow-hidden border-white/40 dark:border-white/5 shadow-xl hover:shadow-2xl`}>
+      <div className={`absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br ${gradient} opacity-20 rounded-full blur-2xl group-hover:opacity-40 transition-opacity duration-700`} />
+      <div className="relative z-10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 ${iconColor} shadow-sm group-hover:scale-110 transition-transform duration-500`}>
+            <Icon size={22} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 leading-none">{label}</span>
+        </div>
+        <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</p>
       </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-100/50 dark:bg-slate-800/50 overflow-hidden">
+        <div className={`h-full bg-gradient-to-r ${gradient} w-0 group-hover:w-full transition-all duration-1000 ease-out`} />
       </div>
     </div>
   );

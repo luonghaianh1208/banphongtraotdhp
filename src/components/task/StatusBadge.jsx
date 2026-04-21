@@ -17,8 +17,8 @@ const StatusBadge = ({ task }) => {
   const Icon = iconMap[status.iconName];
 
   return (
-    <span className={`badge ${status.badgeClass}`}>
-      {Icon && <Icon size={13} className="mr-0.5 -ml-0.5" />}
+    <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-1.5 shadow-sm ${status.badgeClass}`}>
+      {Icon && <Icon size={12} className="shrink-0" />}
       {status.label}
     </span>
   );

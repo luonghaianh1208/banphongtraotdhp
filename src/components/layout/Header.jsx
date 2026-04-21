@@ -1,9 +1,10 @@
 // Header — thanh trên cùng với search, notification, user info
 import { useState, useRef, useEffect } from 'react';
-import { MdSearch, MdNotifications, MdMenu, MdClose, MdCircle, MdRadioButtonUnchecked } from 'react-icons/md';
+import { MdSearch, MdNotifications, MdMenu, MdClose, MdCircle, MdRadioButtonUnchecked, MdDoneAll } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { formatRelative } from '../../utils/dateUtils';
+import { ROLES } from '../../utils/constants';
 
 const Header = ({ title, onToggleSidebar }) => {
   const { userProfile } = useAuth();
@@ -29,30 +30,39 @@ const Header = ({ title, onToggleSidebar }) => {
   }, [showNotifs]);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="flex items-center justify-between px-4 lg:px-6 h-16">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-emerald-500/10 transition-all duration-300">
+      <div className="flex items-center justify-between px-6 lg:px-8 h-20">
         {/* Left: menu toggle + title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+            className="lg:hidden p-3 rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 transition-all active:scale-95"
           >
             <MdMenu size={24} />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">{title}</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest opacity-70">Hệ thống đang hoạt động</span>
+            </div>
+          </div>
         </div>
 
-        {/* Right: notifications */}
-        <div className="flex items-center gap-2">
+        {/* Right: actions */}
+        <div className="flex items-center gap-4">
           {/* Notification bell */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifs(!showNotifs)}
-              className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+              className={`relative p-3 rounded-2xl border transition-all duration-300 active:scale-95 ${showNotifs
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
+                : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-500/30'
+                }`}
             >
               <MdNotifications size={22} />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-doan-red text-white text-[10px] font-bold rounded-full flex items-center justify-center pulse-dot">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 ring-4 ring-white dark:ring-gray-950 animate-bounce">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -60,58 +70,104 @@ const Header = ({ title, onToggleSidebar }) => {
 
             {/* Notification dropdown */}
             {showNotifs && (
-              <div className="absolute right-0 top-12 w-80 bg-white rounded-xl shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50 slide-in-right">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <h3 className="font-semibold text-sm text-gray-900">Thông báo</h3>
+              <div className="absolute right-0 top-16 w-96 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-emerald-500/10 overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-gray-800 bg-emerald-500/5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-wider">Thông báo</h3>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadCount} mới</span>
+                    )}
+                  </div>
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                      className="flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 uppercase tracking-widest transition-colors"
                     >
-                      Đánh dấu tất cả đã đọc
+                      <MdDoneAll size={14} /> Đánh dấu tất cả
                     </button>
                   )}
                 </div>
 
-                {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-gray-500">
-                    Không có thông báo nào
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {notifications.slice(0, 20).map(notif => (
-                      <div
-                        key={notif.id}
-                        onClick={() => !notif.isRead && markRead(notif.id)}
-                        className={`group flex items-start px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          !notif.isRead ? 'bg-primary-50/50' : ''
-                        }`}
-                      >
-                        <div className="flex-1 pr-2">
-                          <p className="text-sm text-gray-800">{notif.message}</p>
-                          <p className="text-xs text-gray-400 mt-1">{formatRelative(notif.createdAt)}</p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            notif.isRead ? markUnread(notif.id) : markRead(notif.id);
-                          }}
-                          title={notif.isRead ? "Đánh dấu là chưa đọc" : "Đánh dấu là đã đọc"}
-                          className={`mt-1 flex-shrink-0 p-1 rounded-full transition-opacity ${notif.isRead ? 'opacity-0 group-hover:opacity-100 hover:bg-gray-200 text-gray-400' : 'text-primary-600 hover:bg-primary-100'}`}
-                        >
-                          {notif.isRead ? <MdRadioButtonUnchecked size={14} /> : <MdCircle size={12} />}
-                        </button>
+                <div className="overflow-y-auto max-h-[32rem] scrollbar-hide">
+                  {notifications.length === 0 ? (
+                    <div className="py-16 flex flex-col items-center justify-center text-gray-400">
+                      <div className="w-16 h-16 rounded-3xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-4">
+                        <MdNotifications size={32} className="opacity-20" />
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <p className="text-xs font-black uppercase tracking-widest opacity-50">Không có thông báo nào</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                      {notifications.slice(0, 20).map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => !notif.isRead && markRead(notif.id)}
+                          className={`group flex items-start px-6 py-5 cursor-pointer hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition-all ${!notif.isRead ? 'bg-emerald-50/50 dark:bg-emerald-500/10' : ''
+                            }`}
+                        >
+                          <div className="flex-1 pr-4">
+                            <p className={`text-sm leading-relaxed ${!notif.isRead ? 'font-bold text-gray-900 dark:text-white' : 'font-medium text-gray-600 dark:text-gray-400'}`}>
+                              {notif.message}
+                            </p>
+                            <p className="text-[10px] text-emerald-600/50 dark:text-emerald-400/50 mt-2 flex items-center gap-1 uppercase font-black tracking-widest">
+                              {formatRelative(notif.createdAt)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              notif.isRead ? markUnread(notif.id) : markRead(notif.id);
+                            }}
+                            className={`mt-1 h-5 w-5 rounded-full flex items-center justify-center transition-all ${notif.isRead
+                              ? 'border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 hover:bg-gray-50 group-hover:opacity-100'
+                              : 'bg-emerald-500 text-white shadow-sm'
+                              }`}
+                          >
+                            {!notif.isRead && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                            {notif.isRead && <MdRadioButtonUnchecked size={12} />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
+                  <button className="w-full py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-emerald-600 transition-colors">
+                    Xem tất cả thông báo
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* User avatar */}
-          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-sm">
-            {userProfile?.displayName?.charAt(0)?.toUpperCase() || '?'}
+          <div className="h-10 w-[1px] bg-gray-100 dark:bg-gray-800 mx-1" />
+
+          {/* User info card in Header */}
+          <div className="flex items-center gap-4 pl-2 group cursor-pointer">
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-sm font-black text-gray-900 dark:text-white truncate max-w-[150px] tracking-tight">
+                {userProfile?.displayName}
+              </span>
+              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">
+                {ROLES[userProfile?.role]?.label}
+              </span>
+            </div>
+            <div className="relative">
+              {userProfile?.avatar ? (
+                <img
+                  src={userProfile.avatar}
+                  alt=""
+                  className="w-11 h-11 rounded-2xl border-2 border-emerald-500/20 object-cover shadow-premium group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center font-black text-lg shadow-premium group-hover:scale-105 transition-transform duration-300">
+                  {userProfile?.displayName?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-gray-950 rounded-full" />
+            </div>
           </div>
         </div>
       </div>

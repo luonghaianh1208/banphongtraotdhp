@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MdAssignment, MdAccessTime, MdSave, MdSend, MdArrowBack, MdInfo, MdCheckCircle } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
+import { getSubmissionPeriod, getCriteriaSet, createOrUpdateDraftSubmission, submitSubmission } from '../../firebase/criteriaFirestore';
 import { useUnitSubmission } from '../../hooks/useSubmissions';
 import ConditionRow from '../criteria/ConditionRow';
-import {
-    getSubmissionPeriod,
-    getCriteriaSet,
-    createOrUpdateDraftSubmission,
-    submitSubmission
-} from '../../firebase/criteriaFirestore';
 
 const UnitSubmitPage = () => {
     const { periodId } = useParams();
@@ -60,14 +56,15 @@ const UnitSubmitPage = () => {
 
     if (loading || subLoading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+                <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">Đang tải dữ liệu báo cáo...</p>
             </div>
         );
     }
 
     if (!period || !criteriaSet) {
-        return <div className="text-center mt-10">Dữ liệu không hợp lệ.</div>;
+        return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
     const isReadOnly = period.status !== 'active' || submission?.status === 'submitted';
@@ -111,7 +108,6 @@ const UnitSubmitPage = () => {
 
         setSaving(true);
         try {
-            // 1. Chắc chắn đã lưu lần cuối
             await createOrUpdateDraftSubmission(
                 periodId,
                 user.id,
@@ -119,9 +115,6 @@ const UnitSubmitPage = () => {
                 responses
             );
 
-            // 2. Nếu đã có subId thì nộp luôn, nếu không thì lấy ID mới tạo để submit
-            // Vì hook `useUnitSubmission` subscribe realtime, `submission` có thể chưa cập nhật kip nếu vừa tạo
-            // (Trong thực tế nên refactor `createOrUpdateDraftSubmission` trả về docRef/ID)
             if (submission?.id) {
                 await submitSubmission(submission.id);
                 alert('Đã nộp báo cáo chính thức thành công!');
@@ -144,98 +137,140 @@ const UnitSubmitPage = () => {
     });
 
     return (
-        <div className="max-w-5xl mx-auto pb-12">
-            {/* Header */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800">{period.title}</h2>
-                        <p className="text-gray-500 mt-2">Năm học: {period.academicYear} • Hạn nộp: {new Date(period.deadline).toLocaleString('vi-VN')}</p>
-                    </div>
-                    <div className="text-right">
-                        <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${submission?.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                                period.status !== 'active' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-green-100 text-green-800'
-                            }`}>
-                            {submission?.status === 'submitted' ? 'Đã Nộp Chính Thức' :
-                                period.status !== 'active' ? 'Đã Khóa Nộp' : 'Đang Làm (Nháp)'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Tóm tắt */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8 flex justify-between items-center shadow-sm">
+        <div className="max-w-6xl mx-auto pb-32 relative">
+            {/* Nav Header */}
+            <div className="flex items-center gap-4 mb-8">
+                <button
+                    onClick={() => navigate('/unit/submissions')}
+                    className="p-3 rounded-2xl glass-card hover:bg-white dark:hover:bg-gray-800 transition-colors group"
+                >
+                    <MdArrowBack size={24} className="group-hover:-translate-x-1 transition-transform" />
+                </button>
                 <div>
-                    <h3 className="font-semibold text-blue-900">Tổng điểm tự chấm hiện tại</h3>
-                    <p className="text-blue-700 text-sm mt-1">Hệ thống sẽ tự động cộng dồn các điểm thành phần ở dưới.</p>
-                </div>
-                <div className="text-3xl font-bold text-blue-700">
-                    {currentTotalScore} / {criteriaSet.totalMaxScore}
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{period.title}</h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-primary-600 dark:text-primary-400">
+                            <MdAccessTime />
+                            Hạn: {new Date(period.deadline).toLocaleString('vi-VN')}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <MdAssignment />
+                            Năm học: {period.academicYear}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Danh sách các chuyên đề / Tiêu chí */}
-            <div className="space-y-6">
-                {criteriaSet.groups?.map((group, gIdx) => (
-                    <div key={group.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-800">
-                                Phần {gIdx + 1}: {group.title}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">Tổng điểm phần này: {group.maxScore} điểm</p>
+            {/* Sticky Floating Score Progress */}
+            <div className="sticky top-4 z-40 mb-10">
+                <div className="glass-card p-6 border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl shadow-2xl flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-emerald-500/20">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/30">
+                            <MdCheckCircle size={32} />
                         </div>
-                        <div className="p-6 bg-white space-y-6">
-                            {group.conditions?.map((cond, cIdx) => (
-                                <ConditionRow
-                                    key={cond.id}
-                                    index={cIdx}
-                                    condition={cond}
-                                    response={responses[cond.id]}
-                                    onChange={(field, value) => handleResponseChange(cond.id, field, value)}
-                                    readOnly={isReadOnly}
-                                />
-                            ))}
+                        <div>
+                            <h3 className="font-black text-gray-900 dark:text-white text-lg leading-tight">Tiến độ tự chấm</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold">Điểm tổng hợp từ các mục</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-6 w-full sm:w-auto">
+                        <div className="flex-1 sm:w-64">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-xs font-black uppercase tracking-widest text-primary-600 dark:text-primary-400">Hoàn tất</span>
+                                <span className="text-xs font-black text-gray-900 dark:text-white">{Math.round((currentTotalScore / criteriaSet.totalMaxScore) * 100)}%</span>
+                            </div>
+                            <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5">
+                                <div
+                                    className="h-full bg-primary-600 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(5,150,105,0.5)]"
+                                    style={{ width: `${Math.min(100, (currentTotalScore / criteriaSet.totalMaxScore) * 100)}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                        <div className="text-4xl font-black text-primary-600 dark:text-primary-400 whitespace-nowrap">
+                            {currentTotalScore} <span className="text-lg text-gray-400 dark:text-gray-600">/ {criteriaSet.totalMaxScore}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sections */}
+            <div className="space-y-12">
+                {criteriaSet.groups?.map((group, gIdx) => (
+                    <div key={group.id} className="animate-fade-in-up" style={{ animationDelay: `${gIdx * 100}ms` }}>
+                        <div className="flex items-center gap-4 mb-6 ml-1">
+                            <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center font-black text-lg">
+                                {gIdx + 1}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">
+                                    {group.title}
+                                </h3>
+                                <p className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                                    Điểm tối đa phần này: {group.maxScore} điểm
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="glass-card overflow-hidden">
+                            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                                {group.conditions?.map((cond, cIdx) => (
+                                    <div key={cond.id} className="p-8 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                        <ConditionRow
+                                            index={cIdx}
+                                            condition={cond}
+                                            response={responses[cond.id]}
+                                            onChange={(field, value) => handleResponseChange(cond.id, field, value)}
+                                            readOnly={isReadOnly}
+                                            showInput={true}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Hành động */}
+            {/* Floating Actions Bar */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 md:left-64 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex justify-end gap-4">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/unit/submissions')}
-                        className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                        disabled={saving}
-                    >
-                        Hủy và Quay lại
-                    </button>
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
+                    <div className="glass-card p-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl shadow-2xl border border-primary-500/30 flex justify-between items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/unit/submissions')}
+                            className="px-6 py-3 text-gray-500 dark:text-gray-400 font-bold hover:text-gray-900 dark:hover:text-white transition-colors"
+                            disabled={saving}
+                        >
+                            Quay lại
+                        </button>
 
-                    <button
-                        type="button"
-                        onClick={handleSaveDraft}
-                        disabled={saving}
-                        className="px-6 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center"
-                    >
-                        {saving ? (
-                            <span className="animate-spin h-4 w-4 border-b-2 border-blue-700 rounded-full mr-2"></span>
-                        ) : null}
-                        Lưu Bản Nháp
-                    </button>
+                        <div className="flex gap-4">
+                            <button
+                                type="button"
+                                onClick={handleSaveDraft}
+                                disabled={saving}
+                                className="px-8 py-3 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-all flex items-center gap-2"
+                            >
+                                {saving ? (
+                                    <span className="animate-spin h-4 w-4 border-b-2 border-primary-700 rounded-full"></span>
+                                ) : <MdSave size={18} />}
+                                <span>Lưu nháp</span>
+                            </button>
 
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={saving}
-                        className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors flex items-center shadow-sm"
-                    >
-                        {saving ? (
-                            <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full mr-2"></span>
-                        ) : null}
-                        Nộp Chính Thức
-                    </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={saving}
+                                className="btn-primary px-10 py-3 flex items-center gap-2 group/submit"
+                            >
+                                {saving ? (
+                                    <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></span>
+                                ) : <MdSend size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                                <span>Nộp báo cáo</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -243,3 +278,4 @@ const UnitSubmitPage = () => {
 };
 
 export default UnitSubmitPage;
+
