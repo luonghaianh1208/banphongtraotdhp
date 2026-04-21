@@ -85,17 +85,16 @@ export const savePenaltyTypes = async (items) => {
 
 // === TASKS ===
 
-// Lắng nghe realtime tất cả tasks ACTIVE (không gồm đã xóa)
+// Lắng nghe realtime tất cả tasks ACTIVE (filter isDeleted server-side)
 export const subscribeToTasks = (callback, onError, maxItems = 500) => {
   const q = query(
     collection(db, 'tasks'),
+    where('isDeleted', '==', false),
     orderBy('createdAt', 'desc'),
     limit(maxItems)
   );
   return onSnapshot(q, (snapshot) => {
-    const tasks = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(t => !t.isDeleted);
+    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(tasks);
   }, (error) => {
     console.error('Lỗi lắng nghe tasks:', error);
@@ -134,9 +133,9 @@ export const subscribeToTrash = (callback, onError) => {
     const tasks = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => {
-         const t1 = a.deletedAt?.toMillis ? a.deletedAt.toMillis() : 0;
-         const t2 = b.deletedAt?.toMillis ? b.deletedAt.toMillis() : 0;
-         return t2 - t1;
+        const t1 = a.deletedAt?.toMillis ? a.deletedAt.toMillis() : 0;
+        const t2 = b.deletedAt?.toMillis ? b.deletedAt.toMillis() : 0;
+        return t2 - t1;
       });
     callback(tasks);
   }, (error) => {
@@ -262,7 +261,7 @@ export const permanentDeleteTask = async (taskId) => {
     // Xóa tất cả file đính kèm trên Storage
     if (task.attachments?.length > 0) {
       await Promise.allSettled(
-        task.attachments.map(file => deleteFile(file.path).catch(() => {}))
+        task.attachments.map(file => deleteFile(file.path).catch(() => { }))
       );
     }
   }
@@ -394,12 +393,13 @@ export const addNotification = async (userId, title, message, type = 'info', rel
   }
 };
 
-// Lắng nghe thông báo của user hiện tại
+// Lắng nghe thông báo của user hiện tại (giới hạn 100 mới nhất)
 export const subscribeToNotifications = (userId, callback, onError) => {
   const q = query(
     collection(db, 'notifications'),
     where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(100)
   );
   return onSnapshot(q, (snapshot) => {
     const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

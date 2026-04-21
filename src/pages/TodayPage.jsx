@@ -4,8 +4,7 @@ import { MdAdd, MdToday, MdDateRange, MdList } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { createTask, updateTask } from '../firebase/firestore';
-import { uploadFile } from '../firebase/storage';
+import { useTaskCRUD } from '../hooks/useTaskCRUD';
 import { handleApproveTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
@@ -22,6 +21,7 @@ const TodayPage = () => {
   const { tasks, loading: tasksLoading } = useTasks();
   const { users, loading: usersLoading } = useUsers();
   const { currentUser, userProfile, canManageTasks, canApprove } = useAuth();
+  const { handleCreateTask, handleEditTask } = useTaskCRUD(currentUser);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editTask, setEditTask] = useState(null);
@@ -62,19 +62,7 @@ const TodayPage = () => {
     return s === TASK_DISPLAY_STATUS.URGENT || s === TASK_DISPLAY_STATUS.OVERDUE;
   }).length;
 
-  // Tạo task mới
-  const handleCreate = async (data) => {
-    const { pendingFiles, existingAttachments, ...taskData } = data;
-    const docRef = await createTask({ ...taskData, attachments: existingAttachments || [] });
-    if (pendingFiles?.length > 0) {
-      const uploaded = [];
-      for (const file of pendingFiles) {
-        const result = await uploadFile(file, docRef.id, currentUser.uid);
-        uploaded.push(result);
-      }
-      await updateTask(docRef.id, { attachments: [...(existingAttachments || []), ...uploaded] });
-    }
-  };
+
 
   // Duyệt hoàn thành
   const handleApprove = async (taskId) => {
@@ -122,9 +110,8 @@ const TodayPage = () => {
             <button
               key={value}
               onClick={() => setViewMode(value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                viewMode === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
             >
               <Icon size={16} /> {label}
             </button>
@@ -166,17 +153,10 @@ const TodayPage = () => {
           task={editTask}
           users={users}
           currentUser={currentUser}
-          onSubmit={editTask ? async (data) => {
-            const { pendingFiles, existingAttachments, ...taskData } = data;
-            let allAttachments = existingAttachments || [];
-            if (pendingFiles?.length > 0) {
-              for (const file of pendingFiles) {
-                const result = await uploadFile(file, editTask.id, currentUser.uid);
-                allAttachments = [...allAttachments, result];
-              }
-            }
-            await updateTask(editTask.id, { ...taskData, attachments: allAttachments }, currentUser.uid, { action: 'edit', field: 'multiple' });
-          } : handleCreate}
+          onSubmit={editTask
+            ? (data) => handleEditTask(editTask.id, data)
+            : handleCreateTask
+          }
           onClose={() => { setShowCreate(false); setEditTask(null); }}
         />
       </Modal>

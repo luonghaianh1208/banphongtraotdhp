@@ -1,5 +1,6 @@
 // App.jsx — Root component với routing và auth protection
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -8,15 +9,18 @@ import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/LoginPage';
 import PendingPage from './pages/PendingPage';
 import TodayPage from './pages/TodayPage';
-import AllTasksPage from './pages/AllTasksPage';
-import DashboardPage from './pages/DashboardPage';
-import MembersPage from './pages/MembersPage';
-import TrashPage from './pages/TrashPage';
-import TaskConfigPage from './pages/TaskConfigPage';
-import SettingsPage from './pages/SettingsPage';
-import PenaltyManagementPage from './pages/PenaltyManagementPage';
-import SystemInfoPage from './pages/SystemInfoPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import ErrorBoundary from './components/common/ErrorBoundary';
+
+// Lazy-load các trang ít dùng hơn → giảm bundle size khởi tạo
+const AllTasksPage = lazy(() => import('./pages/AllTasksPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const MembersPage = lazy(() => import('./pages/MembersPage'));
+const TrashPage = lazy(() => import('./pages/TrashPage'));
+const TaskConfigPage = lazy(() => import('./pages/TaskConfigPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const PenaltyManagementPage = lazy(() => import('./pages/PenaltyManagementPage'));
+const SystemInfoPage = lazy(() => import('./pages/SystemInfoPage'));
 
 // Route bảo vệ — yêu cầu đăng nhập
 const ProtectedRoute = ({ children, roles }) => {
@@ -97,7 +101,11 @@ const App = () => {
       <AuthProvider>
         <TaskConfigProvider>
           <NotificationProvider>
-            <AppRoutes />
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner fullScreen />}>
+                <AppRoutes />
+              </Suspense>
+            </ErrorBoundary>
             <Toaster
               position="top-right"
               toastOptions={{

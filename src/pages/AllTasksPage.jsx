@@ -4,8 +4,8 @@ import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBo
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { createTask, updateTask, softDeleteTasks } from '../firebase/firestore';
-import { uploadFile } from '../firebase/storage';
+import { softDeleteTasks } from '../firebase/firestore';
+import { useTaskCRUD } from '../hooks/useTaskCRUD';
 import { handleApproveTask, handleRemindTask } from '../hooks/useTaskActions';
 import TaskCard from '../components/task/TaskCard';
 import TaskForm from '../components/task/TaskForm';
@@ -24,6 +24,7 @@ const AllTasksPage = () => {
   const { tasks, loading: tasksLoading } = useTasks();
   const { users, loading: usersLoading } = useUsers();
   const { currentUser, canManageTasks, canApprove, isMember } = useAuth();
+  const { handleCreateTask, handleEditTask } = useTaskCRUD(currentUser);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editTask, setEditTask] = useState(null);
@@ -61,20 +62,7 @@ const AllTasksPage = () => {
   // Áp dụng filters
   const filteredTasks = filterTasks(tasks, filters);
 
-  const handleCreate = async (data) => {
-    const { pendingFiles, existingAttachments, ...taskData } = data;
-    // Tạo task trước để lấy ID thực
-    const docRef = await createTask({ ...taskData, attachments: existingAttachments || [] });
-    // Upload files với ID thực (không còn temp_)
-    if (pendingFiles?.length > 0) {
-      const uploaded = [];
-      for (const file of pendingFiles) {
-        const result = await uploadFile(file, docRef.id, currentUser.uid);
-        uploaded.push(result);
-      }
-      await updateTask(docRef.id, { attachments: [...(existingAttachments || []), ...uploaded] });
-    }
-  };
+
 
   const handleApprove = async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
@@ -220,17 +208,10 @@ const AllTasksPage = () => {
           task={editTask}
           users={users}
           currentUser={currentUser}
-          onSubmit={editTask ? async (data) => {
-            const { pendingFiles, existingAttachments, ...taskData } = data;
-            let allAttachments = existingAttachments || [];
-            if (pendingFiles?.length > 0) {
-              for (const file of pendingFiles) {
-                const result = await uploadFile(file, editTask.id, currentUser.uid);
-                allAttachments = [...allAttachments, result];
-              }
-            }
-            await updateTask(editTask.id, { ...taskData, attachments: allAttachments }, currentUser.uid, { action: 'edit', field: 'multiple' });
-          } : handleCreate}
+          onSubmit={editTask
+            ? (data) => handleEditTask(editTask.id, data)
+            : handleCreateTask
+          }
           onClose={() => { setShowCreate(false); setEditTask(null); }}
         />
       </Modal>
