@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { countTasksByStatus, getOverdueByMember } from '../utils/statusUtils';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MdAssignment, MdWarning, MdCheckCircle, MdPeople, MdTrendingUp } from 'react-icons/md';
+import { useMemo } from 'react';
 
 const COLORS = {
   notDue: '#10B981', // emerald-500
@@ -21,24 +22,24 @@ const DashboardPage = () => {
 
   if (tl || ul) return <LoadingSpinner />;
 
-  const counts = countTasksByStatus(tasks);
-  const overdueByMember = getOverdueByMember(tasks, users);
+  const counts = useMemo(() => countTasksByStatus(tasks), [tasks]);
+  const overdueByMember = useMemo(() => getOverdueByMember(tasks, users), [tasks, users]);
 
-  const pieData = [
+  const pieData = useMemo(() => [
     { name: 'Chưa đến hạn', value: counts.notDue, color: COLORS.notDue },
     { name: 'Gần đến hạn', value: counts.nearDue, color: COLORS.nearDue },
     { name: 'Cần gấp', value: counts.urgent, color: COLORS.urgent },
     { name: 'Quá hạn', value: counts.overdue, color: COLORS.overdue },
     { name: 'Gia hạn', value: counts.extended, color: COLORS.extended },
     { name: 'Hoàn thành', value: counts.completed, color: COLORS.completed },
-  ].filter(d => d.value > 0);
+  ].filter(d => d.value > 0), [counts]);
 
-  const barData = users.filter(u => u.isActive !== false).map(user => {
+  const barData = useMemo(() => users.filter(u => u.isActive !== false).map(user => {
     const userTasks = tasks.filter(t => t.assignees?.includes(user.id));
     const done = userTasks.filter(t => t.isCompleted).length;
     const active = userTasks.filter(t => !t.isCompleted).length;
     return { name: user.displayName?.split(' ').pop() || '?', 'Hoàn thành': done, 'Đang làm': active };
-  });
+  }), [users, tasks]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-12 animate-fade-in">
@@ -246,7 +247,7 @@ const DashboardPage = () => {
                         </div>
                         <div>
                           <p className="font-black text-slate-900 dark:text-white leading-none mb-1">{user.displayName}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Assignee</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Người phụ trách</p>
                         </div>
                       </div>
                     </td>
@@ -275,7 +276,7 @@ const DashboardPage = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value, gradient, iconColor }) => {
+const StatCard = ({ icon: Icon, label, value, gradient, iconColor }) => { // eslint-disable-line no-unused-vars
   return (
     <div className={`glass-card p-6 group hover:scale-[1.02] transition-all duration-500 relative overflow-hidden border-white/40 dark:border-white/5 shadow-xl hover:shadow-2xl`}>
       <div className={`absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br ${gradient} opacity-20 rounded-full blur-2xl group-hover:opacity-40 transition-opacity duration-700`} />

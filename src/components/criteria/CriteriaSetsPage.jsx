@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MdDownload, MdDelete, MdEdit, MdClose, MdCheck } from 'react-icons/md';
+import { MdDownload, MdDelete, MdEdit, MdClose } from 'react-icons/md';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { createCriteriaSet, deleteCriteriaSet, updateCriteriaSet } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
@@ -49,7 +49,7 @@ const CriteriaSetsPage = () => {
             toast.success('Tạo bộ tiêu chí thành công!');
             setShowModal(false);
             setFormData({ title: '', academicYear: '', description: '', targetBlocks: [], targetTypes: [] });
-        } catch (err) {
+        } catch (_) {
             toast.error('Lỗi tạo bộ tiêu chí.');
         } finally {
             setIsSubmitting(false);
@@ -61,7 +61,7 @@ const CriteriaSetsPage = () => {
         try {
             await deleteCriteriaSet(setId);
             toast.success('Đã xóa.');
-        } catch (err) { toast.error('Lỗi xóa.'); }
+        } catch (_) { toast.error('Lỗi xóa.'); }
     };
 
     // Xóa hàng loạt
@@ -71,7 +71,7 @@ const CriteriaSetsPage = () => {
             for (const id of selected) await deleteCriteriaSet(id);
             setSelected([]);
             toast.success(`Đã xóa ${selected.length} bộ tiêu chí`);
-        } catch (err) { toast.error('Lỗi xóa hàng loạt.'); }
+        } catch (_) { toast.error('Lỗi xóa hàng loạt.'); }
     };
 
     // Sửa tên inline
@@ -82,16 +82,10 @@ const CriteriaSetsPage = () => {
             await updateCriteriaSet(editingId, { title: editTitle.trim() });
             toast.success('Đã cập nhật tên');
             setEditingId(null);
-        } catch (err) { toast.error('Lỗi cập nhật.'); }
+        } catch (_) { toast.error('Lỗi cập nhật.'); }
     };
 
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-
-    const getTargetLabel = (set) => {
-        if (!set.targetBlocks?.length) return 'Tất cả khối';
-        const blockNames = set.targetBlocks.map(bId => UNIT_BLOCKS.find(b => b.id === bId)?.name || bId);
-        return blockNames.join(', ');
-    };
 
     if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
     if (error) return <div className="text-red-500 p-4">Lỗi: {error.message}</div>;

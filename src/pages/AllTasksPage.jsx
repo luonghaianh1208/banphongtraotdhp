@@ -1,6 +1,6 @@
 // AllTasksPage — trang tất cả công việc: bảng task toàn tổ với filter & export
-import { useState, useEffect } from 'react';
-import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank, MdNotificationsActive } from 'react-icons/md';
+import { useState, useEffect, useMemo } from 'react';
+import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank, MdNotificationsActive, MdSchedule } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
@@ -51,7 +51,7 @@ const AllTasksPage = () => {
     if (urgentTasks.length > 0) {
       toast.error(`Bạn có ${urgentTasks.length} công việc sắp hết hạn trong 24h tới!`, {
         duration: 5000,
-        icon: '⏳'
+        icon: <MdSchedule size={20} />
       });
       sessionStorage.setItem('hasAlertedOverdue', 'true');
     }
@@ -59,8 +59,8 @@ const AllTasksPage = () => {
 
   const loading = tasksLoading || usersLoading;
 
-  // Áp dụng filters
-  const filteredTasks = filterTasks(tasks, filters);
+  // Áp dụng filters với memoization
+  const filteredTasks = useMemo(() => filterTasks(tasks, filters), [tasks, filters]);
 
 
 

@@ -150,11 +150,6 @@ const UnitsPage = () => {
     const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     const toggleAll = () => setSelected(selected.length === filteredUnits.length ? [] : filteredUnits.map(u => u.id));
 
-    const getBlockLabel = (unit) => {
-        if (!unit.blockName) return '—';
-        return `${unit.blockName}${unit.typeName ? ` / ${unit.typeName}` : ''}`;
-    };
-
     if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
     if (error) return <div className="text-red-500 p-4">Lỗi: {error.message}</div>;
 

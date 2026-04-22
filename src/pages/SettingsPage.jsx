@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { MdPerson, MdEdit, MdCameraAlt, MdSave, MdClose } from 'react-icons/md';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { uploadFile, validateFile } from '../firebase/storage';
+import { uploadFile } from '../firebase/storage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES, ORG_NAME } from '../utils/constants';
 import toast from 'react-hot-toast';

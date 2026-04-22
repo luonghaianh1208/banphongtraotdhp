@@ -1,5 +1,5 @@
 // Utility functions cho ngày tháng
-import { formatDistanceToNow, isToday, isThisWeek, isThisMonth, differenceInHours, differenceInDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { formatDistanceToNow, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { vi } from 'date-fns/locale';
 
@@ -48,7 +48,6 @@ export const parseVNTime = (dateInput) => {
 // Kiểm tra task trong khoảng thời gian
 export const isTaskInRange = (task, filter) => {
   const deadline = task.deadline?.toDate ? task.deadline.toDate() : new Date(task.deadline);
-  const now = new Date();
 
   switch (filter) {
     case 'today':

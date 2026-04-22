@@ -30,7 +30,7 @@ const iconMap = {
 };
 
 const Sidebar = ({ onClose }) => {
-  const { userProfile, isAdmin, isManager } = useAuth();
+  const { userProfile } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.getItem('theme') === 'dark' ||
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)

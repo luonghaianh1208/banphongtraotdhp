@@ -70,14 +70,9 @@ export const useAutoOverduePenalties = () => {
 
     isProcessingRef.current = true;
     try {
-      for (const penaltyData of penaltiesToCreate) {
-        try {
-          await createPenalty(penaltyData);
-          console.log(`[AutoPenalty] Đã tạo phạt cho user ${penaltyData.userId} — task "${penaltyData.taskTitle}"`);
-        } catch (err) {
-          console.error(`[AutoPenalty] Lỗi tạo phạt cho user ${penaltyData.userId}:`, err);
-        }
-      }
+      await Promise.all(penaltiesToCreate.map(p => createPenalty(p).catch(err => {
+        console.error(`[AutoPenalty] Lỗi tạo phạt cho user ${p.userId}:`, err);
+      })));
     } finally {
       isProcessingRef.current = false;
     }

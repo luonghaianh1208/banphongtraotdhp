@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
-    const { units, loading: unitsLoading } = useUnits();
+    const { loading: unitsLoading } = useUnits();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -93,7 +93,7 @@ const PlansManagePage = () => {
             await updatePlan(editingId, { title: editTitle.trim() });
             toast.success('Đã cập nhật');
             setEditingId(null);
-        } catch (err) { toast.error('Lỗi cập nhật.'); }
+        } catch (_) { toast.error('Lỗi cập nhật.'); }
     };
 
     const handleDelete = async (planId, name) => {
@@ -101,7 +101,7 @@ const PlansManagePage = () => {
         try {
             await deletePlan(planId);
             toast.success('Đã xóa');
-        } catch (err) { toast.error('Lỗi xóa.'); }
+        } catch (_) { toast.error('Lỗi xóa.'); }
     };
 
     const handleBulkDelete = async () => {
@@ -110,7 +110,7 @@ const PlansManagePage = () => {
             for (const id of selected) await deletePlan(id);
             setSelected([]);
             toast.success(`Đã xóa ${selected.length} kế hoạch`);
-        } catch (err) { toast.error('Lỗi xóa hàng loạt.'); }
+        } catch (_) { toast.error('Lỗi xóa hàng loạt.'); }
     };
 
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);

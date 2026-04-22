@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload, MdHourglassTop } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
-import { formatDateTime, formatRelative, formatForInput } from '../../utils/dateUtils';
+import { formatDateTime, formatRelative } from '../../utils/dateUtils';
 import { addNote, updateTask, deleteTask, removeOverduePenaltiesForTask, addNotification } from '../../firebase/firestore';
 import { uploadFile, validateFile } from '../../firebase/storage';
 import { handleApproveTask, handleExtendDeadline, handleRevertApproveTask, handleRemindTask } from '../../hooks/useTaskActions';
@@ -212,7 +212,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
     try {
       await handleRemindTask(task, currentUser.uid);
       toast.success('Đã nhắc việc thành công!');
-      onClose();
+      setTimeout(() => onClose(), 500); // Allow toast to show first
     } catch (err) {
       toast.error('Lỗi khi nhắc việc: ' + err.message);
     } finally {

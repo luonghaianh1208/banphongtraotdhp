@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { NAV_ITEMS } from '../../utils/constants';
 
 const UnitLayout = () => {
-    const { user, isUnit, loading, logout } = useAuth();
+    const { currentUser: user, isUnit, loading, logout } = useAuth();
     const location = useLocation();
 
     if (loading) {

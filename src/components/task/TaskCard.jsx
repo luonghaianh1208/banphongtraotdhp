@@ -3,7 +3,7 @@ import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdC
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { useTaskConfig } from '../../context/TaskConfigContext';
-import { formatDate, formatDateTime } from '../../utils/dateUtils';
+import { formatDateTime } from '../../utils/dateUtils';
 
 const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect }) => {
   const { getCategoryById } = useTaskConfig();
@@ -18,6 +18,9 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
   return (
     <div
       onClick={() => onClick(task)}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(task)}
+      role="button"
+      tabIndex={0}
       className={`bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm p-5 cursor-pointer group transition-all duration-300 relative overflow-hidden hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600 active:scale-[0.98] ${task.isReminded && !task.isCompleted
         ? 'border-rose-500/50 animate-pulse-border shadow-xl shadow-rose-500/10'
         : 'hover:scale-[1.01]'

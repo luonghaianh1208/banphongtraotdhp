@@ -61,7 +61,7 @@ const FilePreviewModal = ({ file, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="relative w-full h-full max-w-5xl max-h-[90vh] m-4 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden slide-in-right">

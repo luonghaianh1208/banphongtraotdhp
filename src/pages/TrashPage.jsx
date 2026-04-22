@@ -4,7 +4,7 @@ import { MdDeleteSweep, MdRestoreFromTrash, MdDeleteForever, MdSelectAll, MdChec
 import { subscribeToTrash, restoreTask, restoreTasks, permanentDeleteTask, permanentDeleteTasks } from '../firebase/firestore';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
-import { formatDateTime, formatRelative } from '../utils/dateUtils';
+import { formatRelative } from '../utils/dateUtils';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import EmptyState from '../components/common/EmptyState';
 import LoadingSpinner from '../components/common/LoadingSpinner';

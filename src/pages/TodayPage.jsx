@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
@@ -29,18 +29,18 @@ const TodayPage = () => {
 
   const isLoading = tasksLoading || usersLoading;
 
-  const activeTasks = tasks.filter(t => !t.isCompleted);
+  const activeTasks = useMemo(() => tasks.filter(t => !t.isCompleted), [tasks]);
 
-  const filteredTasks = activeTasks.filter(task => {
+  const filteredTasks = useMemo(() => activeTasks.filter(task => {
     const deadline = task.deadline?.toDate ? task.deadline.toDate() : new Date(task.deadline);
     switch (viewMode) {
       case 'today': return isToday(deadline);
       case 'week': return isThisWeek(deadline, { weekStartsOn: 1 });
       default: return true;
     }
-  });
+  }), [activeTasks, viewMode]);
 
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
+  const sortedTasks = useMemo(() => [...filteredTasks].sort((a, b) => {
     const statusA = getTaskDisplayStatus(a);
     const statusB = getTaskDisplayStatus(b);
     const order = [TASK_DISPLAY_STATUS.OVERDUE, TASK_DISPLAY_STATUS.URGENT, TASK_DISPLAY_STATUS.NEAR_DUE, TASK_DISPLAY_STATUS.NOT_DUE, TASK_DISPLAY_STATUS.EXTENDED];
@@ -51,12 +51,12 @@ const TodayPage = () => {
     const deadlineA = a.deadline?.toDate ? a.deadline.toDate() : new Date(a.deadline);
     const deadlineB = b.deadline?.toDate ? b.deadline.toDate() : new Date(b.deadline);
     return deadlineA - deadlineB;
-  });
+  }), [filteredTasks]);
 
-  const urgentCount = activeTasks.filter(t => {
+  const urgentCount = useMemo(() => activeTasks.filter(t => {
     const s = getTaskDisplayStatus(t);
     return s === TASK_DISPLAY_STATUS.URGENT || s === TASK_DISPLAY_STATUS.OVERDUE;
-  }).length;
+  }).length, [activeTasks]);
 
   const handleApprove = async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
@@ -138,7 +138,7 @@ const TodayPage = () => {
               { value: 'today', icon: MdToday, label: 'Hôm nay' },
               { value: 'week', icon: MdDateRange, label: 'Tuần này' },
               { value: 'all', icon: MdList, label: 'Tất cả' },
-            ].map(({ value, icon: Icon, label }) => (
+            ].map(({ value, icon: Icon, label }) => ( // eslint-disable-line no-unused-vars
               <button
                 key={value}
                 onClick={() => setViewMode(value)}
@@ -221,7 +221,7 @@ const TodayPage = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value, gradient, iconColor }) => (
+const StatCard = ({ icon: Icon, label, value, gradient, iconColor }) => ( // eslint-disable-line no-unused-vars
   <div className={`glass-card p-6 group hover:scale-[1.02] transition-all duration-500 relative overflow-hidden border-white/40 dark:border-white/5`}>
     <div className={`absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br ${gradient} opacity-20 rounded-full blur-2xl group-hover:opacity-40 transition-opacity duration-700`} />
     <div className="relative z-10">

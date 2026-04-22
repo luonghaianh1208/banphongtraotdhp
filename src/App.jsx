@@ -71,7 +71,7 @@ const PublicRoute = ({ children }) => {
 
 // Route cho trang pending — chỉ hiện khi user đang chờ duyệt
 const PendingRoute = () => {
-  const { currentUser, userProfile, loading, isPending } = useAuth();
+  const { currentUser, loading, isPending } = useAuth();
   if (loading) return <LoadingSpinner fullScreen />;
   if (!currentUser) return <Navigate to="/login" replace />;
   if (!isPending) return <Navigate to="/" replace />;
