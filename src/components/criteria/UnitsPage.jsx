@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd } from 'react-icons/md';
 import { useUnits } from '../../hooks/useUnits';
-import { updateUnit, deleteUnit, batchDeleteUnits } from '../../firebase/criteriaFirestore';
+import { updateUnit } from '../../firebase/criteriaFirestore';
+import { deleteUnitAccount } from '../../firebase/functions';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import { exportUnitTemplate } from '../../utils/exportExcel';
 import { httpsCallable } from 'firebase/functions';
@@ -129,21 +130,23 @@ const UnitsPage = () => {
 
     // Xóa đơn lẻ
     const handleDelete = async (unitId, name) => {
-        if (!confirm(`Xóa đơn vị "${name}"?`)) return;
+        if (!confirm(`Xóa đơn vị "${name}"? Hành động này sẽ xóa vĩnh viễn tài khoản.`)) return;
         try {
-            await deleteUnit(unitId);
-            toast.success('Đã xóa');
-        } catch (err) { toast.error('Lỗi xóa: ' + err.message); }
+            await deleteUnitAccount({ unitId });
+            toast.success('Đã xóa đơn vị');
+        } catch (err) { toast.error('Lỗi xóa: ' + (err.message || 'Không thể xóa')); }
     };
 
     // Xóa hàng loạt
     const handleBulkDelete = async () => {
-        if (!confirm(`Xóa ${selected.length} đơn vị đã chọn?`)) return;
+        if (!confirm(`Xóa ${selected.length} đơn vị đã chọn? Hành động này sẽ xóa vĩnh viễn tài khoản.`)) return;
         try {
-            await batchDeleteUnits(selected);
+            for (const unitId of selected) {
+                await deleteUnitAccount({ unitId });
+            }
             setSelected([]);
             toast.success(`Đã xóa ${selected.length} đơn vị`);
-        } catch (err) { toast.error('Lỗi xóa hàng loạt: ' + err.message); }
+        } catch (err) { toast.error('Lỗi xóa hàng loạt: ' + (err.message || 'Không thể xóa')); }
     };
 
     // Toggle chọn

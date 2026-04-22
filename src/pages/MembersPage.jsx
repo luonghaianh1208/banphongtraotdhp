@@ -1,10 +1,11 @@
 // MembersPage — quản lý thành viên (chỉ admin)
 import { useState } from 'react';
-import { MdEdit, MdPersonOff, MdCheckCircle, MdPerson, MdHourglassTop } from 'react-icons/md';
+import { MdEdit, MdDeleteForever, MdCheckCircle, MdPerson, MdHourglassTop } from 'react-icons/md';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { deleteUserAccount } from '../firebase/functions';
 import Modal from '../components/common/Modal';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -15,7 +16,7 @@ const MembersPage = () => {
   const { users, loading } = useUsers();
   const { canManageUsers } = useAuth();
   const [editingUser, setEditingUser] = useState(null);
-  const [confirmDisable, setConfirmDisable] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Phân loại users
@@ -74,17 +75,17 @@ const MembersPage = () => {
     }
   };
 
-  // Vô hiệu hóa
-  const handleDisable = async (userId) => {
+  // Xóa tài khoản
+  const handleDeleteUser = async (userId) => {
+    setFormLoading(true);
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        isActive: false,
-        status: 'disabled',
-        updatedAt: serverTimestamp(),
-      });
-      toast.success('Đã vô hiệu hóa tài khoản');
+      await deleteUserAccount({ userId });
+      toast.success('Đã xóa tài khoản');
+      setConfirmDelete(null);
     } catch (err) {
-      toast.error('Lỗi: ' + err.message);
+      toast.error('Lỗi: ' + (err.message || 'Không thể xóa'));
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -188,11 +189,10 @@ const MembersPage = () => {
                   </td>
                   <td className="py-3 px-4 text-gray-500">{user.email}</td>
                   <td className="py-3 px-4 text-center">
-                    <span className={`badge ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-700' :
-                      user.role === 'manager' ? 'bg-amber-100 text-amber-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
+                    <span className={`badge ${user.role === 'admin' ? 'bg-red-100 text-red-700' :
+                        user.role === 'manager' ? 'bg-amber-100 text-amber-700' :
+                          'bg-blue-100 text-blue-700'
+                      }`}>
                       {ROLES[user.role]?.label || user.role}
                     </span>
                   </td>
@@ -211,11 +211,11 @@ const MembersPage = () => {
                         </button>
                         {user.role !== 'admin' && (
                           <button
-                            onClick={() => setConfirmDisable(user)}
+                            onClick={() => setConfirmDelete(user)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Vô hiệu hóa"
+                            title="Xóa tài khoản"
                           >
-                            <MdPersonOff size={18} />
+                            <MdDeleteForever size={18} />
                           </button>
                         )}
                       </div>
@@ -236,11 +236,10 @@ const MembersPage = () => {
               key={key}
               onClick={() => handleRoleChange(editingUser.id, key)}
               disabled={formLoading}
-              className={`w-full text-left p-3 rounded-lg border transition-all ${
-                editingUser?.role === key
+              className={`w-full text-left p-3 rounded-lg border transition-all ${editingUser?.role === key
                   ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-gray-200 hover:border-gray-300 text-gray-600'
-              }`}
+                }`}
             >
               <span className="font-medium">{label}</span>
               {editingUser?.role === key && <span className="text-xs ml-2">(hiện tại)</span>}
@@ -249,14 +248,14 @@ const MembersPage = () => {
         </div>
       </Modal>
 
-      {/* Confirm disable */}
+      {/* Confirm xóa */}
       <ConfirmDialog
-        isOpen={!!confirmDisable}
-        onClose={() => setConfirmDisable(null)}
-        onConfirm={() => handleDisable(confirmDisable?.id)}
-        title="Vô hiệu hóa tài khoản"
-        message={`Bạn chắc chắn muốn vô hiệu hóa tài khoản "${confirmDisable?.displayName}"?`}
-        confirmText="Vô hiệu hóa"
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => handleDeleteUser(confirmDelete?.id)}
+        title="Xóa tài khoản"
+        message={`Bạn chắc chắn muốn xóa tài khoản "${confirmDelete?.displayName}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa vĩnh viễn"
         danger
       />
     </div>

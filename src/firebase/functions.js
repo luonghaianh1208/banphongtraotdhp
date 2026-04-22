@@ -14,5 +14,8 @@ export const approveTask = httpsCallable(functions, 'approveTask');
 // Gia hạn deadline (admin hoặc manager)
 export const extendDeadline = httpsCallable(functions, 'extendDeadline');
 
-// Vô hiệu hóa tài khoản (chỉ admin)
-export const disableUser = httpsCallable(functions, 'disableUser');
+// Xóa tài khoản thành viên (chỉ admin) — xóa Auth + Firestore
+export const deleteUserAccount = httpsCallable(functions, 'deleteUser');
+
+// Xóa tài khoản đơn vị (chỉ admin) — xóa Auth + Firestore
+export const deleteUnitAccount = httpsCallable(functions, 'deleteUnit');

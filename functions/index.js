@@ -573,3 +573,54 @@ exports.createUnit = onCall(async (request) => {
 
   return { success: true, uid: userRecord.uid, message: `Đã tạo đơn vị: ${unitName}` };
 });
+
+// === 14. XÓA TÀI KHOẢN THÀNH VIÊN (ADMIN) ===
+exports.deleteUser = onCall(async (request) => {
+  const { userId } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdmin(callerUid);
+
+  if (!userId) throw new HttpsError("invalid-argument", "Thiếu userId");
+  if (userId === callerUid) throw new HttpsError("failed-precondition", "Không thể xóa chính mình");
+
+  try {
+    // Xóa Firebase Auth user
+    await getAuth().deleteUser(userId);
+  } catch (error) {
+    if (error.code !== "auth/user-not-found") {
+      throw new HttpsError("internal", `Lỗi xóa Auth: ${error.message}`);
+    }
+  }
+
+  // Xóa Firestore document
+  await db.collection("users").doc(userId).delete();
+
+  return { success: true, message: "Đã xóa tài khoản thành viên" };
+});
+
+// === 15. XÓA TÀI KHOẢN ĐƠN VỊ (ADMIN) ===
+exports.deleteUnit = onCall(async (request) => {
+  const { unitId } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdmin(callerUid);
+
+  if (!unitId) throw new HttpsError("invalid-argument", "Thiếu unitId");
+
+  try {
+    // Xóa Firebase Auth user
+    await getAuth().deleteUser(unitId);
+  } catch (error) {
+    if (error.code !== "auth/user-not-found") {
+      throw new HttpsError("internal", `Lỗi xóa Auth: ${error.message}`);
+    }
+  }
+
+  // Xóa Firestore document
+  await db.collection("units").doc(unitId).delete();
+
+  return { success: true, message: "Đã xóa tài khoản đơn vị" };
+});
