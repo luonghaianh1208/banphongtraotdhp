@@ -20,8 +20,6 @@ const DashboardPage = () => {
   const { tasks, loading: tl } = useTasks();
   const { users, loading: ul } = useUsers();
 
-  if (tl || ul) return <LoadingSpinner />;
-
   const counts = useMemo(() => countTasksByStatus(tasks), [tasks]);
   const overdueByMember = useMemo(() => getOverdueByMember(tasks, users), [tasks, users]);
 
@@ -40,6 +38,8 @@ const DashboardPage = () => {
     const active = userTasks.filter(t => !t.isCompleted).length;
     return { name: user.displayName?.split(' ').pop() || '?', 'Hoàn thành': done, 'Đang làm': active };
   }), [users, tasks]);
+
+  if (tl || ul) return <LoadingSpinner />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-12 animate-fade-in">
