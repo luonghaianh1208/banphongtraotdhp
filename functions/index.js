@@ -537,12 +537,23 @@ exports.createUnit = onCall(async (request) => {
   // Tự sinh mật khẩu ngẫu nhiên (đơn vị chỉ đăng nhập bằng Google)
   const randomPassword = require("crypto").randomBytes(16).toString("hex");
 
-  // Tạo Firebase Auth user cho đơn vị
-  const userRecord = await getAuth().createUser({
-    email,
-    password: randomPassword,
-    displayName: unitName,
-  });
+  let userRecord;
+  try {
+    // Tạo Firebase Auth user cho đơn vị
+    userRecord = await getAuth().createUser({
+      email,
+      password: randomPassword,
+      displayName: unitName,
+    });
+  } catch (error) {
+    if (error.code === "auth/email-already-exists") {
+      throw new HttpsError("already-exists", `Email "${email}" đã được sử dụng cho tài khoản khác.`);
+    }
+    if (error.code === "auth/invalid-email") {
+      throw new HttpsError("invalid-argument", `Email "${email}" không hợp lệ.`);
+    }
+    throw new HttpsError("internal", `Lỗi tạo tài khoản: ${error.message}`);
+  }
 
   // Tạo document trong collection `units` với uid làm doc ID
   await db.collection("units").doc(userRecord.uid).set({
