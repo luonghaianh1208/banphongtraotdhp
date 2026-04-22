@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
@@ -238,8 +239,8 @@ const PlansManagePage = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`badge ${plan.type === 'contest'
-                                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-                                                    : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
+                                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                                                : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
                                                 }`}>
                                                 {plan.type === 'contest' ? 'Hội thi' : 'Kế hoạch'}
                                             </span>
@@ -317,9 +318,11 @@ const PlansManagePage = () => {
             </div>
 
             {/* Modal tạo mới */}
-            {showAddModal && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-300">
-                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col slide-in-from-bottom-8">
+            {showAddModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 fade-in" onClick={() => setShowAddModal(false)}></div>
+                    <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col z-10 slide-in-from-bottom-8">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Thêm Kế hoạch mới</h3>
                             <button
@@ -439,7 +442,8 @@ const PlansManagePage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

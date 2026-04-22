@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd } from 'react-icons/md';
 import { useUnits } from '../../hooks/useUnits';
 import { updateUnit, deleteUnit, batchDeleteUnits } from '../../firebase/criteriaFirestore';
@@ -380,8 +381,9 @@ const UnitsPage = () => {
             </div>
 
             {/* Premium Add Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {showAddModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
                     <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowAddModal(false)}></div>
                     <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full relative z-10 border border-white/20 dark:border-gray-800 animate-fade-in-up">
                         <div className="flex justify-between items-center mb-6">
@@ -470,7 +472,8 @@ const UnitsPage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

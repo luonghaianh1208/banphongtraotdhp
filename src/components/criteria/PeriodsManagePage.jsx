@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useSubmissionPeriods } from '../../hooks/useSubmissionPeriods';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
@@ -191,9 +192,11 @@ const PeriodsManagePage = () => {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-300">
-                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-md w-full slide-in-from-bottom-8">
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 fade-in" onClick={() => setShowModal(false)}></div>
+                    <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-md w-full z-10 slide-in-from-bottom-8">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Mở Đợt Báo Cáo</h3>
                             <button
@@ -285,7 +288,8 @@ const PeriodsManagePage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

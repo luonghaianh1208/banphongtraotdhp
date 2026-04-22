@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MdDownload, MdDelete, MdEdit, MdClose, MdCheck } from 'react-icons/md';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { createCriteriaSet, deleteCriteriaSet, updateCriteriaSet } from '../../firebase/criteriaFirestore';
@@ -132,8 +133,8 @@ const CriteriaSetsPage = () => {
                     <div
                         key={set.id}
                         className={`group relative card glass p-8 flex flex-col h-full border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${selected.includes(set.id)
-                                ? 'border-primary-500 ring-2 ring-primary-500/20 bg-primary-50/10 dark:bg-primary-900/10 scale-[1.02]'
-                                : 'border-white/40 dark:border-gray-800/40 hover:border-primary-300 dark:hover:border-primary-700'
+                            ? 'border-primary-500 ring-2 ring-primary-500/20 bg-primary-50/10 dark:bg-primary-900/10 scale-[1.02]'
+                            : 'border-white/40 dark:border-gray-800/40 hover:border-primary-300 dark:hover:border-primary-700'
                             }`}
                         style={{ animationDelay: `${idx * 50}ms` }}
                     >
@@ -228,8 +229,9 @@ const CriteriaSetsPage = () => {
             </div>
 
             {/* Premium Create Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
                     <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-md animate-fade-in" onClick={() => !isSubmitting && setShowModal(false)}></div>
                     <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-premium p-8 max-w-xl w-full relative z-10 border border-white/20 dark:border-gray-800/50 animate-fade-in-up max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-8 shrink-0">
@@ -348,7 +350,8 @@ const CriteriaSetsPage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
