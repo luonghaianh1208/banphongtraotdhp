@@ -1,10 +1,9 @@
-// Modal component — popup dialog tái sử dụng
-import { useEffect, useRef } from 'react';
+// Modal component — popup dialog tái sử dụng (React Portal)
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MdClose } from 'react-icons/md';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
-  const overlayRef = useRef(null);
-
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -29,20 +28,25 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     full: 'max-w-6xl',
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === overlayRef.current) onClose();
-  };
-
-  return (
+  return createPortal(
     <div
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
-      <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden slide-in-right`}>
+      {/* Overlay backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm fade-in"
+        onClick={onClose}
+      />
+
+      {/* Modal box */}
+      <div
+        className={`relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden z-10 slide-in-right`}
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -56,7 +60,8 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
