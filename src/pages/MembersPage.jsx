@@ -20,8 +20,9 @@ const MembersPage = () => {
   const [formLoading, setFormLoading] = useState(false);
 
   // Phân loại users
-  const pendingUsers = users.filter(u => u.status === 'pending' || (u.isActive === false && !u.status));
-  const approvedUsers = users.filter(u => u.status !== 'pending' && u.isActive !== false);
+  const pendingUsers = users.filter(u => u.status === 'pending');
+  const activeUsers = users.filter(u => u.status !== 'pending' && u.isActive !== false);
+  const disabledUsers = users.filter(u => u.status !== 'pending' && u.isActive === false);
 
   // Duyệt user mới
   const handleApproveUser = async (userId, role = 'member') => {
@@ -96,7 +97,7 @@ const MembersPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{approvedUsers.length} thành viên hoạt động</p>
+          <p className="text-sm text-gray-500">{activeUsers.length} thành viên hoạt động{disabledUsers.length > 0 && ` · ${disabledUsers.length} đã vô hiệu hóa`}</p>
         </div>
       </div>
 
@@ -159,7 +160,7 @@ const MembersPage = () => {
         </div>
       )}
 
-      {/* === APPROVED MEMBERS === */}
+      {/* === ACTIVE MEMBERS === */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -173,7 +174,7 @@ const MembersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {approvedUsers.map(user => (
+              {activeUsers.map(user => (
                 <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
@@ -190,8 +191,8 @@ const MembersPage = () => {
                   <td className="py-3 px-4 text-gray-500">{user.email}</td>
                   <td className="py-3 px-4 text-center">
                     <span className={`badge ${user.role === 'admin' ? 'bg-red-100 text-red-700' :
-                        user.role === 'manager' ? 'bg-amber-100 text-amber-700' :
-                          'bg-blue-100 text-blue-700'
+                      user.role === 'manager' ? 'bg-amber-100 text-amber-700' :
+                        'bg-blue-100 text-blue-700'
                       }`}>
                       {ROLES[user.role]?.label || user.role}
                     </span>
@@ -223,6 +224,46 @@ const MembersPage = () => {
                   )}
                 </tr>
               ))}
+
+              {/* Disabled/Rejected users */}
+              {disabledUsers.map(user => (
+                <tr key={user.id} className="border-b border-gray-50 bg-gray-50/50 opacity-70 hover:opacity-100 transition-all">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="" className="w-8 h-8 rounded-full grayscale" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-semibold text-xs">
+                          {user.displayName?.charAt(0)?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="font-medium text-gray-500">{user.displayName}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-gray-400">{user.email}</td>
+                  <td className="py-3 px-4 text-center">
+                    <span className="badge bg-gray-100 text-gray-500">
+                      {ROLES[user.role]?.label || user.role}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <span className="badge bg-red-50 text-red-500">
+                      {user.status === 'rejected' ? 'Đã từ chối' : 'Đã vô hiệu hóa'}
+                    </span>
+                  </td>
+                  {canManageUsers && (
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => setConfirmDelete(user)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Xóa tài khoản"
+                      >
+                        <MdDeleteForever size={18} />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -237,8 +278,8 @@ const MembersPage = () => {
               onClick={() => handleRoleChange(editingUser.id, key)}
               disabled={formLoading}
               className={`w-full text-left p-3 rounded-lg border transition-all ${editingUser?.role === key
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                : 'border-gray-200 hover:border-gray-300 text-gray-600'
                 }`}
             >
               <span className="font-medium">{label}</span>

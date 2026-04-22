@@ -31,3 +31,17 @@ dist-ssr
 # AI / Dev Folders
 .agent/
 CLAUDE.md
+
+# Firebase
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+functions/node_modules/
+
+# Temp / Export files
+tmp_*.json
+*.tmp
+
+# Review / Report files (dev only)
+FULL-REVIEW-REPORT.md
