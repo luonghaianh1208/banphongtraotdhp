@@ -12,6 +12,7 @@ const PeriodsManagePage = () => {
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [criteriaSearch, setCriteriaSearch] = useState('');
+    const [expandedGroups, setExpandedGroups] = useState({});
 
     const [formData, setFormData] = useState({
         title: '',
@@ -286,53 +287,116 @@ const PeriodsManagePage = () => {
                                 </div>
                                 {criteriaSets.length === 0 ? (
                                     <p className="text-sm text-slate-400 dark:text-slate-500 italic p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">Chưa có bộ tiêu chí nào. Vui lòng tạo trước.</p>
-                                ) : (
-                                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                                        {/* Search input — sticky */}
-                                        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-3 py-2">
-                                            <div className="relative">
-                                                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Tìm bộ tiêu chí..."
-                                                    value={criteriaSearch}
-                                                    onChange={e => setCriteriaSearch(e.target.value)}
-                                                    className="input w-full pl-9 py-1.5 text-sm"
-                                                />
+                                ) : (() => {
+                                    const filtered = criteriaSets.filter(c => c.title.toLowerCase().includes(criteriaSearch.toLowerCase()));
+                                    const grouped = filtered.reduce((acc, c) => {
+                                        const key = c.academicYear || 'Không rõ năm';
+                                        if (!acc[key]) acc[key] = [];
+                                        acc[key].push(c);
+                                        return acc;
+                                    }, {});
+                                    const groupKeys = Object.keys(grouped).sort().reverse();
+
+                                    return (
+                                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                            {/* Search */}
+                                            <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-3 py-2">
+                                                <div className="relative">
+                                                    <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Tìm bộ tiêu chí..."
+                                                        value={criteriaSearch}
+                                                        onChange={e => setCriteriaSearch(e.target.value)}
+                                                        className="input w-full pl-9 py-1.5 text-sm"
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                        {/* Checkbox list */}
-                                        <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                                            {criteriaSets
-                                                .filter(c => c.title.toLowerCase().includes(criteriaSearch.toLowerCase()))
-                                                .map(c => {
-                                                    const checked = formData.criteriaSetIds.includes(c.id);
+                                            {/* Accordion groups */}
+                                            <div className="max-h-56 overflow-y-auto">
+                                                {groupKeys.length === 0 && (
+                                                    <p className="p-4 text-sm text-slate-400 text-center italic">Không tìm thấy "{criteriaSearch}"</p>
+                                                )}
+                                                {groupKeys.map(year => {
+                                                    const items = grouped[year];
+                                                    const isOpen = expandedGroups[year] !== false;
+                                                    const selectedInGroup = items.filter(c => formData.criteriaSetIds.includes(c.id)).length;
+                                                    const allSelectedInGroup = selectedInGroup === items.length;
+
+                                                    const toggleGroup = () => setExpandedGroups(prev => ({ ...prev, [year]: !isOpen }));
+                                                    const toggleGroupAll = (e) => {
+                                                        e.stopPropagation();
+                                                        const groupIds = items.map(c => c.id);
+                                                        setFormData(p => ({
+                                                            ...p,
+                                                            criteriaSetIds: allSelectedInGroup
+                                                                ? p.criteriaSetIds.filter(id => !groupIds.includes(id))
+                                                                : [...new Set([...p.criteriaSetIds, ...groupIds])]
+                                                        }));
+                                                    };
+
                                                     return (
-                                                        <label
-                                                            key={c.id}
-                                                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 ${checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={checked}
-                                                                onChange={() => toggleCriteriaSet(c.id)}
-                                                                className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
-                                                            />
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.title}</p>
-                                                                <p className="text-[11px] text-slate-400">{c.academicYear || 'Chưa rõ'} · {c.groups?.length || 0} nhóm</p>
-                                                            </div>
-                                                        </label>
+                                                        <div key={year} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                                                            {/* Group header */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={toggleGroup}
+                                                                className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                                                    </svg>
+                                                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{year}</span>
+                                                                    <span className="text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-full font-semibold">
+                                                                        {selectedInGroup}/{items.length}
+                                                                    </span>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={toggleGroupAll}
+                                                                    className={`text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${allSelectedInGroup
+                                                                            ? 'bg-rose-50 text-rose-500 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400'
+                                                                            : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                                                        }`}
+                                                                >
+                                                                    {allSelectedInGroup ? 'Bỏ nhóm' : 'Chọn nhóm'}
+                                                                </button>
+                                                            </button>
+                                                            {/* Group items */}
+                                                            {isOpen && (
+                                                                <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                                                                    {items.map(c => {
+                                                                        const checked = formData.criteriaSetIds.includes(c.id);
+                                                                        return (
+                                                                            <label
+                                                                                key={c.id}
+                                                                                className={`flex items-center gap-3 pl-10 pr-4 py-2.5 cursor-pointer transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 ${checked ? 'bg-emerald-50/70 dark:bg-emerald-900/15' : ''}`}
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={checked}
+                                                                                    onChange={() => toggleCriteriaSet(c.id)}
+                                                                                    className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
+                                                                                />
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{c.title}</p>
+                                                                                    <p className="text-[10px] text-slate-400">{c.groups?.length || 0} nhóm tiêu chí</p>
+                                                                                </div>
+                                                                            </label>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     );
                                                 })}
-                                            {criteriaSets.filter(c => c.title.toLowerCase().includes(criteriaSearch.toLowerCase())).length === 0 && (
-                                                <p className="p-4 text-sm text-slate-400 text-center italic">Không tìm thấy "{criteriaSearch}"</p>
-                                            )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-1 uppercase tracking-wider">
                                     Đã chọn {formData.criteriaSetIds.length}/{criteriaSets.length} bộ tiêu chí
                                 </p>
