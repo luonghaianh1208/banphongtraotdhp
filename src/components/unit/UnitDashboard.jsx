@@ -1,26 +1,21 @@
 import { Link } from 'react-router-dom';
 import { MdAssignment, MdStars, MdChevronRight, MdAccessTime, MdCalendarToday } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
-import { useSubmissionPeriods } from '../../hooks/useSubmissionPeriods';
+import { useUnitAssignments } from '../../hooks/useAssignments';
+import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { usePlans } from '../../hooks/usePlans';
 
 const UnitDashboard = () => {
     const { userProfile } = useAuth();
-    const { periods, loading: periodsLoading } = useSubmissionPeriods();
+    const unitId = userProfile?.unitId;
+    const { assignments, loading: assignLoading } = useUnitAssignments(unitId);
+    const { criteriaSets } = useCriteriaSets();
     const { plans, loading: plansLoading } = usePlans();
 
-    const loading = periodsLoading || plansLoading;
+    const loading = assignLoading || plansLoading;
 
     const unitBlockId = userProfile?.blockId;
-    const unitTypeId = userProfile?.typeId;
-    const unitTypeKey = `${unitBlockId}:${unitTypeId}`;
-
-    const isPeriodVisible = (period) => {
-        if (!period.targetBlocks?.length) return true;
-        if (!period.targetBlocks.includes(unitBlockId)) return false;
-        if (period.targetTypes?.length > 0 && !period.targetTypes.includes(unitTypeKey)) return false;
-        return true;
-    };
+    const unitTypeKey = `${unitBlockId}:${userProfile?.typeId}`;
 
     const isPlanVisible = (plan) => {
         if (!plan.targetBlocks?.length) return true;
@@ -37,9 +32,12 @@ const UnitDashboard = () => {
         );
     }
 
-    const activePeriods = periods.filter(p =>
-        ['active', 'published'].includes(p.status) && isPeriodVisible(p)
-    );
+    // Enrich assignments with criteria set data
+    const enriched = assignments.map(a => {
+        const cs = criteriaSets.find(s => s.id === a.criteriaSetId);
+        return { ...a, criteriaSet: cs };
+    });
+
     const activePublishedPlans = plans.filter(p =>
         ['published', 'active'].includes(p.status) && isPlanVisible(p)
     );
@@ -59,7 +57,7 @@ const UnitDashboard = () => {
                         <span className="text-emerald-300">{userProfile?.unitName || 'Đơn vị'}</span>!
                     </h2>
                     <p className="text-primary-50/80 max-w-2xl text-lg font-medium leading-relaxed">
-                        Chào mừng quay trở lại hệ thống quản trị thi đua. Bạn có <span className="text-white font-bold">{activePeriods.length} kỳ đánh giá</span> đang mở
+                        Chào mừng quay trở lại hệ thống quản trị thi đua. Bạn có <span className="text-white font-bold">{enriched.length} tiêu chí</span> được giao
                         {activePublishedPlans.length > 0 && <> và <span className="text-white font-bold">{activePublishedPlans.length} kế hoạch/hội thi</span> cần tham gia</>}.
                     </p>
                 </div>
@@ -76,26 +74,28 @@ const UnitDashboard = () => {
                             <MdAssignment size={28} />
                         </div>
                         <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-200 dark:border-emerald-900/20">
-                            {activePeriods.length} kỳ đang mở
+                            {enriched.length} tiêu chí được giao
                         </span>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Chỉ tiêu Thi đua</h3>
                     <p className="text-gray-500 dark:text-gray-400 font-medium mb-4 leading-relaxed">
-                        Theo dõi và nộp báo cáo kết quả thực hiện các chỉ tiêu thi đua theo quý và năm.
+                        Theo dõi và nộp báo cáo kết quả thực hiện các chỉ tiêu thi đua được giao cho đơn vị.
                     </p>
 
-                    {/* Quick list of active periods */}
-                    {activePeriods.length > 0 && (
+                    {/* Quick list of assigned criteria */}
+                    {enriched.length > 0 && (
                         <div className="space-y-2 mb-6">
-                            {activePeriods.slice(0, 3).map(p => (
-                                <Link key={p.id} to={`/unit/submit/${p.id}`}
+                            {enriched.slice(0, 3).map(item => (
+                                <Link key={item.id} to={`/unit/submit/${item.criteriaSetId}`}
                                     className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors group/item">
                                     <MdCalendarToday size={16} className="text-gray-400 group-hover/item:text-emerald-500 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{p.title}</p>
+                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
+                                            {item.criteriaSet?.title || item.criteriaSetTitle || 'Tiêu chí'}
+                                        </p>
                                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                                             <MdAccessTime size={12} />
-                                            Hạn: {p.deadline ? new Date(p.deadline).toLocaleDateString('vi-VN') : '—'}
+                                            Năm: {item.criteriaSet?.academicYear || '—'}
                                         </p>
                                     </div>
                                     <MdChevronRight size={16} className="text-gray-300 group-hover/item:text-emerald-500" />

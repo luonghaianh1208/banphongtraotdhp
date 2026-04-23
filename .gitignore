@@ -53,3 +53,9 @@ lint.log
 
 # Claude / AI settings
 .claude/
+
+# Legacy / Removed files
+src/components/criteria/PeriodsManagePage.jsx
+src/hooks/useSubmissionPeriods.js
+src/assets/react.svg
+src/assets/vite.svg
