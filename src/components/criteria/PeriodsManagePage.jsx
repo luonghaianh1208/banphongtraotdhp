@@ -16,13 +16,37 @@ const PeriodsManagePage = () => {
         title: '',
         academicYear: '',
         deadline: '',
-        criteriaSetId: ''
+        criteriaSetIds: []
     });
+
+    const toggleCriteriaSet = (id) => {
+        setFormData(p => ({
+            ...p,
+            criteriaSetIds: p.criteriaSetIds.includes(id)
+                ? p.criteriaSetIds.filter(x => x !== id)
+                : [...p.criteriaSetIds, id]
+        }));
+    };
+
+    const toggleAllCriteriaSets = () => {
+        setFormData(p => ({
+            ...p,
+            criteriaSetIds: p.criteriaSetIds.length === criteriaSets.length
+                ? []
+                : criteriaSets.map(c => c.id)
+        }));
+    };
+
+    // Lấy tên các bộ tiêu chí theo IDs (backward compat: hỗ trợ cả criteriaSetId cũ và criteriaSetIds mới)
+    const getCriteriaLabels = (period) => {
+        const ids = period.criteriaSetIds || (period.criteriaSetId ? [period.criteriaSetId] : []);
+        return ids.map(id => criteriaSets.find(c => c.id === id)?.title).filter(Boolean);
+    };
 
     const handleCreate = async (e) => {
         e.preventDefault();
-        if (!formData.criteriaSetId) {
-            toast.error('Vui lòng chọn một Bộ tiêu chí định mức!');
+        if (formData.criteriaSetIds.length === 0) {
+            toast.error('Vui lòng chọn ít nhất một Bộ tiêu chí!');
             return;
         }
 
@@ -32,11 +56,12 @@ const PeriodsManagePage = () => {
                 title: formData.title,
                 academicYear: formData.academicYear,
                 deadline: new Date(formData.deadline).toISOString(),
-                criteriaSetId: formData.criteriaSetId,
+                criteriaSetIds: formData.criteriaSetIds,
+                criteriaSetId: formData.criteriaSetIds[0],
                 status: 'active',
             });
             setShowModal(false);
-            setFormData({ title: '', academicYear: '', deadline: '', criteriaSetId: '' });
+            setFormData({ title: '', academicYear: '', deadline: '', criteriaSetIds: [] });
             toast.success('Tạo đợt chấm điểm thành công!');
         } catch (err) {
             console.error(err);
@@ -112,11 +137,14 @@ const PeriodsManagePage = () => {
                                             <div className="font-semibold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                                 {period.title}
                                             </div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-1.5 mt-1">
+                                                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                                 </svg>
-                                                {criteriaSets.find(c => c.id === period.criteriaSetId)?.title || 'Đang rà soát...'}
+                                                {getCriteriaLabels(period).length > 0
+                                                    ? getCriteriaLabels(period).join(' · ')
+                                                    : <span className="italic">Đang rà soát...</span>
+                                                }
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -244,23 +272,45 @@ const PeriodsManagePage = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Bộ tiêu chí áp dụng</label>
-                                <select
-                                    required
-                                    value={formData.criteriaSetId}
-                                    onChange={e => setFormData(p => ({ ...p, criteriaSetId: e.target.value }))}
-                                    className="input w-full"
-                                >
-                                    <option value="" disabled>-- Chọn bộ tiêu chí --</option>
-                                    {criteriaSets.map(c => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.title} ({c.academicYear})
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-1 mt-1 uppercase tracking-wider">
-                                    Sẽ sử dụng khung điểm từ bộ tiêu chí này
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Bộ tiêu chí áp dụng</label>
+                                    <button
+                                        type="button"
+                                        onClick={toggleAllCriteriaSets}
+                                        className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                                    >
+                                        {formData.criteriaSetIds.length === criteriaSets.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                                    </button>
+                                </div>
+                                {criteriaSets.length === 0 ? (
+                                    <p className="text-sm text-slate-400 dark:text-slate-500 italic p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">Chưa có bộ tiêu chí nào. Vui lòng tạo trước.</p>
+                                ) : (
+                                    <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
+                                        {criteriaSets.map(c => {
+                                            const checked = formData.criteriaSetIds.includes(c.id);
+                                            return (
+                                                <label
+                                                    key={c.id}
+                                                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 ${checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={() => toggleCriteriaSet(c.id)}
+                                                        className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.title}</p>
+                                                        <p className="text-[11px] text-slate-400">{c.academicYear || 'Chưa rõ'} · {c.groups?.length || 0} nhóm</p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-1 uppercase tracking-wider">
+                                    Đã chọn {formData.criteriaSetIds.length}/{criteriaSets.length} bộ tiêu chí
                                 </p>
                             </div>
 
