@@ -45,3 +45,11 @@ tmp_*.json
 
 # Review / Report files (dev only)
 FULL-REVIEW-REPORT.md
+*-report.md
+*-review-report.md
+prompt-*.md
+task.md
+lint.log
+
+# Claude / AI settings
+.claude/
