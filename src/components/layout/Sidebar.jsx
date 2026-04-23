@@ -4,7 +4,7 @@ import {
   MdToday, MdAssignment, MdDashboard, MdGroup, MdSettings,
   MdLogout, MdDeleteSweep, MdTune, MdPerson, MdGavel, MdInfo,
   MdAccountBalance, MdFactCheck, MdAssignmentTurnedIn, MdEventNote,
-  MdCorporateFare, MdArticle, MdDarkMode, MdLightMode
+  MdCorporateFare, MdArticle, MdDarkMode, MdLightMode, MdDateRange
 } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { logout } from '../../firebase/auth';
@@ -26,7 +26,8 @@ const iconMap = {
   MdAssignmentTurnedIn: MdAssignmentTurnedIn,
   MdEventNote: MdEventNote,
   MdCorporateFare: MdCorporateFare,
-  MdArticle: MdArticle
+  MdArticle: MdArticle,
+  MdDateRange: MdDateRange
 };
 
 const Sidebar = ({ onClose }) => {
