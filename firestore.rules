@@ -92,5 +92,17 @@ service cloud.firestore {
       allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
       allow delete: if isAdminOrManager();
     }
+
+    match /criteriaAssignments/{assignId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminOrManager();
+    }
+
+    match /criteriaSubmissions/{subId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdminOrManager();
+    }
   }
 }
