@@ -15,7 +15,6 @@ const PAGE_TITLES = {
   '/settings': 'Cài đặt',
   '/system-info': 'Thông tin hệ thống',
   '/criteria-sets': 'Quản lý Bộ tiêu chí',
-  '/periods': 'Quản lý Đợt đánh giá',
   '/plans-manage': 'Quản lý Kế hoạch',
   '/units': 'Danh sách Đơn vị',
   '/penalties': 'Quản lý Phiếu phạt',

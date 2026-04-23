@@ -27,6 +27,9 @@ export const NotificationProvider = ({ children }) => {
     const unsubscribe = subscribeToNotifications(currentUser.uid, (notifs) => {
       setNotifications(notifs);
       setLoading(false);
+    }, (err) => {
+      console.error('[NotificationContext] Lỗi realtime:', err);
+      setLoading(false);
     });
 
     return unsubscribe;

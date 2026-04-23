@@ -3,14 +3,15 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSubmissions } from '../../hooks/useSubmissions';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
+import { useAuth } from '../../context/AuthContext';
 import { updateSubmission } from '../../firebase/criteriaFirestore';
 import GradeInputCard from './GradeInputCard';
-import ConditionRow from './ConditionRow';
-import { MdArrowBack, MdSave, MdTrendingUp, MdDescription, MdAttachFile } from 'react-icons/md';
+import { MdArrowBack, MdSave, MdTrendingUp, MdDescription, MdAttachFile, MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 const CriteriaDetailPage = () => {
     const { periodId, submissionId } = useParams();
     const navigate = useNavigate();
+    const { userProfile } = useAuth();
 
     const { submissions, loading: subLoading } = useSubmissions(periodId);
     const { criteriaSets, loading: criteriaLoading } = useCriteriaSets();
@@ -19,19 +20,14 @@ const CriteriaDetailPage = () => {
     const [criteriaSet, setCriteriaSet] = useState(null);
     const [gradeData, setGradeData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+    const [expandedTC, setExpandedTC] = useState({});
 
     useEffect(() => {
         if (!subLoading && submissions.length > 0) {
             const sub = submissions.find(s => s.id === submissionId);
             setSubmission(sub);
-
-            // Initialize grading data from existing submission
-            // We want to support both old flat format and new object format
-            if (sub && sub.gradedPoints) {
-                setGradeData(sub.gradedPoints);
-            } else {
-                setGradeData({});
-            }
+            if (sub && sub.gradedPoints) setGradeData(sub.gradedPoints);
+            else setGradeData({});
         }
     }, [subLoading, submissions, submissionId]);
 
@@ -39,27 +35,32 @@ const CriteriaDetailPage = () => {
         if (!criteriaLoading && submission && criteriaSets.length > 0) {
             const set = criteriaSets.find(c => c.id === submission.criteriaSetId);
             setCriteriaSet(set);
+            // Expand all tiêu chí by default
+            if (set) {
+                const exp = {};
+                (set.tieuChi || set.groups || []).forEach(tc => { exp[tc.id] = true; });
+                setExpandedTC(exp);
+            }
         }
     }, [criteriaLoading, submission, criteriaSets]);
 
-    const handleGradeChange = (conditionId, field, value) => {
-        setGradeData(prev => {
-            const current = prev[conditionId] || { officialScore: '', feedback: '' };
-            return {
-                ...prev,
-                [conditionId]: {
-                    ...current,
-                    [field]: field === 'officialScore' ? (value === '' ? '' : Number(value)) : value
-                }
-            };
-        });
+    const toggleTC = (tcId) => setExpandedTC(prev => ({ ...prev, [tcId]: !prev[tcId] }));
+
+    // Grade change at mục level
+    const handleGradeChange = (mucId, field, value) => {
+        setGradeData(prev => ({
+            ...prev,
+            [mucId]: {
+                ...(prev[mucId] || { officialScore: '', feedback: '' }),
+                [field]: field === 'officialScore' ? (value === '' ? '' : Number(value)) : value,
+            }
+        }));
     };
 
     const handleSaveGrades = async () => {
         if (!submission) return;
         setIsSaving(true);
         try {
-            // Calculate total graded score
             let total = 0;
             Object.values(gradeData).forEach(entry => {
                 const score = typeof entry === 'object' ? entry.officialScore : entry;
@@ -89,6 +90,18 @@ const CriteriaDetailPage = () => {
         );
     }
 
+    // Support both old (groups→conditions) and new (tieuChi→noiDung→muc) format
+    const tieuChiList = criteriaSet.tieuChi || criteriaSet.groups || [];
+    const isNewFormat = !!criteriaSet.tieuChi;
+
+    // Filter by assignment — member/manager chỉ thấy TC được giao
+    const isStaff = ['member', 'manager'].includes(userProfile?.role);
+    const visibleTieuChi = isStaff && isNewFormat
+        ? tieuChiList.filter(tc => tc.assignedTo === userProfile?.uid)
+        : tieuChiList;
+
+    const hasMuc = visibleTieuChi.length > 0;
+
     return (
         <div className="max-w-6xl mx-auto pb-12 px-4">
             {/* Header section */}
@@ -117,99 +130,171 @@ const CriteriaDetailPage = () => {
                 </div>
             </div>
 
-            {/* Criteria sections */}
-            <div className="space-y-10">
-                {criteriaSet.groups?.map(group => (
-                    <div key={group.id} className="card glass-morphism overflow-hidden border-emerald-100/10 dark:border-emerald-500/10">
-                        <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-4">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight">{group.title}</h3>
-                            {group.description && <p className="text-emerald-50 text-sm mt-1 font-medium opacity-90">{group.description}</p>}
-                        </div>
+            {/* Criteria sections — NEW 3-LEVEL */}
+            <div className="space-y-6">
+                {visibleTieuChi.map(tc => {
+                    const isOpen = expandedTC[tc.id];
+                    const noiDungList = tc.noiDung || [];
+                    // Old format: conditions array directly on group
+                    const conditionsList = tc.conditions || [];
 
-                        <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {group.conditions?.map((condition, idx) => (
-                                <div key={condition.id} className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-emerald-50/5 transition-colors">
-                                    {/* Left column: Criteria & Self-report */}
-                                    <div className="flex-1 space-y-6">
-                                        <ConditionRow condition={condition} index={idx} />
+                    return (
+                        <div key={tc.id} className="card glass-morphism overflow-hidden border-emerald-100/10 dark:border-emerald-500/10">
+                            {/* TC Header */}
+                            <div
+                                className="bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 flex items-center cursor-pointer"
+                                onClick={() => toggleTC(tc.id)}
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tight truncate">{tc.title}</h3>
+                                    {tc.description && <p className="text-emerald-50 text-sm mt-1 font-medium opacity-90">{tc.description}</p>}
+                                </div>
+                                {isOpen ? <MdExpandLess className="text-white" size={24} /> : <MdExpandMore className="text-white" size={24} />}
+                            </div>
 
-                                        {/* Unit Self-Report Detail */}
-                                        <div className="bg-gray-50/80 dark:bg-gray-800/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 space-y-4">
-                                            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                                                <MdDescription size={18} />
-                                                <h4 className="text-xs font-black uppercase tracking-widest">Chi tiết từ cơ sở</h4>
-                                            </div>
+                            {isOpen && (
+                                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    {/* NEW FORMAT: tieuChi → noiDung → muc */}
+                                    {isNewFormat && noiDungList.map(nd => (
+                                        <div key={nd.id} className="p-4 space-y-3">
+                                            <h4 className="text-sm font-black text-gray-700 dark:text-gray-200 uppercase tracking-tight flex items-center gap-2 px-2">
+                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                                {nd.title}
+                                            </h4>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                                                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Điểm tự chấm</span>
-                                                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                                                        {submission.selfPoints?.[condition.id] || 0}
-                                                        <small className="text-xs text-gray-400 font-bold ml-1">/ {condition.maxScore} đ</small>
-                                                    </span>
-                                                </div>
-                                                <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                                                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mô tả thực hiện</span>
-                                                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium leading-relaxed">
-                                                        {submission.selfDescriptions?.[condition.id] || <span className="italic text-gray-400">Không có mô tả chi tiết</span>}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            {(nd.muc || []).map(m => (
+                                                <div key={m.id} className="bg-gray-50/80 dark:bg-gray-800/30 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50">
+                                                    <div className="flex flex-col lg:flex-row gap-6">
+                                                        {/* Left: mục info + self-score */}
+                                                        <div className="flex-1 space-y-4">
+                                                            <div className="flex items-start gap-3">
+                                                                <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm">{m.stt}</span>
+                                                                <div className="flex-1 min-w-0 space-y-2">
+                                                                    {m.dieuKienCham && (
+                                                                        <div>
+                                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Điều kiện chấm</span>
+                                                                            <p className="text-sm text-gray-700 dark:text-gray-200 mt-0.5 whitespace-pre-line">{m.dieuKienCham}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {m.yeucauMinhChung && (
+                                                                        <div>
+                                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Yêu cầu MC & nguyên tắc</span>
+                                                                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 whitespace-pre-line bg-blue-50/50 dark:bg-blue-900/10 p-2 rounded-lg">{m.yeucauMinhChung}</p>
+                                                                        </div>
+                                                                    )}
 
-                                            <div>
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                                    <MdAttachFile size={14} /> Minh chứng đính kèm
-                                                </span>
-                                                {submission.evidenceFiles?.[condition.id] && submission.evidenceFiles[condition.id].length > 0 ? (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {submission.evidenceFiles[condition.id].map((file, fIdx) => (
-                                                            <a
-                                                                key={fIdx}
-                                                                href={file.url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all"
-                                                            >
-                                                                {file.name}
-                                                            </a>
-                                                        ))}
+                                                                    <div className="flex flex-wrap gap-3 text-[11px] font-bold">
+                                                                        {m.toTheoDoi && <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">Tổ: {m.toTheoDoi}</span>}
+                                                                        <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md">{m.khungDiem} đ</span>
+                                                                        {m.deadline && <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md">Hạn: {m.deadline}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Self-score from unit */}
+                                                            <div className="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-3">
+                                                                <div>
+                                                                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Điểm tự chấm</span>
+                                                                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                                                        {submission.selfPoints?.[m.id] ?? 0}
+                                                                        <small className="text-xs text-gray-400 font-bold ml-1">/ {m.khungDiem}đ</small>
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Mô tả thực hiện</span>
+                                                                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                                                                        {submission.selfDescriptions?.[m.id] || <span className="italic text-gray-400">Không có mô tả</span>}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Evidence files */}
+                                                            {submission.evidenceFiles?.[m.id] && submission.evidenceFiles[m.id].length > 0 && (
+                                                                <div>
+                                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                                                        <MdAttachFile size={14} /> Minh chứng
+                                                                    </span>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {submission.evidenceFiles[m.id].map((file, fIdx) => (
+                                                                            <a key={fIdx} href={file.url} target="_blank" rel="noreferrer"
+                                                                                className="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all">
+                                                                                {file.name}
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Right: Grading input */}
+                                                        <div className="w-full lg:w-72 flex-shrink-0">
+                                                            <GradeInputCard
+                                                                label="Kết quả thẩm định"
+                                                                maxScore={m.khungDiem}
+                                                                scoreData={gradeData[m.id] || { officialScore: '', feedback: '' }}
+                                                                onChange={(field, val) => handleGradeChange(m.id, field, val)}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                ) : (
-                                                    <div className="text-xs font-medium text-gray-400 italic bg-white/50 dark:bg-gray-900/50 py-2 px-3 rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
-                                                        Không có tệp minh chứng đính kèm
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+
+                                    {/* OLD FORMAT: groups → conditions (backward compat) */}
+                                    {!isNewFormat && conditionsList.map((condition, idx) => (
+                                        <div key={condition.id} className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-emerald-50/5 transition-colors">
+                                            <div className="flex-1 space-y-4">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-black">{idx + 1}</span>
+                                                    <h4 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{condition.text}</h4>
+                                                </div>
+                                                <div className="bg-gray-50/80 dark:bg-gray-800/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 space-y-4">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                                            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Điểm tự chấm</span>
+                                                            <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                                                {submission.selfPoints?.[condition.id] || 0}
+                                                                <small className="text-xs text-gray-400 font-bold ml-1">/ {condition.maxScore} đ</small>
+                                                            </span>
+                                                        </div>
+                                                        <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                                            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mô tả thực hiện</span>
+                                                            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                                                {submission.selfDescriptions?.[condition.id] || <span className="italic text-gray-400">Không có</span>}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                )}
+                                                </div>
+                                            </div>
+                                            <div className="w-full lg:w-80 flex-shrink-0">
+                                                <GradeInputCard
+                                                    label="Kết quả thẩm định"
+                                                    maxScore={condition.maxScore}
+                                                    scoreData={gradeData[condition.id] || { officialScore: '', feedback: '' }}
+                                                    onChange={(field, val) => handleGradeChange(condition.id, field, val)}
+                                                />
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Right column: Official Evaluation */}
-                                    <div className="w-full lg:w-80 flex-shrink-0">
-                                        <GradeInputCard
-                                            label="Kết quả thẩm định"
-                                            maxScore={condition.maxScore}
-                                            scoreData={gradeData[condition.id] || { officialScore: '', feedback: '' }}
-                                            onChange={(field, val) => handleGradeChange(condition.id, field, val)}
-                                        />
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
-                {(!criteriaSet.groups || criteriaSet.groups.length === 0) && (
+                {!hasMuc && (
                     <div className="card glass-morphism p-20 text-center">
-                        <div className="text-emerald-500/20 mb-4 flex justify-center">
-                            <MdDescription size={64} />
-                        </div>
-                        <p className="text-xl font-bold text-gray-400">Bộ tiêu chí này chưa được cấu hình các nhóm tiêu chí chi tiết.</p>
+                        <MdDescription size={64} className="text-emerald-500/20 mx-auto mb-4" />
+                        <p className="text-xl font-bold text-gray-400">
+                            {isStaff ? 'Bạn chưa được giao tiêu chí nào trong bộ này.' : 'Bộ tiêu chí này chưa được cấu hình chi tiết.'}
+                        </p>
                     </div>
                 )}
             </div>
 
-            {/* Sticky bottom bar for save button */}
-            {criteriaSet.groups && criteriaSet.groups.length > 0 && (
+            {/* Sticky save */}
+            {hasMuc && (
                 <div className="sticky bottom-6 mt-12 z-20">
                     <div className="max-w-md mx-auto card glass-morphism p-3 border-emerald-500/30 shadow-2xl shadow-emerald-500/20">
                         <button
@@ -218,7 +303,7 @@ const CriteriaDetailPage = () => {
                             className="btn btn-primary w-full py-4 text-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                         >
                             {isSaving ? (
-                                <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full font-bold"></span>
+                                <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full"></span>
                             ) : (
                                 <MdSave size={24} />
                             )}

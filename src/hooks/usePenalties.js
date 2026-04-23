@@ -31,6 +31,9 @@ export const useAllPenalties = () => {
     const unsub = subscribeToAllPenalties((data) => {
       setPenalties(data);
       setLoading(false);
+    }, (err) => {
+      console.error('[useAllPenalties] Lỗi realtime:', err);
+      setLoading(false);
     });
 
     return () => unsub();

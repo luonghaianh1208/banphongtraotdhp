@@ -56,10 +56,10 @@ const Sidebar = ({ onClose }) => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Lọc menu theo quyền user
-  const visibleItems = NAV_ITEMS.filter(item =>
-    item.roles.includes(userProfile?.role)
-  );
+  // Lọc menu theo quyền user — guard tránh crash khi userProfile null
+  const visibleItems = userProfile?.role
+    ? NAV_ITEMS.filter(item => item.roles.includes(userProfile.role))
+    : [];
 
   return (
     <aside className="flex flex-col h-full bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-r border-emerald-500/10 w-64 transition-all duration-500 z-50">

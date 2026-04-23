@@ -32,9 +32,9 @@ const UnitPlanDetail = lazy(() => import('./components/unit/UnitPlanDetail'));
 
 // Lazy-load module Quản lý nội bộ (Internal)
 const CriteriaSetsPage = lazy(() => import('./components/criteria/CriteriaSetsPage'));
-const PeriodsManagePage = lazy(() => import('./components/criteria/PeriodsManagePage'));
 const CriteriaOverviewPage = lazy(() => import('./components/criteria/CriteriaOverviewPage'));
 const CriteriaDetailPage = lazy(() => import('./components/criteria/CriteriaDetailPage'));
+const CriteriaSetDetailPage = lazy(() => import('./components/criteria/CriteriaSetDetailPage'));
 const PlansManagePage = lazy(() => import('./components/criteria/PlansManagePage'));
 const PlanDetailPage = lazy(() => import('./components/criteria/PlanDetailPage'));
 const UnitsPage = lazy(() => import('./components/criteria/UnitsPage'));
@@ -124,10 +124,10 @@ const AppRoutes = () => {
         <Route path="criteria-sets" element={
           <ProtectedRoute roles={['admin', 'manager']}><CriteriaSetsPage /></ProtectedRoute>
         } />
-        <Route path="periods" element={
-          <ProtectedRoute roles={['admin', 'manager']}><PeriodsManagePage /></ProtectedRoute>
+        <Route path="criteria-set/:setId" element={
+          <ProtectedRoute roles={['admin', 'manager']}><CriteriaSetDetailPage /></ProtectedRoute>
         } />
-        <Route path="criteria-overview/:periodId" element={
+        <Route path="criteria-overview/:criteriaSetId" element={
           <ProtectedRoute roles={['admin', 'manager']}><CriteriaOverviewPage /></ProtectedRoute>
         } />
         <Route path="criteria-detail/:periodId/:submissionId" element={
@@ -148,7 +148,7 @@ const AppRoutes = () => {
       <Route path="/unit" element={<UnitRoute><UnitLayout /></UnitRoute>}>
         <Route path="dashboard" element={<UnitDashboard />} />
         <Route path="submissions" element={<UnitSubmissionsList />} />
-        <Route path="submit/:periodId" element={<UnitSubmitPage />} />
+        <Route path="submit/:criteriaSetId" element={<UnitSubmitPage />} />
         <Route path="plans" element={<UnitPlansList />} />
         <Route path="plans/:planId" element={<UnitPlanDetail />} />
       </Route>

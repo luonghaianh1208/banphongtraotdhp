@@ -351,3 +351,170 @@ export const submitContestEntry = async (entryId) => {
         lastEditedAt: serverTimestamp()
     });
 };
+
+// ======================================
+// 7. CRITERIA ASSIGNMENTS (GIAO TIÊU CHÍ)
+// ======================================
+
+// Giao 1 bộ TC cho nhiều đơn vị
+export const assignCriteriaToUnits = async (criteriaSet, unitList, assignedBy) => {
+    const batch = writeBatch(db);
+    const colRef = collection(db, 'criteriaAssignments');
+    const now = new Date();
+    unitList.forEach(unit => {
+        const newRef = doc(colRef);
+        batch.set(newRef, {
+            criteriaSetId: criteriaSet.id,
+            criteriaSetTitle: criteriaSet.title || '',
+            unitId: unit.id,
+            unitName: unit.unitName || unit.name || '',
+            assignedBy,
+            assignedAt: now,
+            status: 'active',
+            revokedAt: null,
+            revokedBy: null,
+        });
+    });
+    await batch.commit();
+};
+
+// Thu hồi
+export const revokeCriteriaAssignment = async (assignmentId, revokedBy) => {
+    const ref = doc(db, 'criteriaAssignments', assignmentId);
+    return updateDoc(ref, {
+        status: 'revoked',
+        revokedAt: serverTimestamp(),
+        revokedBy,
+    });
+};
+
+// Mở lại (un-revoke)
+export const reactivateCriteriaAssignment = async (assignmentId) => {
+    const ref = doc(db, 'criteriaAssignments', assignmentId);
+    return updateDoc(ref, {
+        status: 'active',
+        revokedAt: null,
+        revokedBy: null,
+    });
+};
+
+// Admin xem tất cả assignments
+export const subscribeToAssignments = (callback, onError) => {
+    const q = query(collection(db, 'criteriaAssignments'), orderBy('assignedAt', 'desc'));
+    return onSnapshot(q, (snap) => {
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, onError);
+};
+
+// Admin xem assignments cho 1 bộ TC
+export const subscribeToSetAssignments = (criteriaSetId, callback, onError) => {
+    const q = query(
+        collection(db, 'criteriaAssignments'),
+        where('criteriaSetId', '==', criteriaSetId),
+        orderBy('assignedAt', 'desc')
+    );
+    return onSnapshot(q, (snap) => {
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, onError);
+};
+
+// Đơn vị xem assignments của mình (active only)
+export const subscribeToUnitAssignments = (unitId, callback, onError) => {
+    const q = query(
+        collection(db, 'criteriaAssignments'),
+        where('unitId', '==', unitId),
+        where('status', '==', 'active')
+    );
+    return onSnapshot(q, (snap) => {
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, onError);
+};
+
+// ======================================
+// 8. CRITERIA SUBMISSIONS (BÀI NỘP THEO TC)
+// ======================================
+
+// Lưu / cập nhật bài nộp (upsert — tìm doc bằng criteriaSetId + unitId)
+export const saveUnitCriteriaResponse = async (criteriaSetId, unitId, unitName, responses, totalSelfScore) => {
+    const q = query(
+        collection(db, 'criteriaSubmissions'),
+        where('criteriaSetId', '==', criteriaSetId),
+        where('unitId', '==', unitId)
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+        return addDoc(collection(db, 'criteriaSubmissions'), {
+            criteriaSetId,
+            unitId,
+            unitName,
+            responses: responses || {},
+            totalSelfScore: totalSelfScore || 0,
+            totalGradedScore: null,
+            status: 'draft',
+            lastSavedAt: serverTimestamp(),
+            submittedAt: null,
+            gradedBy: null,
+            gradedAt: null,
+        });
+    } else {
+        const existingDoc = snap.docs[0];
+        return updateDoc(existingDoc.ref, {
+            responses: responses || {},
+            totalSelfScore: totalSelfScore || 0,
+            lastSavedAt: serverTimestamp(),
+        });
+    }
+};
+
+// Đơn vị nộp chính thức
+export const submitCriteriaSubmission = async (criteriaSetId, unitId) => {
+    const q = query(
+        collection(db, 'criteriaSubmissions'),
+        where('criteriaSetId', '==', criteriaSetId),
+        where('unitId', '==', unitId)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+        return updateDoc(snap.docs[0].ref, {
+            status: 'submitted',
+            submittedAt: serverTimestamp(),
+        });
+    }
+};
+
+// Theo dõi bài nộp 1 đơn vị cho 1 TC
+export const subscribeToUnitCriteriaSubmission = (criteriaSetId, unitId, callback, onError) => {
+    const q = query(
+        collection(db, 'criteriaSubmissions'),
+        where('criteriaSetId', '==', criteriaSetId),
+        where('unitId', '==', unitId)
+    );
+    return onSnapshot(q, (snap) => {
+        callback(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() });
+    }, onError);
+};
+
+// Admin xem tất cả bài nộp cho 1 bộ TC
+export const subscribeToAllCriteriaSubmissions = (criteriaSetId, callback, onError) => {
+    const q = query(
+        collection(db, 'criteriaSubmissions'),
+        where('criteriaSetId', '==', criteriaSetId)
+    );
+    return onSnapshot(q, (snap) => {
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, onError);
+};
+
+// Cấp trên chấm điểm
+export const gradeCriteriaSubmission = async (submissionId, gradedScores, comment, gradedBy) => {
+    const ref = doc(db, 'criteriaSubmissions', submissionId);
+    return updateDoc(ref, {
+        gradedScores: gradedScores || {},
+        totalGradedScore: Object.values(gradedScores || {}).reduce((s, v) => s + (Number(v) || 0), 0),
+        gradedComment: comment || '',
+        gradedBy,
+        gradedAt: serverTimestamp(),
+        status: 'graded',
+    });
+};
