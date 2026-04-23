@@ -13,7 +13,7 @@ import EvidenceUpload from '../criteria/EvidenceUpload';
 const UnitPlanDetail = () => {
     const { planId } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { userProfile } = useAuth();
 
     const [plan, setPlan] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,7 +23,7 @@ const UnitPlanDetail = () => {
     const [docsData, setDocsData] = useState([]);
 
     // Hook lấy data cũ đã lưu (nếu có)
-    const { entry, loading: entryLoading } = useUnitContestEntry(planId, user?.id);
+    const { entry, loading: entryLoading } = useUnitContestEntry(planId, userProfile?.id);
 
     useEffect(() => {
         const fetchPlanData = async () => {
@@ -64,13 +64,13 @@ const UnitPlanDetail = () => {
     const isReadOnly = entry?.status === 'submitted' || plan.status === 'locked';
 
     const handleSaveDraft = async () => {
-        if (!user) return;
+        if (!userProfile) return;
         setSaving(true);
         try {
             await createOrUpdateContestEntry(
                 planId,
-                user.id,
-                { unitName: user.unitName, unitCode: user.unitCode },
+                userProfile.id,
+                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
                 docsData
             );
             toast.success('Đã lưu bản nháp thành công!');
@@ -83,7 +83,7 @@ const UnitPlanDetail = () => {
     };
 
     const handleSubmit = async () => {
-        if (!user) return;
+        if (!userProfile) return;
         if (docsData.length === 0) {
             toast.error('Vui lòng đính kèm ít nhất 1 hồ sơ hoặc minh chứng trước khi nộp.');
             return;
@@ -98,8 +98,8 @@ const UnitPlanDetail = () => {
             // 1. Save một lần nữa để chắc chắn
             await createOrUpdateContestEntry(
                 planId,
-                user.id,
-                { unitName: user.unitName, unitCode: user.unitCode },
+                userProfile.id,
+                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
                 docsData
             );
 

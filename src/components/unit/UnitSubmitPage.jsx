@@ -10,7 +10,7 @@ import ConditionRow from '../criteria/ConditionRow';
 const UnitSubmitPage = () => {
     const { periodId } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { userProfile } = useAuth();
 
     const [period, setPeriod] = useState(null);
     const [criteriaSet, setCriteriaSet] = useState(null);
@@ -21,7 +21,7 @@ const UnitSubmitPage = () => {
     const [responses, setResponses] = useState({});
 
     // Hook lấy dữ liệu nộp cũ của Unit (nếu có)
-    const { submission, loading: subLoading } = useUnitSubmission(periodId, user?.id);
+    const { submission, loading: subLoading } = useUnitSubmission(periodId, userProfile?.id);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,13 +83,13 @@ const UnitSubmitPage = () => {
     };
 
     const handleSaveDraft = async () => {
-        if (!user) return;
+        if (!userProfile) return;
         setSaving(true);
         try {
             await createOrUpdateDraftSubmission(
                 periodId,
-                user.id,
-                { unitName: user.unitName, unitCode: user.unitCode },
+                userProfile.id,
+                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
                 responses
             );
             toast.success('Đã lưu bản nháp thành công!');
@@ -102,7 +102,7 @@ const UnitSubmitPage = () => {
     };
 
     const handleSubmit = async () => {
-        if (!user) return;
+        if (!userProfile) return;
         if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) {
             return;
         }
@@ -111,8 +111,8 @@ const UnitSubmitPage = () => {
         try {
             await createOrUpdateDraftSubmission(
                 periodId,
-                user.id,
-                { unitName: user.unitName, unitCode: user.unitCode },
+                userProfile.id,
+                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
                 responses
             );
 

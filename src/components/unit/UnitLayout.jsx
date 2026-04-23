@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { NAV_ITEMS } from '../../utils/constants';
 
 const UnitLayout = () => {
-    const { currentUser: user, isUnit, loading, logout } = useAuth();
+    const { currentUser: user, userProfile, isUnit, loading, logout } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -48,7 +48,7 @@ const UnitLayout = () => {
                     </div>
                     <div className="p-3 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-900/20">
                         <p className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest mb-1">Đơn vị</p>
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{user.unitName || user.email}</p>
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{userProfile?.unitName || user.email}</p>
                     </div>
                 </div>
 
@@ -58,8 +58,8 @@ const UnitLayout = () => {
                             key={item.path}
                             to={item.path}
                             className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-300 font-bold group ${location.pathname === item.path || (item.path !== '/unit/dashboard' && location.pathname.includes(item.path))
-                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 scale-[1.02]'
-                                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200'
+                                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 scale-[1.02]'
+                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200'
                                 }`}
                         >
                             {item.label}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
 import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
@@ -269,6 +269,24 @@ const PlansManagePage = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                                                <button
+                                                    onClick={async () => {
+                                                        const newStatus = plan.status === 'published' ? 'draft' : 'published';
+                                                        try {
+                                                            await updatePlan(plan.id, { status: newStatus });
+                                                            toast.success(newStatus === 'published' ? 'Đã công bố cho cơ sở!' : 'Đã thu hồi về nháp!');
+                                                        } catch (err) {
+                                                            toast.error('Lỗi: ' + err.message);
+                                                        }
+                                                    }}
+                                                    className={`p-2 rounded-lg transition-colors ${plan.status === 'published'
+                                                        ? 'text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                                                        : 'text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                                                        }`}
+                                                    title={plan.status === 'published' ? 'Thu hồi (chuyển nháp)' : 'Công bố cho cơ sở'}
+                                                >
+                                                    <MdPublish size={20} />
+                                                </button>
                                                 <button
                                                     onClick={() => startEdit(plan)}
                                                     className="p-2 text-sky-600 hover:bg-sky-100 dark:hover:bg-sky-900/30 rounded-lg"
