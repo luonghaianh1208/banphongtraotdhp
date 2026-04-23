@@ -11,6 +11,7 @@ const PeriodsManagePage = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [criteriaSearch, setCriteriaSearch] = useState('');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -286,27 +287,50 @@ const PeriodsManagePage = () => {
                                 {criteriaSets.length === 0 ? (
                                     <p className="text-sm text-slate-400 dark:text-slate-500 italic p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">Chưa có bộ tiêu chí nào. Vui lòng tạo trước.</p>
                                 ) : (
-                                    <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
-                                        {criteriaSets.map(c => {
-                                            const checked = formData.criteriaSetIds.includes(c.id);
-                                            return (
-                                                <label
-                                                    key={c.id}
-                                                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 ${checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={checked}
-                                                        onChange={() => toggleCriteriaSet(c.id)}
-                                                        className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.title}</p>
-                                                        <p className="text-[11px] text-slate-400">{c.academicYear || 'Chưa rõ'} · {c.groups?.length || 0} nhóm</p>
-                                                    </div>
-                                                </label>
-                                            );
-                                        })}
+                                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                        {/* Search input — sticky */}
+                                        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-3 py-2">
+                                            <div className="relative">
+                                                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Tìm bộ tiêu chí..."
+                                                    value={criteriaSearch}
+                                                    onChange={e => setCriteriaSearch(e.target.value)}
+                                                    className="input w-full pl-9 py-1.5 text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        {/* Checkbox list */}
+                                        <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                                            {criteriaSets
+                                                .filter(c => c.title.toLowerCase().includes(criteriaSearch.toLowerCase()))
+                                                .map(c => {
+                                                    const checked = formData.criteriaSetIds.includes(c.id);
+                                                    return (
+                                                        <label
+                                                            key={c.id}
+                                                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 ${checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={() => toggleCriteriaSet(c.id)}
+                                                                className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
+                                                            />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.title}</p>
+                                                                <p className="text-[11px] text-slate-400">{c.academicYear || 'Chưa rõ'} · {c.groups?.length || 0} nhóm</p>
+                                                            </div>
+                                                        </label>
+                                                    );
+                                                })}
+                                            {criteriaSets.filter(c => c.title.toLowerCase().includes(criteriaSearch.toLowerCase())).length === 0 && (
+                                                <p className="p-4 text-sm text-slate-400 text-center italic">Không tìm thấy "{criteriaSearch}"</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-1 uppercase tracking-wider">
