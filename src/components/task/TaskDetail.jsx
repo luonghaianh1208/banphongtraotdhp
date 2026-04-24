@@ -1,5 +1,5 @@
 // TaskDetail — modal chi tiết task: notes, attachments (upload cho mọi người), history, approve
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload, MdHourglassTop } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
@@ -29,9 +29,12 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
 
   if (!task) return null;
 
-  // User lookup map — O(1) thay vì O(n) mỗi lần find
-  const userMap = {};
-  (users || []).forEach(u => { userMap[u.id] = u; });
+  // User lookup map — O(1), chỉ tính lại khi users thay đổi
+  const userMap = useMemo(() => {
+    const m = {};
+    (users || []).forEach(u => { m[u.id] = u; });
+    return m;
+  }, [users]);
 
   const assigneeNames = (task.assignees || [])
     .map(uid => userMap[uid]?.displayName || '?');

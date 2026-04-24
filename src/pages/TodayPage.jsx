@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
@@ -58,11 +58,11 @@ const TodayPage = () => {
     return s === TASK_DISPLAY_STATUS.URGENT || s === TASK_DISPLAY_STATUS.OVERDUE;
   }).length, [activeTasks]);
 
-  const handleApprove = async (taskId) => {
+  const handleApprove = useCallback(async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
     await handleApproveTask(task, currentUser.uid);
-  };
+  }, [tasks, handleApproveTask, currentUser?.uid]);
 
   if (isLoading) return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10 animate-fade-in">

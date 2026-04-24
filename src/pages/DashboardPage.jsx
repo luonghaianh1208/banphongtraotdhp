@@ -32,12 +32,23 @@ const DashboardPage = () => {
     { name: 'Hoàn thành', value: counts.completed, color: COLORS.completed },
   ].filter(d => d.value > 0), [counts]);
 
-  const barData = useMemo(() => users.filter(u => u.isActive !== false).map(user => {
-    const userTasks = tasks.filter(t => t.assignees?.includes(user.id));
-    const done = userTasks.filter(t => t.isCompleted).length;
-    const active = userTasks.filter(t => !t.isCompleted).length;
-    return { name: user.displayName?.split(' ').pop() || '?', 'Hoàn thành': done, 'Đang làm': active };
-  }), [users, tasks]);
+  // Pre-compute task counts per user — O(tasks) thay vì O(users × tasks)
+  const taskUserMap = useMemo(() => {
+    const map = {};
+    tasks.forEach(t => {
+      (t.assignees || []).forEach(uid => {
+        if (!map[uid]) map[uid] = { done: 0, active: 0 };
+        t.isCompleted ? map[uid].done++ : map[uid].active++;
+      });
+    });
+    return map;
+  }, [tasks]);
+
+  const barData = useMemo(() => users.filter(u => u.isActive !== false).map(user => ({
+    name: user.displayName?.split(' ').pop() || '?',
+    'Hoàn thành': taskUserMap[user.id]?.done || 0,
+    'Đang làm': taskUserMap[user.id]?.active || 0,
+  })), [users, taskUserMap]);
 
   if (tl || ul) return <LoadingSpinner />;
 
