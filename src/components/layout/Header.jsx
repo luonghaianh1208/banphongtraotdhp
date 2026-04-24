@@ -10,6 +10,7 @@ const Header = ({ title, onToggleSidebar }) => {
   const { userProfile } = useAuth();
   const { notifications, unreadCount, markRead, markUnread, markAllRead } = useNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showCount, setShowCount] = useState(20);
   const notifRef = useRef(null);
 
   // Click outside hoặc Escape để đóng dropdown
@@ -98,7 +99,7 @@ const Header = ({ title, onToggleSidebar }) => {
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                      {notifications.slice(0, 20).map(notif => (
+                      {notifications.slice(0, showCount).map(notif => (
                         <div
                           key={notif.id}
                           onClick={() => !notif.isRead && markRead(notif.id)}
@@ -128,6 +129,14 @@ const Header = ({ title, onToggleSidebar }) => {
                           </button>
                         </div>
                       ))}
+                      {notifications.length > showCount && (
+                        <button
+                          onClick={() => setShowCount(prev => prev + 20)}
+                          className="w-full py-4 text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors border-t border-gray-50 dark:border-gray-800"
+                        >
+                          Xem thêm ({notifications.length - showCount} còn lại)
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

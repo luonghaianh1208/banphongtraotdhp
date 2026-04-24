@@ -29,9 +29,13 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
 
   if (!task) return null;
 
+  // User lookup map — O(1) thay vì O(n) mỗi lần find
+  const userMap = {};
+  (users || []).forEach(u => { userMap[u.id] = u; });
+
   const assigneeNames = (task.assignees || [])
-    .map(uid => users.find(u => u.id === uid)?.displayName || '?');
-  const creatorName = users.find(u => u.id === task.createdBy)?.displayName || '?';
+    .map(uid => userMap[uid]?.displayName || '?');
+  const creatorName = userMap[task.createdBy]?.displayName || '?';
 
   // Người dùng có quyền chỉnh sửa task này không?
   const canEdit = canManageTasks || task.createdBy === currentUser?.uid;
@@ -43,8 +47,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   // Helper: lấy tên người upload từ uid
   const getUploaderName = (uid) => {
     if (!uid) return 'Không rõ';
-    const user = users.find(u => u.id === uid);
-    return user?.displayName || 'Không rõ';
+    return userMap[uid]?.displayName || 'Không rõ';
   };
 
   // Helper: icon theo loại file
@@ -409,7 +412,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {task.editHistory.map((entry, i) => {
               const editorName = users.find(u => u.id === entry.editedBy)?.displayName || '?';
-              
+
               // Map tiếng Anh sang tiếng Việt
               let actionText = '';
               if (entry.action === 'edit' && entry.field === 'multiple') actionText = 'đã cập nhật thông tin công việc';
@@ -444,7 +447,7 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
             <MdCheckCircle size={18} /> Duyệt hoàn thành
           </button>
         )}
-        
+
         {canApprove && task.isCompleted && (
           <button onClick={handleRevertApprove} disabled={loading} className="btn btn-secondary text-amber-600 border-amber-200 hover:bg-amber-50">
             <MdUndo size={18} /> Hủy duyệt (Khôi phục hoạt động)
@@ -474,10 +477,10 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
               </button>
             ) : (
               <div className="flex items-center gap-2 w-full max-w-sm">
-                <DateTimePicker 
-                  selected={newDeadline} 
-                  onChange={(date) => setNewDeadline(date)} 
-                  className="input flex-1 min-w-0" 
+                <DateTimePicker
+                  selected={newDeadline}
+                  onChange={(date) => setNewDeadline(date)}
+                  className="input flex-1 min-w-0"
                   placeholder="Chọn thời gian mới"
                 />
                 <button onClick={handleExtend} disabled={loading} className="btn btn-primary px-3">Lưu</button>

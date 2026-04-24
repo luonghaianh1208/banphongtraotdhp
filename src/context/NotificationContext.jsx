@@ -1,5 +1,5 @@
 // NotificationContext — quản lý thông báo realtime
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { subscribeToNotifications, markNotificationRead, markNotificationUnread, markAllNotificationsRead } from '../firebase/firestore';
 
@@ -35,7 +35,7 @@ export const NotificationProvider = ({ children }) => {
     return unsubscribe;
   }, [currentUser]);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
   const markRead = async (notifId) => {
     await markNotificationRead(notifId);

@@ -64,7 +64,32 @@ const TodayPage = () => {
     await handleApproveTask(task, currentUser.uid);
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return (
+    <div className="max-w-5xl mx-auto space-y-10 pb-10 animate-fade-in">
+      <div className="space-y-3">
+        <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+        <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800/50 rounded-lg animate-pulse" />
+      </div>
+      <div className="grid gap-5">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+            <div className="flex justify-between">
+              <div className="h-5 w-3/5 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+              <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800/50 rounded-full animate-pulse" />
+            </div>
+            <div className="flex gap-4">
+              <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+            </div>
+            <div className="flex justify-between">
+              <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+              <div className="h-4 w-12 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10">

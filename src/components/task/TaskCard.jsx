@@ -1,4 +1,5 @@
 // TaskCard — card hiển thị task trên danh sách
+import { memo, useMemo } from 'react';
 import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
@@ -8,12 +9,20 @@ import { formatDateTime } from '../../utils/dateUtils';
 const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect }) => {
   const { getCategoryById } = useTaskConfig();
   const cat = getCategoryById(task.category);
-  // Tìm tên người thực hiện
-  const assigneeNames = (task.assignees || [])
-    .map(uid => users.find(u => u.id === uid)?.displayName || '?')
-    .join(', ');
 
-  const creatorName = users.find(u => u.id === task.createdBy)?.displayName || '?';
+  // User lookup map — O(1) thay vì O(n) mỗi lần find
+  const userMap = useMemo(() => {
+    const m = {};
+    (users || []).forEach(u => { m[u.id] = u; });
+    return m;
+  }, [users]);
+
+  const assigneeNames = useMemo(() =>
+    (task.assignees || []).map(uid => userMap[uid]?.displayName || '?').join(', '),
+    [task.assignees, userMap]
+  );
+
+  const creatorName = userMap[task.createdBy]?.displayName || '?';
 
   return (
     <div
@@ -35,6 +44,7 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
             <button
               onClick={(e) => { e.stopPropagation(); onToggleSelect(task.id); }}
               className="mt-0.5 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+              aria-label={selected ? 'Bỏ chọn công việc' : 'Chọn công việc'}
             >
               {selected ? <MdCheckBox size={22} className="text-emerald-600" /> : <MdCheckBoxOutlineBlank size={22} className="text-slate-300 dark:text-slate-600" />}
             </button>
@@ -93,7 +103,7 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 relative z-10">
           <div className="flex items-start gap-2">
             <MdStickyNote2 size={14} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 italic line-clamp-1 italic">
+            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 italic line-clamp-1">
               {task.notes[task.notes.length - 1].content}
             </p>
           </div>
@@ -103,4 +113,4 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
   );
 };
 
-export default TaskCard;
+export default memo(TaskCard);

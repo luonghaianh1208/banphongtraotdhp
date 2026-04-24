@@ -67,9 +67,14 @@ export const useAutoOverduePenalties = () => {
       if (penaltiesToCreate.length === 0) return;
       isProcessingRef.current = true;
 
-      Promise.all(penaltiesToCreate.map(p => createPenalty(p).catch(err => {
-        console.error(`[AutoPenalty] Lỗi tạo phạt cho user ${p.userId}:`, err);
-      }))).finally(() => { isProcessingRef.current = false; });
+      Promise.allSettled(penaltiesToCreate.map(p => createPenalty(p)))
+        .then(results => {
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.error(`[AutoPenalty] ${failed.length}/${results.length} phạt tạo thất bại:`, failed.map(f => f.reason));
+          }
+        })
+        .finally(() => { isProcessingRef.current = false; });
     }, 2000);
 
     return () => clearTimeout(timeoutId);

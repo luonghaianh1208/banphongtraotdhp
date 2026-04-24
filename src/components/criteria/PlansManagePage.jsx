@@ -7,6 +7,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import toast from 'react-hot-toast';
+import { getVietnameseError } from '../../utils/errorUtils';
 
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
@@ -93,7 +94,7 @@ const PlansManagePage = () => {
             await updatePlan(editingId, { title: editTitle.trim() });
             toast.success('Đã cập nhật');
             setEditingId(null);
-        } catch (_) { toast.error('Lỗi cập nhật.'); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi cập nhật.')); }
     };
 
     const handleDelete = async (planId, name) => {
@@ -101,7 +102,7 @@ const PlansManagePage = () => {
         try {
             await deletePlan(planId);
             toast.success('Đã xóa');
-        } catch (_) { toast.error('Lỗi xóa.'); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi xóa.')); }
     };
 
     const handleBulkDelete = async () => {
@@ -110,7 +111,7 @@ const PlansManagePage = () => {
             for (const id of selected) await deletePlan(id);
             setSelected([]);
             toast.success(`Đã xóa ${selected.length} kế hoạch`);
-        } catch (_) { toast.error('Lỗi xóa hàng loạt.'); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi xóa hàng loạt.')); }
     };
 
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);

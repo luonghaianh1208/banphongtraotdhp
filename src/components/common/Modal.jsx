@@ -1,22 +1,55 @@
-// Modal component — popup dialog tái sử dụng (React Portal)
-import { useEffect } from 'react';
+// Modal component — popup dialog tái sử dụng (React Portal + Focus Trap)
+import { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { MdClose } from 'react-icons/md';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+  const modalRef = useRef(null);
+
+  // Focus trap: giữ Tab navigation bên trong modal
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') { onClose(); return; }
+
+    if (e.key === 'Tab' && modalRef.current) {
+      const focusable = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
-      document.addEventListener('keydown', handleEsc);
+      document.addEventListener('keydown', handleKeyDown);
+
+      // Auto-focus vào modal khi mở
+      requestAnimationFrame(() => {
+        if (modalRef.current) {
+          const firstFocusable = modalRef.current.querySelector(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (firstFocusable) firstFocusable.focus();
+        }
+      });
+
       return () => {
         document.body.style.overflow = '';
-        document.removeEventListener('keydown', handleEsc);
+        document.removeEventListener('keydown', handleKeyDown);
       };
     } else {
       document.body.style.overflow = '';
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
@@ -32,6 +65,9 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
     >
       {/* Overlay backdrop */}
       <div
@@ -41,6 +77,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
       {/* Modal box */}
       <div
+        ref={modalRef}
         className={`relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden z-10 slide-in-right`}
         onClick={e => e.stopPropagation()}
       >

@@ -9,6 +9,8 @@ import { createCriteriaSet, deleteCriteriaSet, updateCriteriaSet } from '../../f
 import { UNIT_BLOCKS } from '../../utils/constants';
 import { exportCriteriaTemplate, importCriteriaExcel, buildCriteriaSetsFromRows } from '../../utils/exportExcel';
 import toast from 'react-hot-toast';
+import { getVietnameseError } from '../../utils/errorUtils';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 const CriteriaSetsPage = () => {
     const { criteriaSets, loading, error } = useCriteriaSets();
@@ -21,6 +23,7 @@ const CriteriaSetsPage = () => {
     const [showImportPreview, setShowImportPreview] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selected, setSelected] = useState([]);
+    const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: null });
     const fileInputRef = useRef(null);
 
     // Search & Filter state
@@ -90,7 +93,7 @@ const CriteriaSetsPage = () => {
             setShowModal(false);
             setFormData({ title: '', academicYear: '', description: '', targetBlocks: [], targetTypes: [] });
             navigate(`/criteria-set/${docRef.id}`);
-        } catch (_) { toast.error('Lỗi tạo.'); } finally { setIsSubmitting(false); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi tạo.')); } finally { setIsSubmitting(false); }
     };
 
     // === Upload Excel → parse → editable table ===
@@ -163,17 +166,27 @@ const CriteriaSetsPage = () => {
                 tieuChi: clonedTC, totalMaxScore: set.totalMaxScore || 0, isActive: true,
             });
             toast.success('Đã nhân bản!');
-        } catch (_) { toast.error('Lỗi nhân bản.'); } finally { setIsSubmitting(false); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi nhân bản.')); } finally { setIsSubmitting(false); }
     };
 
     const handleDelete = async (setId, title) => {
-        if (!confirm(`Xóa "${title}"?`)) return;
-        try { await deleteCriteriaSet(setId); toast.success('Đã xóa.'); } catch (_) { toast.error('Lỗi.'); }
+        setConfirmState({
+            open: true, title: 'Xác nhận xóa', message: `Xóa bộ tiêu chí "${title}"? Thao tác này không thể hoàn tác.`,
+            onConfirm: async () => {
+                try { await deleteCriteriaSet(setId); toast.success('Đã xóa.'); } catch (err) { console.error(err); toast.error(getVietnameseError(err)); }
+                setConfirmState(s => ({ ...s, open: false }));
+            }
+        });
     };
 
     const handleBulkDelete = async () => {
-        if (!confirm(`Xóa ${selected.length} bộ?`)) return;
-        try { for (const id of selected) await deleteCriteriaSet(id); setSelected([]); toast.success('Đã xóa.'); } catch (_) { toast.error('Lỗi.'); }
+        setConfirmState({
+            open: true, title: 'Xác nhận xóa hàng loạt', message: `Xóa ${selected.length} bộ tiêu chí đã chọn? Thao tác này không thể hoàn tác.`,
+            onConfirm: async () => {
+                try { for (const id of selected) await deleteCriteriaSet(id); setSelected([]); toast.success('Đã xóa.'); } catch (err) { console.error(err); toast.error(getVietnameseError(err)); }
+                setConfirmState(s => ({ ...s, open: false }));
+            }
+        });
     };
 
     const handleBulkAssign = async (userId) => {
@@ -189,7 +202,7 @@ const CriteriaSetsPage = () => {
                 await updateCriteriaSet(setId, { tieuChi: updatedTC });
             }
             toast.success(`Đã phân công ${staffName}`); setSelected([]);
-        } catch (_) { toast.error('Lỗi.'); } finally { setIsSubmitting(false); }
+        } catch (err) { console.error(err); toast.error(getVietnameseError(err)); } finally { setIsSubmitting(false); }
     };
 
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
@@ -557,6 +570,15 @@ const CriteriaSetsPage = () => {
                 </div>,
                 document.body
             )}
+
+            {/* Confirm Dialog thay thế native confirm() */}
+            <ConfirmDialog
+                isOpen={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                onConfirm={confirmState.onConfirm}
+                onCancel={() => setConfirmState(s => ({ ...s, open: false }))}
+            />
         </div>
     );
 };
