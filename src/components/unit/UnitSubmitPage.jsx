@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { MdAssignment, MdAccessTime, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { getCriteriaSet, saveUnitCriteriaResponse, submitCriteriaSubmission, subscribeToUnitCriteriaSubmission } from '../../firebase/criteriaFirestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
 
 const UnitSubmitPage = () => {
@@ -17,6 +19,7 @@ const UnitSubmitPage = () => {
     const [expandedTC, setExpandedTC] = useState({});
     const [responses, setResponses] = useState({});
     const [submissionStatus, setSubmissionStatus] = useState(null);
+    const [assignmentRevoked, setAssignmentRevoked] = useState(false);
 
     // Load criteria set
     useEffect(() => {
@@ -40,6 +43,28 @@ const UnitSubmitPage = () => {
         };
         fetchData();
     }, [criteriaSetId, navigate]);
+
+    // Check assignment status (revoked = locked)
+    useEffect(() => {
+        if (!criteriaSetId || !userProfile?.unitId) return;
+        const checkAssignment = async () => {
+            try {
+                const q2 = query(
+                    collection(db, 'criteriaAssignments'),
+                    where('criteriaSetId', '==', criteriaSetId),
+                    where('unitId', '==', userProfile.unitId)
+                );
+                const snap = await getDocs(q2);
+                if (!snap.empty) {
+                    const assignment = snap.docs[0].data();
+                    setAssignmentRevoked(assignment.status === 'revoked');
+                }
+            } catch (err) {
+                console.error('Lỗi kiểm tra assignment:', err);
+            }
+        };
+        checkAssignment();
+    }, [criteriaSetId, userProfile?.unitId]);
 
     // Subscribe to existing submission
     useEffect(() => {
@@ -73,7 +98,7 @@ const UnitSubmitPage = () => {
         return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
-    const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded';
+    const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked;
     const isNewFormat = !!criteriaSet.tieuChi;
     const tieuChiList = criteriaSet.tieuChi || criteriaSet.groups || [];
 
@@ -95,6 +120,7 @@ const UnitSubmitPage = () => {
 
     const handleSaveDraft = async () => {
         if (!userProfile) return;
+        if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể lưu.'); return; }
         setSaving(true);
         try {
             await saveUnitCriteriaResponse(
@@ -115,6 +141,7 @@ const UnitSubmitPage = () => {
 
     const handleSubmit = async () => {
         if (!userProfile) return;
+        if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể nộp.'); return; }
         if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
         setSaving(true);
@@ -154,8 +181,8 @@ const UnitSubmitPage = () => {
                         </div>
                         {submissionStatus && (
                             <span className={`text-xs font-black uppercase px-2 py-0.5 rounded-full ${submissionStatus === 'submitted' ? 'bg-blue-100 text-blue-600' :
-                                    submissionStatus === 'graded' ? 'bg-emerald-100 text-emerald-600' :
-                                        'bg-amber-100 text-amber-600'
+                                submissionStatus === 'graded' ? 'bg-emerald-100 text-emerald-600' :
+                                    'bg-amber-100 text-amber-600'
                                 }`}>{submissionStatus === 'submitted' ? 'Đã nộp' : submissionStatus === 'graded' ? 'Đã thẩm định' : 'Bản nháp'}</span>
                         )}
                     </div>

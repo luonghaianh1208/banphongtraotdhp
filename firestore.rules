@@ -100,8 +100,10 @@ service cloud.firestore {
 
     match /criteriaSubmissions/{subId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      // Chỉ unit tạo bài nộp cho chính mình
+      allow create: if isUnit() && request.resource.data.unitId == request.auth.uid;
+      // Unit sửa bài nộp của mình, hoặc admin/manager chấm điểm
+      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
       allow delete: if isAdminOrManager();
     }
   }
