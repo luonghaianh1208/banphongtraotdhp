@@ -55,10 +55,19 @@ src/
 │   ├── NotificationContext.jsx # Inbox / alerts 
 │   └── TaskConfigContext.jsx   # Global dynamic settings
 ├── firebase/            # Firebase Config & Wrappers (Auth, Firestore, Storage)
+├── functions/           # Cloud Functions (Backend atomicity & logic)
+│   └── index.js         # Core logic: initFirstAdmin, publishPeriodResults, etc.
 ├── hooks/               # Custom React hooks referencing Firestore data
 ├── pages/               # Main route pages (Dashboard, Login, Tasks, Settings, etc)
 └── utils/               # Helper functions (dates, statuses, exports, errors)
 ```
+
+## Các Quyết định Kỹ thuật (Data Integrity & Security)
+- **Atomicity**: Sử dụng Firestore Transactions trong Cloud Functions (`initFirstAdmin`, `createPenalty`) để tránh race conditions.
+- **Idempotency**: Sử dụng Composite Document IDs (`criteriaSetId_unitId`) cho `criteriaSubmissions` để tránh tạo bản trùng khi lưu nháp nhanh.
+- **Server-side Logic**: Các phép tính điểm tổng (`publishPeriodResults`) được thực hiện tại backend (Cloud Functions) để đảm bảo tính chính xác và không bị can thiệp bởi client.
+- **Security Rules**: Phân quyền nghiêm ngặt theo role (`isUnit`, `isAdminOrManager`) trực tiếp tại `firestore.rules`.
+
 
 ## Các file KHÔNG được sửa tùy tiện khi làm tính năng mới
 - `src/firebase/config.js`: Setup core, tránh đụng vào nếu không thay đổi Firebase instance.
