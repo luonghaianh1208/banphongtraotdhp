@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useSubmissions } from '../../hooks/useSubmissions';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useAuth } from '../../context/AuthContext';
-import { updateSubmission } from '../../firebase/criteriaFirestore';
+import { getCriteriaSubmission, gradeCriteriaSubmission } from '../../firebase/criteriaFirestore';
 import GradeInputCard from './GradeInputCard';
 import { MdArrowBack, MdSave, MdTrendingUp, MdDescription, MdAttachFile, MdExpandMore, MdExpandLess } from 'react-icons/md';
 
@@ -13,23 +12,32 @@ const CriteriaDetailPage = () => {
     const navigate = useNavigate();
     const { userProfile } = useAuth();
 
-    const { submissions, loading: subLoading } = useSubmissions(periodId);
     const { criteriaSets, loading: criteriaLoading } = useCriteriaSets();
 
     const [submission, setSubmission] = useState(null);
+    const [subLoading, setSubLoading] = useState(true);
     const [criteriaSet, setCriteriaSet] = useState(null);
     const [gradeData, setGradeData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
     const [expandedTC, setExpandedTC] = useState({});
 
     useEffect(() => {
-        if (!subLoading && submissions.length > 0) {
-            const sub = submissions.find(s => s.id === submissionId);
-            setSubmission(sub);
-            if (sub && sub.gradedPoints) setGradeData(sub.gradedPoints);
-            else setGradeData({});
-        }
-    }, [subLoading, submissions, submissionId]);
+        const fetchSubmission = async () => {
+            setSubLoading(true);
+            try {
+                const sub = await getCriteriaSubmission(submissionId);
+                setSubmission(sub);
+                if (sub && sub.gradedScores) setGradeData(sub.gradedScores);
+                else setGradeData({});
+            } catch (err) {
+                console.error(err);
+                toast.error('Lỗi khi tải bài nộp');
+            } finally {
+                setSubLoading(false);
+            }
+        };
+        if (submissionId) fetchSubmission();
+    }, [submissionId]);
 
     useEffect(() => {
         if (!criteriaLoading && submission && criteriaSets.length > 0) {
@@ -61,17 +69,12 @@ const CriteriaDetailPage = () => {
         if (!submission) return;
         setIsSaving(true);
         try {
-            let total = 0;
-            Object.values(gradeData).forEach(entry => {
-                const score = typeof entry === 'object' ? entry.officialScore : entry;
-                if (typeof score === 'number') total += score;
-            });
-
-            await updateSubmission(submission.id, {
-                gradedPoints: gradeData,
-                totalGradedScore: total,
-                status: 'graded'
-            });
+            await gradeCriteriaSubmission(
+                submission.id,
+                gradeData,
+                '',
+                userProfile?.id || 'admin_uid'
+            );
             toast.success('Đã lưu điểm thẩm định thành công!');
             navigate(`/criteria-overview/${periodId}`);
         } catch (error) {
@@ -94,11 +97,9 @@ const CriteriaDetailPage = () => {
     const tieuChiList = criteriaSet.tieuChi || criteriaSet.groups || [];
     const isNewFormat = !!criteriaSet.tieuChi;
 
-    // Filter by assignment — member/manager chỉ thấy TC được giao
     const isStaff = ['member', 'manager'].includes(userProfile?.role);
-    const visibleTieuChi = isStaff && isNewFormat
-        ? tieuChiList.filter(tc => tc.assignedTo === userProfile?.uid)
-        : tieuChiList;
+    // Remove broken assignedTo filter (BUG-010) - Members can grade all criteria
+    const visibleTieuChi = tieuChiList;
 
     const hasMuc = visibleTieuChi.length > 0;
 
@@ -196,26 +197,26 @@ const CriteriaDetailPage = () => {
                                                                 <div>
                                                                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Điểm tự chấm</span>
                                                                     <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                                                                        {submission.selfPoints?.[m.id] ?? 0}
+                                                                        {submission.responses?.[m.id]?.selfScore ?? submission.selfPoints?.[m.id] ?? 0}
                                                                         <small className="text-xs text-gray-400 font-bold ml-1">/ {m.khungDiem}đ</small>
                                                                     </span>
                                                                 </div>
                                                                 <div>
                                                                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Mô tả thực hiện</span>
                                                                     <p className="text-xs text-gray-600 dark:text-gray-300">
-                                                                        {submission.selfDescriptions?.[m.id] || <span className="italic text-gray-400">Không có mô tả</span>}
+                                                                        {submission.responses?.[m.id]?.notes || submission.selfDescriptions?.[m.id] || <span className="italic text-gray-400">Không có mô tả</span>}
                                                                     </p>
                                                                 </div>
                                                             </div>
 
                                                             {/* Evidence files */}
-                                                            {submission.evidenceFiles?.[m.id] && submission.evidenceFiles[m.id].length > 0 && (
+                                                            {(submission.responses?.[m.id]?.evidenceFiles || submission.evidenceFiles?.[m.id]) && (submission.responses?.[m.id]?.evidenceFiles || submission.evidenceFiles?.[m.id]).length > 0 && (
                                                                 <div>
                                                                     <span className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
                                                                         <MdAttachFile size={14} /> Minh chứng
                                                                     </span>
                                                                     <div className="flex flex-wrap gap-2">
-                                                                        {submission.evidenceFiles[m.id].map((file, fIdx) => (
+                                                                        {(submission.responses?.[m.id]?.evidenceFiles || submission.evidenceFiles?.[m.id]).map((file, fIdx) => (
                                                                             <a key={fIdx} href={file.url} target="_blank" rel="noreferrer"
                                                                                 className="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all">
                                                                                 {file.name}

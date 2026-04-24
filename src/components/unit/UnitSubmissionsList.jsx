@@ -42,9 +42,9 @@ const UnitSubmissionsList = () => {
                 {enriched.length > 0 ? (
                     enriched.map(item => {
                         const cs = item.criteriaSet;
-                        const deadline = cs?.criteria?.[0]?.contents?.[0]?.mucs?.[0]?.deadline;
-                        const totalMucs = cs?.criteria?.reduce((sum, tc) =>
-                            sum + (tc.contents || []).reduce((s, nd) => s + (nd.mucs || []).length, 0), 0) || 0;
+                        const deadline = cs?.tieuChi?.[0]?.noiDung?.[0]?.muc?.[0]?.deadline;
+                        const totalMucs = cs?.tieuChi?.reduce((sum, tc) =>
+                            sum + (tc.noiDung || []).reduce((s, nd) => s + (nd.muc || []).length, 0), 0) || 0;
 
                         return (
                             <div key={item.id} className="glass-card group hover:scale-[1.01] transition-all duration-300 relative overflow-hidden">

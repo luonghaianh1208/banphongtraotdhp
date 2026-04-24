@@ -204,6 +204,18 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
         oldValue: 'pending_approval',
         newValue: 'active',
       });
+
+      // Thông báo cho tổ trưởng
+      if (task.createdBy && task.createdBy !== currentUser.uid) {
+        await addNotification(
+          task.createdBy,
+          'Thu hồi gửi duyệt',
+          `${userProfile.displayName} đã thu hồi công việc "${task.title}" đang chờ duyệt`,
+          'info',
+          task.id
+        );
+      }
+
       toast.success('Đã thu hồi gửi duyệt');
     } catch (err) {
       toast.error('Lỗi: ' + err.message);

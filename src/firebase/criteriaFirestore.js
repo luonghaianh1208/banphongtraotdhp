@@ -1,6 +1,6 @@
 import {
     collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-    query, where, orderBy, onSnapshot, serverTimestamp, writeBatch
+    query, where, orderBy, onSnapshot, serverTimestamp, writeBatch, setDoc
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -114,74 +114,8 @@ export const updateUnitAssignment = async (periodId, unitId, graderIds) => {
 // ======================================
 // 4. SUBMISSIONS (BÀI NỘP CHỈ TIÊU)
 // ======================================
-export const subscribeToAllSubmissions = (periodId, callback, onError) => {
-    const q = query(collection(db, 'submissions'), where('periodId', '==', periodId));
-    return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        callback(items);
-    }, onError);
-};
-
-export const subscribeToUnitSubmission = (periodId, unitId, callback, onError) => {
-    const q = query(
-        collection(db, 'submissions'),
-        where('periodId', '==', periodId),
-        where('unitId', '==', unitId)
-    );
-    return onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-            const docSnap = snapshot.docs[0];
-            callback({ id: docSnap.id, ...docSnap.data() });
-        } else {
-            callback(null);
-        }
-    }, onError);
-};
-
-export const createOrUpdateDraftSubmission = async (periodId, unitId, unitData, responses) => {
-    // Tính tổng điểm tự chấm
-    let totalSelfScore = 0;
-    Object.values(responses).forEach(res => {
-        totalSelfScore += (Number(res.selfScore) || 0);
-    });
-
-    const q = query(
-        collection(db, 'submissions'),
-        where('periodId', '==', periodId),
-        where('unitId', '==', unitId)
-    );
-    const snap = await getDocs(q);
-
-    if (!snap.empty) {
-        const docRef = snap.docs[0].ref;
-        return updateDoc(docRef, {
-            responses,
-            totalSelfScore,
-            lastEditedAt: serverTimestamp()
-        });
-    } else {
-        // Tạo mới
-        const data = {
-            periodId,
-            unitId,
-            unitName: unitData.unitName,
-            unitCode: unitData.unitCode,
-            status: 'draft',
-            responses,
-            scores: {},
-            totalSelfScore,
-            totalOfficialScore: 0,
-            maxTotalScore: 0, // Cần update từ CriteriaSet nếu cần
-            classification: null,
-            overallComment: '',
-            assignedGraders: [],
-            submittedAt: null,
-            lastEditedAt: serverTimestamp(),
-            createdAt: serverTimestamp()
-        };
-        return addDoc(collection(db, 'submissions'), data);
-    }
-};
+// (Old submission tracking functions removed)
+// (Old createOrUpdateDraftSubmission removed)
 
 export const submitSubmission = async (submissionId) => {
     const ref = doc(db, 'submissions', submissionId);
@@ -434,64 +368,46 @@ export const subscribeToUnitAssignments = (unitId, callback, onError) => {
 // 8. CRITERIA SUBMISSIONS (BÀI NỘP THEO TC)
 // ======================================
 
+export const getCriteriaSubmission = async (submissionId) => {
+    const snap = await getDoc(doc(db, 'criteriaSubmissions', submissionId));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
 // Lưu / cập nhật bài nộp (upsert — tìm doc bằng criteriaSetId + unitId)
 export const saveUnitCriteriaResponse = async (criteriaSetId, unitId, unitName, responses, totalSelfScore) => {
-    const q = query(
-        collection(db, 'criteriaSubmissions'),
-        where('criteriaSetId', '==', criteriaSetId),
-        where('unitId', '==', unitId)
-    );
-    const snap = await getDocs(q);
+    const compId = `${criteriaSetId}_${unitId}`;
+    const ref = doc(db, 'criteriaSubmissions', compId);
 
-    if (snap.empty) {
-        return addDoc(collection(db, 'criteriaSubmissions'), {
-            criteriaSetId,
-            unitId,
-            unitName,
-            responses: responses || {},
-            totalSelfScore: totalSelfScore || 0,
-            totalGradedScore: null,
-            status: 'draft',
-            lastSavedAt: serverTimestamp(),
-            submittedAt: null,
-            gradedBy: null,
-            gradedAt: null,
-        });
-    } else {
-        const existingDoc = snap.docs[0];
-        return updateDoc(existingDoc.ref, {
-            responses: responses || {},
-            totalSelfScore: totalSelfScore || 0,
-            lastSavedAt: serverTimestamp(),
-        });
-    }
+    return setDoc(ref, {
+        criteriaSetId,
+        unitId,
+        unitName,
+        responses: responses || {},
+        totalSelfScore: totalSelfScore || 0,
+        status: 'draft',
+        lastSavedAt: serverTimestamp(),
+    }, { merge: true });
 };
 
 // Đơn vị nộp chính thức
 export const submitCriteriaSubmission = async (criteriaSetId, unitId) => {
-    const q = query(
-        collection(db, 'criteriaSubmissions'),
-        where('criteriaSetId', '==', criteriaSetId),
-        where('unitId', '==', unitId)
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-        return updateDoc(snap.docs[0].ref, {
-            status: 'submitted',
-            submittedAt: serverTimestamp(),
-        });
-    }
+    const compId = `${criteriaSetId}_${unitId}`;
+    const ref = doc(db, 'criteriaSubmissions', compId);
+    return setDoc(ref, {
+        status: 'submitted',
+        submittedAt: serverTimestamp(),
+    }, { merge: true });
 };
 
 // Theo dõi bài nộp 1 đơn vị cho 1 TC
 export const subscribeToUnitCriteriaSubmission = (criteriaSetId, unitId, callback, onError) => {
-    const q = query(
-        collection(db, 'criteriaSubmissions'),
-        where('criteriaSetId', '==', criteriaSetId),
-        where('unitId', '==', unitId)
-    );
-    return onSnapshot(q, (snap) => {
-        callback(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() });
+    const compId = `${criteriaSetId}_${unitId}`;
+    return onSnapshot(doc(db, 'criteriaSubmissions', compId), (docSnap) => {
+        if (docSnap.exists()) {
+            callback({ id: docSnap.id, ...docSnap.data() });
+        } else {
+            callback(null);
+        }
     }, onError);
 };
 
@@ -511,7 +427,7 @@ export const gradeCriteriaSubmission = async (submissionId, gradedScores, commen
     const ref = doc(db, 'criteriaSubmissions', submissionId);
     return updateDoc(ref, {
         gradedScores: gradedScores || {},
-        totalGradedScore: Object.values(gradedScores || {}).reduce((s, v) => s + (Number(v) || 0), 0),
+        totalGradedScore: Object.values(gradedScores || {}).reduce((s, v) => s + (Number(v?.officialScore ?? v) || 0), 0),
         gradedComment: comment || '',
         gradedBy,
         gradedAt: serverTimestamp(),

@@ -46,13 +46,14 @@ const UnitSubmitPage = () => {
 
     // Check assignment status (revoked = locked)
     useEffect(() => {
-        if (!criteriaSetId || !userProfile?.unitId) return;
+        const unitId = userProfile?.unitId || userProfile?.id;
+        if (!criteriaSetId || !unitId) return;
         const checkAssignment = async () => {
             try {
                 const q2 = query(
                     collection(db, 'criteriaAssignments'),
                     where('criteriaSetId', '==', criteriaSetId),
-                    where('unitId', '==', userProfile.unitId)
+                    where('unitId', '==', unitId)
                 );
                 const snap = await getDocs(q2);
                 if (!snap.empty) {
@@ -68,8 +69,9 @@ const UnitSubmitPage = () => {
 
     // Subscribe to existing submission
     useEffect(() => {
-        if (!criteriaSetId || !userProfile?.unitId) return;
-        const unsub = subscribeToUnitCriteriaSubmission(criteriaSetId, userProfile.unitId,
+        const unitId = userProfile?.unitId || userProfile?.id;
+        if (!criteriaSetId || !unitId) return;
+        const unsub = subscribeToUnitCriteriaSubmission(criteriaSetId, unitId,
             (sub) => {
                 if (sub) {
                     setResponses(prev => {
@@ -121,11 +123,12 @@ const UnitSubmitPage = () => {
     const handleSaveDraft = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể lưu.'); return; }
+        const unitId = userProfile.unitId || userProfile.id;
         setSaving(true);
         try {
             await saveUnitCriteriaResponse(
                 criteriaSetId,
-                userProfile.unitId,
+                unitId,
                 userProfile.unitName || userProfile.displayName,
                 responses,
                 currentTotalScore
@@ -144,18 +147,19 @@ const UnitSubmitPage = () => {
         if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể nộp.'); return; }
         if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
+        const unitId = userProfile.unitId || userProfile.id;
         setSaving(true);
         try {
             // Save first
             await saveUnitCriteriaResponse(
                 criteriaSetId,
-                userProfile.unitId,
+                unitId,
                 userProfile.unitName || userProfile.displayName,
                 responses,
                 currentTotalScore
             );
             // Then submit
-            await submitCriteriaSubmission(criteriaSetId, userProfile.unitId);
+            await submitCriteriaSubmission(criteriaSetId, unitId);
             toast.success('Đã nộp báo cáo chính thức thành công!');
             navigate('/unit/submissions');
         } catch (err) {

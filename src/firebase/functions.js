@@ -19,3 +19,9 @@ export const deleteUserAccount = httpsCallable(functions, 'deleteUser');
 
 // Xóa tài khoản đơn vị (chỉ admin) — xóa Auth + Firestore
 export const deleteUnitAccount = httpsCallable(functions, 'deleteUnit');
+
+// Công bố đợt báo cáo (tính điểm và khóa đợt)
+export const publishPeriodResults = httpsCallable(functions, 'publishPeriodResults');
+
+// Khởi tạo Admin đầu tiên (đảm bảo atomic, chống race condition)
+export const initFirstAdmin = httpsCallable(functions, 'initFirstAdmin');

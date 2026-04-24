@@ -514,12 +514,54 @@ exports.publishPeriodResults = onCall(async (request) => {
 
   await requireAdminOrManager(callerUid); // Admin hoặc Manager
 
-  await db.collection("submissionPeriods").doc(periodId).update({
+  const periodRef = db.collection("submissionPeriods").doc(periodId);
+  const periodDoc = await periodRef.get();
+  if (!periodDoc.exists) throw new HttpsError("not-found", "Không tìm thấy đợt báo cáo");
+
+  const periodData = periodDoc.data();
+  const criteriaSetIds = periodData.criteriaSetIds || [];
+
+  if (criteriaSetIds.length === 0 && periodData.criteriaSetId) {
+    criteriaSetIds.push(periodData.criteriaSetId);
+  }
+
+  let periodResults = {}; // { unitId: { totalScore, blockId } }
+
+  for (const csId of criteriaSetIds) {
+    const submissionsSnap = await db.collection("criteriaSubmissions")
+      .where("criteriaSetId", "==", csId)
+      .where("status", "==", "graded")
+      .get();
+
+    submissionsSnap.forEach(doc => {
+      const sub = doc.data();
+      const uId = sub.unitId;
+      const score = Number(sub.totalGradedScore) || 0;
+
+      if (!periodResults[uId]) {
+        periodResults[uId] = {
+          unitId: uId,
+          unitName: sub.unitName || "",
+          blockId: sub.blockId || "",
+          blockName: sub.blockName || "",
+          typeId: sub.typeId || "",
+          typeName: sub.typeName || "",
+          totalScore: 0,
+          details: {} // { criteriaSetId: score }
+        };
+      }
+      periodResults[uId].totalScore += score;
+      periodResults[uId].details[csId] = score;
+    });
+  }
+
+  await periodRef.update({
     status: "published",
+    results: periodResults,
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  return { message: "Đã công bố kết quả của đợt báo cáo" };
+  return { message: "Đã công bố và tính điểm đợt báo cáo" };
 });
 
 // === 13. TẠO TÀI KHOẢN ĐƠN VỊ CƠ SỞ (UNIT) ===
@@ -623,4 +665,32 @@ exports.deleteUnit = onCall(async (request) => {
   await db.collection("units").doc(unitId).delete();
 
   return { success: true, message: "Đã xóa tài khoản đơn vị" };
+});
+
+// === 16. KHỞI TẠO ADMIN ĐẦU TIÊN ===
+exports.initFirstAdmin = onCall(async (request) => {
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  const adminDocRef = db.collection('system').doc('firstAdminAssigned');
+
+  return await db.runTransaction(async (transaction) => {
+    const docSnap = await transaction.get(adminDocRef);
+    if (docSnap.exists && docSnap.data().assigned) {
+      return { success: false, message: "Admin đã được tạo, bạn chỉ có quyền thành viên." };
+    }
+
+    // Gán role admin
+    const userRef = db.collection("users").doc(callerUid);
+    transaction.set(userRef, {
+      role: "admin",
+      isActive: true,
+      status: "approved",
+    }, { merge: true });
+
+    // Mark as assigned
+    transaction.set(adminDocRef, { assigned: true, uid: callerUid });
+
+    return { success: true, message: "Khởi tạo Admin đầu tiên thành công!" };
+  });
 });

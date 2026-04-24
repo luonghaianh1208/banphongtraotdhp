@@ -100,10 +100,10 @@ service cloud.firestore {
 
     match /criteriaSubmissions/{subId} {
       allow read: if isAuthenticated();
-      // Chỉ unit tạo bài nộp cho chính mình
-      allow create: if isUnit() && request.resource.data.unitId == request.auth.uid;
-      // Unit sửa bài nộp của mình, hoặc admin/manager chấm điểm
-      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
+      // Unit creates draft submission for itself
+      allow create: if isUnit() && request.resource.data.unitId == request.auth.uid && request.resource.data.status == 'draft';
+      // Unit updates its own submission only if it's currently a draft, and cannot change unitId
+      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid && resource.data.status == 'draft' && request.resource.data.unitId == request.auth.uid);
       allow delete: if isAdminOrManager();
     }
   }

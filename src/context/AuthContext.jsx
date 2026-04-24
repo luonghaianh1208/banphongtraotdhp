@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDocs, collection, query, where, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured } from '../firebase/config';
 import { getUserProfile } from '../firebase/auth';
+import { initFirstAdmin } from '../firebase/functions';
 
 const AuthContext = createContext(null);
 
@@ -48,21 +49,32 @@ export const AuthProvider = ({ children }) => {
               const unitDoc = unitsSnap.docs[0];
               profile = { id: unitDoc.id, ...unitDoc.data() };
             } else {
-              // Không phải unit → tạo user profile bình thường
-              const usersSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
-              const isFirstUser = usersSnap.empty;
-
+              // BUG-001 FIX: dùng Cloud Function atomic thay vì client-side check
+              // Tạo profile member trước (mặc định pending)
               const newProfile = {
                 email: user.email,
                 displayName: user.displayName || user.email.split('@')[0],
-                role: isFirstUser ? 'admin' : 'member',
-                isActive: isFirstUser ? true : false,
-                status: isFirstUser ? 'approved' : 'pending',
+                role: 'member',
+                isActive: false,
+                status: 'pending',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 avatar: user.photoURL || null,
               };
               await setDoc(doc(db, 'users', user.uid), newProfile);
+
+              // Thử gán admin qua Cloud Function (atomic transaction)
+              try {
+                const result = await initFirstAdmin();
+                if (result.data?.success) {
+                  newProfile.role = 'admin';
+                  newProfile.isActive = true;
+                  newProfile.status = 'approved';
+                }
+              } catch (cfErr) {
+                console.warn('initFirstAdmin CF call failed (có thể admin đã tồn tại):', cfErr.message);
+              }
+
               profile = { id: user.uid, ...newProfile };
             }
           }
@@ -112,8 +124,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Kiểm tra quyền
-  const isApproved = userProfile?.status === 'approved' || (userProfile?.isActive !== false && !userProfile?.status);
-  const isPending = userProfile?.status === 'pending' || (userProfile?.isActive === false);
+  const isApproved = userProfile?.status === 'approved';
+  const isPending = userProfile?.status === 'pending';
   const isAdmin = isApproved && userProfile?.role === 'admin';
   const isManager = isApproved && userProfile?.role === 'manager';
   const isMember = isApproved && userProfile?.role === 'member';
