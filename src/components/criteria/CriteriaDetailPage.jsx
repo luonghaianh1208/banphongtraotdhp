@@ -255,14 +255,14 @@ const CriteriaDetailPage = () => {
                                                         <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                                                             <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Điểm tự chấm</span>
                                                             <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                                                                {submission.selfPoints?.[condition.id] || 0}
+                                                                {submission.responses?.[condition.id]?.selfScore ?? submission.selfPoints?.[condition.id] ?? 0}
                                                                 <small className="text-xs text-gray-400 font-bold ml-1">/ {condition.maxScore} đ</small>
                                                             </span>
                                                         </div>
                                                         <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                                                             <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mô tả thực hiện</span>
                                                             <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                                                                {submission.selfDescriptions?.[condition.id] || <span className="italic text-gray-400">Không có</span>}
+                                                                {submission.responses?.[condition.id]?.notes || submission.selfDescriptions?.[condition.id] || <span className="italic text-gray-400">Không có mô tả</span>}
                                                             </p>
                                                         </div>
                                                     </div>

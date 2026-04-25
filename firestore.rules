@@ -100,10 +100,26 @@ service cloud.firestore {
 
     match /criteriaSubmissions/{subId} {
       allow read: if isAuthenticated();
-      // Unit creates draft submission for itself
-      allow create: if isUnit() && request.resource.data.unitId == request.auth.uid && request.resource.data.status == 'draft';
-      // Unit updates its own submission only if it's currently a draft, and cannot change unitId
-      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid && resource.data.status == 'draft' && request.resource.data.unitId == request.auth.uid);
+
+      // Đơn vị tạo mới: chỉ khi submission là draft
+      allow create: if isUnit()
+        && request.resource.data.unitId == request.auth.uid
+        && request.resource.data.status == 'draft';
+
+      // Đơn vị update: chặn khi period đã locked hoặc published
+      allow update: if isAdminOrManager()
+        || (
+          isUnit()
+          && resource.data.unitId == request.auth.uid
+          && resource.data.status == 'draft'
+          && request.resource.data.unitId == request.auth.uid
+          && (
+            // Kiểm tra submissionPeriod chưa bị khóa
+            !exists(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId))
+            || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'open'
+            || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'draft'
+          )
+        );
       allow delete: if isAdminOrManager();
     }
   }

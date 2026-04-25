@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MdAssignment, MdAccessTime, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
-import { getCriteriaSet, saveUnitCriteriaResponse, submitCriteriaSubmission, subscribeToUnitCriteriaSubmission } from '../../firebase/criteriaFirestore';
+import { getCriteriaSet, saveUnitCriteriaResponse, submitCriteriaSubmission, subscribeToUnitCriteriaSubmission, getSubmissionPeriod } from '../../firebase/criteriaFirestore';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
@@ -20,6 +20,7 @@ const UnitSubmitPage = () => {
     const [responses, setResponses] = useState({});
     const [submissionStatus, setSubmissionStatus] = useState(null);
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
+    const [isPeriodLocked, setIsPeriodLocked] = useState(false);
 
     // Load criteria set
     useEffect(() => {
@@ -67,6 +68,21 @@ const UnitSubmitPage = () => {
         checkAssignment();
     }, [criteriaSetId, userProfile?.unitId]);
 
+    // BUG-008: Check period status (locked/published = read-only)
+    useEffect(() => {
+        const checkPeriodStatus = async () => {
+            if (!criteriaSet?.periodId) return;
+            const period = await getSubmissionPeriod(criteriaSet.periodId);
+            if (period && (period.status === 'locked' || period.status === 'published')) {
+                setIsPeriodLocked(true);
+                toast('Đợt báo cáo đã bị khóa. Bạn chỉ có thể xem, không thể chỉnh sửa.', {
+                    icon: '🔒',
+                });
+            }
+        };
+        if (criteriaSet) checkPeriodStatus();
+    }, [criteriaSet]);
+
     // Subscribe to existing submission
     useEffect(() => {
         const unitId = userProfile?.unitId || userProfile?.id;
@@ -100,7 +116,7 @@ const UnitSubmitPage = () => {
         return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
-    const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked;
+    const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
     const isNewFormat = !!criteriaSet.tieuChi;
     const tieuChiList = criteriaSet.tieuChi || criteriaSet.groups || [];
 
@@ -123,6 +139,7 @@ const UnitSubmitPage = () => {
     const handleSaveDraft = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể lưu.'); return; }
+        if (isReadOnly) { toast.error('Đợt báo cáo đã bị khóa hoặc đã nộp, không thể lưu.'); return; }
         const unitId = userProfile.unitId || userProfile.id;
         setSaving(true);
         try {
@@ -131,7 +148,8 @@ const UnitSubmitPage = () => {
                 unitId,
                 userProfile.unitName || userProfile.displayName,
                 responses,
-                currentTotalScore
+                currentTotalScore,
+                criteriaSet?.periodId || null
             );
             toast.success('Đã lưu thành công!');
         } catch (err) {
@@ -145,6 +163,7 @@ const UnitSubmitPage = () => {
     const handleSubmit = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) { toast.error('Đợt nộp đã bị thu hồi, không thể nộp.'); return; }
+        if (isReadOnly) { toast.error('Đợt báo cáo đã bị khóa hoặc đã nộp, không thể nộp.'); return; }
         if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
         const unitId = userProfile.unitId || userProfile.id;
@@ -156,7 +175,8 @@ const UnitSubmitPage = () => {
                 unitId,
                 userProfile.unitName || userProfile.displayName,
                 responses,
-                currentTotalScore
+                currentTotalScore,
+                criteriaSet?.periodId || null
             );
             // Then submit
             await submitCriteriaSubmission(criteriaSetId, unitId);

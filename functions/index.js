@@ -694,3 +694,42 @@ exports.initFirstAdmin = onCall(async (request) => {
     return { success: true, message: "Khởi tạo Admin đầu tiên thành công!" };
   });
 });
+
+// === 17. TẠO PHIẾU PHẠT IDEMPOTENT (tránh trùng lặp) ===
+exports.createPenaltyIdempotent = onCall(async (request) => {
+  const { userId, taskId, penaltyTypeId, amount, reason, taskTitle } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError('unauthenticated', 'Chưa đăng nhập');
+
+  await requireAdminOrManager(callerUid);
+
+  if (!userId || !taskId || !penaltyTypeId) {
+    throw new HttpsError('invalid-argument', 'Thiếu thông tin bắt buộc');
+  }
+
+  // Composite document ID — đảm bảo idempotent tuyệt đối
+  const penaltyDocId = `${userId}_${taskId}_${penaltyTypeId}`;
+  const penaltyRef = db.collection('penalties').doc(penaltyDocId);
+
+  // Dùng transaction để kiểm tra + tạo atomic
+  await db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(penaltyRef);
+    if (existing.exists) {
+      // Đã tồn tại → không làm gì, không báo lỗi
+      return;
+    }
+    transaction.set(penaltyRef, {
+      userId,
+      taskId,
+      taskTitle: taskTitle || '',
+      penaltyTypeId,
+      amount: amount || 0,
+      reason: reason || '',
+      isAuto: true,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: callerUid,
+    });
+  });
+
+  return { message: 'OK' };
+});

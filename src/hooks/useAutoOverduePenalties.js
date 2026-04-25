@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTaskConfig } from '../context/TaskConfigContext';
 import { useTasks } from './useTasks';
 import { useAllPenalties } from './usePenalties';
-import { createPenalty } from '../firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getTaskDisplayStatus } from '../utils/statusUtils';
 import { TASK_DISPLAY_STATUS } from '../utils/constants';
 
@@ -67,11 +67,25 @@ export const useAutoOverduePenalties = () => {
       if (penaltiesToCreate.length === 0) return;
       isProcessingRef.current = true;
 
-      Promise.allSettled(penaltiesToCreate.map(p => createPenalty(p)))
+      const functions = getFunctions();
+      const createPenaltyIdempotent = httpsCallable(functions, 'createPenaltyIdempotent');
+
+      Promise.allSettled(
+        penaltiesToCreate.map(p =>
+          createPenaltyIdempotent({
+            userId: p.userId,
+            taskId: p.taskId,
+            taskTitle: p.taskTitle,
+            penaltyTypeId: p.penaltyTypeId,
+            amount: p.amount,
+            reason: p.reason,
+          })
+        )
+      )
         .then(results => {
           const failed = results.filter(r => r.status === 'rejected');
           if (failed.length > 0) {
-            console.error(`[AutoPenalty] ${failed.length}/${results.length} phạt tạo thất bại:`, failed.map(f => f.reason));
+            console.warn('Một số phiếu phạt không tạo được:', failed);
           }
         })
         .finally(() => { isProcessingRef.current = false; });

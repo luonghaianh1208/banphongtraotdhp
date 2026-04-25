@@ -374,7 +374,7 @@ export const getCriteriaSubmission = async (submissionId) => {
 };
 
 // Lưu / cập nhật bài nộp (upsert — tìm doc bằng criteriaSetId + unitId)
-export const saveUnitCriteriaResponse = async (criteriaSetId, unitId, unitName, responses, totalSelfScore) => {
+export const saveUnitCriteriaResponse = async (criteriaSetId, unitId, unitName, responses, totalSelfScore, periodId = null) => {
     const compId = `${criteriaSetId}_${unitId}`;
     const ref = doc(db, 'criteriaSubmissions', compId);
 
@@ -384,6 +384,7 @@ export const saveUnitCriteriaResponse = async (criteriaSetId, unitId, unitName, 
         unitName,
         responses: responses || {},
         totalSelfScore: totalSelfScore || 0,
+        periodId: periodId || null,
         status: 'draft',
         lastSavedAt: serverTimestamp(),
     }, { merge: true });

@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026-04-25 PM] - Fix chi tiết BUG-004, BUG-006, BUG-008
+### Đã sửa
+- **BUG-004**: Thêm fallback `responses[].selfScore` và `.notes` cho format cũ (`groups → conditions`) trong `CriteriaDetailPage.jsx`
+- **BUG-006**: Cloud Function `createPenaltyIdempotent` thay thế client-side `createPenalty`. Hook `useAutoOverduePenalties` gọi CF thay vì Firestore trực tiếp
+- **BUG-008**: Firestore Rules check `submissionPeriods.status` trước khi cho update. `periodId` thêm vào `saveUnitCriteriaResponse`. FE guard `isPeriodLocked` trong `UnitSubmitPage.jsx`
+### File bị ảnh hưởng
+- `src/components/criteria/CriteriaDetailPage.jsx`
+- `functions/index.js`
+- `src/hooks/useAutoOverduePenalties.js`
+- `firestore.rules`
+- `src/firebase/criteriaFirestore.js`
+- `src/components/unit/UnitSubmitPage.jsx`
+
 ## [2026-04-25] - Fix toàn bộ 13 bugs backend & security
 ### Đã sửa
 - **BUG-001**: Race condition admin đầu tiên → Cloud Function `initFirstAdmin` + Transaction

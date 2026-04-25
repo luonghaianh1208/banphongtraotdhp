@@ -27,8 +27,8 @@ Trạng thái: open | in-progress | fixed | wont-fix
 ---
 
 ## [BUG-004] Field tự chấm không khớp
-- **Trạng thái**: ✅ fixed
-- **Fix**: Sửa `CriteriaDetailPage` đọc `submission.responses[m.id].selfScore`.
+- **Trạng thái**: ✅ fixed (2026-04-25)
+- **Fix**: Thêm fallback `responses[].selfScore` và `.notes` cho cả format mới và format cũ (`groups → conditions`) trong `CriteriaDetailPage.jsx`.
 
 ---
 
@@ -40,7 +40,7 @@ Trạng thái: open | in-progress | fixed | wont-fix
 
 ## [BUG-006] Duplicate penalty multi-admin
 - **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: `createPenalty` dùng Transaction + composite key `taskId_userId_penaltyTypeId`.
+- **Fix**: Cloud Function `createPenaltyIdempotent` + Transaction + composite key `userId_taskId_penaltyTypeId`. Hook `useAutoOverduePenalties` gọi CF thay vì `createPenalty` trực tiếp.
 
 ---
 
@@ -54,7 +54,7 @@ Trạng thái: open | in-progress | fixed | wont-fix
 
 ## [BUG-008] Đơn vị sửa được bài sau khi đợt khóa
 - **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Thêm check `resource.data.status == 'draft'` vào `firestore.rules`.
+- **Fix**: Firestore Rules check `submissionPeriods/{periodId}.status` trước khi cho update. Thêm `periodId` vào `saveUnitCriteriaResponse`. FE guard `isPeriodLocked` trong `UnitSubmitPage.jsx`.
 
 ---
 
