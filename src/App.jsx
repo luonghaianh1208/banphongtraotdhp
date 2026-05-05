@@ -122,22 +122,22 @@ const AppRoutes = () => {
 
         {/* Module Chỉ tiêu & Kế hoạch (Admin/Manager) */}
         <Route path="criteria-sets" element={
-          <ProtectedRoute roles={['admin', 'manager']}><CriteriaSetsPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><CriteriaSetsPage /></ProtectedRoute>
         } />
         <Route path="criteria-set/:setId" element={
-          <ProtectedRoute roles={['admin', 'manager']}><CriteriaSetDetailPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><CriteriaSetDetailPage /></ProtectedRoute>
         } />
         <Route path="criteria-overview/:criteriaSetId" element={
-          <ProtectedRoute roles={['admin', 'manager']}><CriteriaOverviewPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><CriteriaOverviewPage /></ProtectedRoute>
         } />
         <Route path="criteria-detail/:periodId/:submissionId" element={
-          <ProtectedRoute roles={['admin', 'manager']}><CriteriaDetailPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><CriteriaDetailPage /></ProtectedRoute>
         } />
         <Route path="plans-manage" element={
-          <ProtectedRoute roles={['admin', 'manager']}><PlansManagePage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><PlansManagePage /></ProtectedRoute>
         } />
         <Route path="plans/:planId" element={
-          <ProtectedRoute roles={['admin', 'manager']}><PlanDetailPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><PlanDetailPage /></ProtectedRoute>
         } />
         <Route path="units" element={
           <ProtectedRoute roles={['admin', 'manager']}><UnitsPage /></ProtectedRoute>
