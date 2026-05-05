@@ -645,9 +645,7 @@ const CriteriaSetDetailPage = () => {
                         </div>
                     </div>
                 )}
-                    </div>
-                )}
-            </div>
+                </div>
             )}
 
             {/* Floating save indicator */}
