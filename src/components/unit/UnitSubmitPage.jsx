@@ -33,13 +33,13 @@ const UnitSubmitPage = () => {
             try {
                 const cData = await getCriteriaSet(criteriaSetId);
                 if (!cData) {
-                    toast.error('Khong tim thay bo tieu chi!');
+                    toast.error('Không tìm thấy bộ tiêu chí!');
                     navigate('/unit/submissions');
                     return;
                 }
                 setCriteriaSet(cData);
             } catch (err) {
-                console.error('Loi khi tai du lieu:', err);
+                console.error('Lỗi khi tải dữ liệu:', err);
             } finally {
                 setLoading(false);
             }
@@ -65,7 +65,7 @@ const UnitSubmitPage = () => {
                     setAssignmentRevoked(assignment.status === 'revoked');
                 }
             } catch (err) {
-                console.error('Loi kiem tra assignment:', err);
+                console.error('Lỗi kiểm tra assignment:', err);
             }
         };
 
@@ -78,7 +78,7 @@ const UnitSubmitPage = () => {
             const period = await getSubmissionPeriod(criteriaSet.periodId);
             if (period && (period.status === 'locked' || period.status === 'published')) {
                 setIsPeriodLocked(true);
-                toast('Dot bao cao da bi khoa. Ban chi co the xem, khong the chinh sua.', {
+                toast('Đợt báo cáo đã bị khóa. Bạn chỉ có thể xem, không thể chỉnh sửa.', {
                     icon: '🔒',
                 });
             }
@@ -112,13 +112,13 @@ const UnitSubmitPage = () => {
         return (
             <div className="flex flex-col justify-center items-center h-64 space-y-4">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
-                <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">Dang tai du lieu bao cao...</p>
+                <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">Đang tải dữ liệu báo cáo...</p>
             </div>
         );
     }
 
     if (!criteriaSet) {
-        return <div className="text-center mt-10 dark:text-white font-bold">Du lieu khong hop le.</div>;
+        return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
     const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
@@ -140,11 +140,11 @@ const UnitSubmitPage = () => {
     const handleSaveDraft = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) {
-            toast.error('Dot nop da bi thu hoi, khong the luu.');
+            toast.error('Đợt nộp đã bị thu hồi, không thể lưu.');
             return;
         }
         if (isReadOnly) {
-            toast.error('Dot bao cao da bi khoa hoac da nop, khong the luu.');
+            toast.error('Đợt báo cáo đã bị khóa hoặc đã nộp, không thể lưu.');
             return;
         }
 
@@ -159,10 +159,10 @@ const UnitSubmitPage = () => {
                 currentTotalScore,
                 criteriaSet?.periodId || null
             );
-            toast.success('Da luu thanh cong!');
+            toast.success('Đã lưu thành công!');
         } catch (err) {
-            console.error('Loi luu:', err);
-            toast.error('Co loi xay ra khi luu.');
+            console.error('Lỗi lưu:', err);
+            toast.error('Có lỗi xảy ra khi lưu.');
         } finally {
             setSaving(false);
         }
@@ -171,14 +171,14 @@ const UnitSubmitPage = () => {
     const handleSubmit = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) {
-            toast.error('Dot nop da bi thu hoi, khong the nop.');
+            toast.error('Đợt nộp đã bị thu hồi, không thể nộp.');
             return;
         }
         if (isReadOnly) {
-            toast.error('Dot bao cao da bi khoa hoac da nop, khong the nop.');
+            toast.error('Đợt báo cáo đã bị khóa hoặc đã nộp, không thể nộp.');
             return;
         }
-        if (!window.confirm('Ban co chac chan muon nop bao cao chinh thuc? Sau khi nop se khong the chinh sua.')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
         const unitId = userProfile.id;
         setSaving(true);
@@ -192,11 +192,11 @@ const UnitSubmitPage = () => {
                 criteriaSet?.periodId || null
             );
             await submitCriteriaSubmission(criteriaSetId, unitId);
-            toast.success('Da nop bao cao chinh thuc thanh cong!');
+            toast.success('Đã nộp báo cáo chính thức thành công!');
             navigate('/unit/submissions');
         } catch (err) {
-            console.error('Loi khi nop:', err);
-            toast.error('Co loi xay ra. Vui long thu lai.');
+            console.error('Lỗi khi nộp:', err);
+            toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }
@@ -215,7 +215,7 @@ const UnitSubmitPage = () => {
                     <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{criteriaSet.title}</h2>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                         <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">
-                            <MdAssignment /> Nam: {criteriaSet.academicYear || '—'}
+                            <MdAssignment /> Năm: {criteriaSet.academicYear || '—'}
                         </div>
                         {submissionStatus && (
                             <span
@@ -226,7 +226,7 @@ const UnitSubmitPage = () => {
                                         : 'bg-amber-100 text-amber-600'
                                     }`}
                             >
-                                {submissionStatus === 'submitted' ? 'Da nop' : submissionStatus === 'graded' ? 'Da tham dinh' : 'Ban nhap'}
+                                {submissionStatus === 'submitted' ? 'Đã nộp' : submissionStatus === 'graded' ? 'Đã thẩm định' : 'Bản nháp'}
                             </span>
                         )}
                     </div>
@@ -240,14 +240,14 @@ const UnitSubmitPage = () => {
                             <MdCheckCircle size={32} />
                         </div>
                         <div>
-                            <h3 className="font-black text-gray-900 dark:text-white text-lg leading-tight">Tien do tu cham</h3>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold">Diem tong hop tu cac muc</p>
+                            <h3 className="font-black text-gray-900 dark:text-white text-lg leading-tight">Tiến độ tự chấm</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold">Điểm tổng hợp từ các mục</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-6 w-full sm:w-auto">
                         <div className="flex-1 sm:w-64">
                             <div className="flex justify-between mb-2">
-                                <span className="text-xs font-black uppercase tracking-widest text-primary-600 dark:text-primary-400">Hoan tat</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-primary-600 dark:text-primary-400">Hoàn tất</span>
                                 <span className="text-xs font-black text-gray-900 dark:text-white">
                                     {Math.round((currentTotalScore / (criteriaSet.totalMaxScore || 1)) * 100)}%
                                 </span>
@@ -269,17 +269,17 @@ const UnitSubmitPage = () => {
             <div className="glass-card overflow-hidden">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-800">
                     <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white">Bang tu cham theo hang ngang</h3>
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white">Bảng tự chấm theo hàng ngang</h3>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Moi muc cham nam tren mot dong de cap duoi va cap tren doi chieu cung mot cau truc.
+                            Mỗi mục chấm nằm trên một dòng để cấp dưới và cấp trên đối chiếu cùng một cấu trúc.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
                         <span className="rounded-full bg-primary-50 px-3 py-1.5 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
-                            {tableRows.length} muc
+                            {tableRows.length} mục
                         </span>
                         <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
-                            Tong toi da {criteriaSet.totalMaxScore || 0} diem
+                            Tổng tối đa {criteriaSet.totalMaxScore || 0} điểm
                         </span>
                     </div>
                 </div>
@@ -289,17 +289,17 @@ const UnitSubmitPage = () => {
                         <table className="min-w-[1760px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tieu chi</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Noi dung</th>
+                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
                                     <th className="px-3 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
-                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Dieu kien cham</th>
-                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yeu cau minh chung</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">To</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Han</th>
-                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Toi da</th>
-                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tu cham</th>
-                                    <th className="min-w-[280px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giai trinh</th>
-                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tep minh chung</th>
+                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
+                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
+                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
+                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tối đa</th>
+                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
+                                    <th className="min-w-[280px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
+                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tệp minh chứng</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
@@ -378,7 +378,7 @@ const UnitSubmitPage = () => {
                                                     disabled={isReadOnly}
                                                     rows={4}
                                                     className="input min-w-[260px] w-full px-3 py-2 text-sm resize-y"
-                                                    placeholder="Nhap giai trinh hoac mo ta minh chung..."
+                                                    placeholder="Nhập giải trình hoặc mô tả minh chứng..."
                                                 />
                                             </td>
                                             <td className="px-4 py-4">
@@ -398,7 +398,7 @@ const UnitSubmitPage = () => {
                     </div>
                 ) : (
                     <div className="px-6 py-10 text-center text-sm font-bold text-gray-400">
-                        Bo tieu chi nay chua co muc nao de nhap.
+                        Bộ tiêu chí này chưa có mục nào để nhập.
                     </div>
                 )}
             </div>
@@ -412,7 +412,7 @@ const UnitSubmitPage = () => {
                             className="px-6 py-3 text-gray-500 dark:text-gray-400 font-bold hover:text-gray-900 dark:hover:text-white transition-colors"
                             disabled={saving}
                         >
-                            Quay lai
+                            Quay lại
                         </button>
                         <div className="flex gap-4">
                             <button
@@ -422,7 +422,7 @@ const UnitSubmitPage = () => {
                                 className="px-8 py-3 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-all flex items-center gap-2"
                             >
                                 {saving ? <span className="animate-spin h-4 w-4 border-b-2 border-primary-700 rounded-full"></span> : <MdSave size={18} />}
-                                <span>Luu</span>
+                                <span>Lưu</span>
                             </button>
                             <button
                                 type="button"
@@ -435,7 +435,7 @@ const UnitSubmitPage = () => {
                                 ) : (
                                     <MdSend size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                 )}
-                                <span>Nop bao cao</span>
+                                <span>Nộp báo cáo</span>
                             </button>
                         </div>
                     </div>

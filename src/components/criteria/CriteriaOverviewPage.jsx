@@ -35,8 +35,8 @@ const CriteriaOverviewPage = () => {
     if (!criteriaSet) {
         return (
             <div className="card p-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">Khong tim thay bo tieu chi.</p>
-                <Link to="/criteria-sets" className="btn btn-primary">Quay lai</Link>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Không tìm thấy bộ tiêu chí.</p>
+                <Link to="/criteria-sets" className="btn btn-primary">Quay lại</Link>
             </div>
         );
     }
@@ -56,10 +56,10 @@ const CriteriaOverviewPage = () => {
         .filter((item) => item.assignment.unitName.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const statusMap = {
-        not_submitted: { label: 'Chua nop', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
-        draft: { label: 'Dang nhap', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
-        submitted: { label: 'Da nop', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
-        graded: { label: 'Da tham dinh', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
+        not_submitted: { label: 'Chưa nộp', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+        draft: { label: 'Bản nháp', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
+        submitted: { label: 'Đã nộp', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
+        graded: { label: 'Đã thẩm định', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
     };
 
     const getOfficialScoreValue = (scoreEntry) => (
@@ -86,13 +86,13 @@ const CriteriaOverviewPage = () => {
         setIsSavingGrade(true);
         try {
             await gradeCriteriaSubmission(submissionId, gradedScores, gradedComment, 'admin');
-            toast.success('Da luu tham dinh!');
+            toast.success('Đã lưu thẩm định!');
             setGradingUnit(null);
             setGradedScores({});
             setGradedComment('');
         } catch (err) {
             console.error(err);
-            toast.error('Loi khi luu tham dinh');
+            toast.error('Lỗi khi lưu thẩm định');
         } finally {
             setIsSavingGrade(false);
         }
@@ -107,30 +107,30 @@ const CriteriaOverviewPage = () => {
                         className="inline-flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:gap-3 transition-all duration-300 group"
                     >
                         <MdArrowBack size={16} className="transition-transform group-hover:-translate-x-1" />
-                        Quay lai Quan ly Bo tieu chi
+                        Quay lại Quản lý Bộ tiêu chí
                     </button>
                     <h2 className="text-2xl font-black text-gray-900 dark:text-white">{criteriaSet.title}</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {criteriaSet.description || 'Tong quan nop bao cao theo don vi.'}
+                        {criteriaSet.description || 'Tổng quan nộp báo cáo theo đơn vị.'}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
                         <p className="text-2xl font-black text-gray-900 dark:text-white">{activeAssignments.length}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">Don vi</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">Đơn vị</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
                         <p className="text-2xl font-black text-blue-600">{overviewData.filter((d) => d.status === 'submitted').length}</p>
-                        <p className="text-[10px] font-bold text-blue-400 uppercase">Da nop</p>
+                        <p className="text-[10px] font-bold text-blue-400 uppercase">Đã nộp</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
                         <p className="text-2xl font-black text-emerald-600">{overviewData.filter((d) => d.status === 'graded').length}</p>
-                        <p className="text-[10px] font-bold text-emerald-400 uppercase">Da tham dinh</p>
+                        <p className="text-[10px] font-bold text-emerald-400 uppercase">Đã thẩm định</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
                         <p className="text-2xl font-black text-slate-500">{overviewData.filter((d) => d.status === 'not_submitted').length}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Chua nop</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Chưa nộp</p>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,7 @@ const CriteriaOverviewPage = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-1 bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
-                    placeholder="Tim don vi..."
+                    placeholder="Tìm đơn vị..."
                 />
                 {searchTerm && (
                     <button onClick={() => setSearchTerm('')}>
@@ -169,8 +169,8 @@ const CriteriaOverviewPage = () => {
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.assignment.unitName}</h4>
                                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>
-                                            {item.totalSelfScore > 0 && <span className="text-xs font-bold text-gray-400">Tu cham: {item.totalSelfScore}d</span>}
-                                            {item.totalGradedScore !== null && <span className="text-xs font-bold text-emerald-600">Tham dinh: {item.totalGradedScore}d</span>}
+                                            {item.totalSelfScore > 0 && <span className="text-xs font-bold text-gray-400">Tự chấm: {item.totalSelfScore}đ</span>}
+                                            {item.totalGradedScore !== null && <span className="text-xs font-bold text-emerald-600">Thẩm định: {item.totalGradedScore}đ</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -189,7 +189,7 @@ const CriteriaOverviewPage = () => {
                                         className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                                     >
                                         <MdGrade size={14} />
-                                        {isGrading ? 'Dong' : item.status === 'graded' ? 'Xem/Sua diem' : 'Tham dinh'}
+                                        {isGrading ? 'Đóng' : item.status === 'graded' ? 'Xem/Sửa điểm' : 'Thẩm định'}
                                     </button>
                                 )}
                             </div>
@@ -198,13 +198,13 @@ const CriteriaOverviewPage = () => {
                                 <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 space-y-4 animate-fade-in-up">
                                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-black uppercase text-gray-400">Chi tiet bai nop va cham diem</p>
+                                            <p className="text-xs font-black uppercase text-gray-400">Chi tiết bài nộp và chấm điểm</p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                Bang nay dung cung cau truc hang ngang voi man hinh cap duoi.
+                                                Bảng này dùng cùng cấu trúc hàng ngang với màn hình cấp dưới.
                                             </p>
                                         </div>
                                         <div className="text-xs font-bold text-gray-400">
-                                            {tableRows.length} muc cham
+                                            {tableRows.length} mục chấm
                                         </div>
                                     </div>
 
@@ -212,18 +212,18 @@ const CriteriaOverviewPage = () => {
                                         <table className="min-w-[1900px] w-full text-sm">
                                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                                 <tr>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tieu chi</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Noi dung</th>
+                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
                                                     <th className="px-3 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
-                                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Dieu kien cham</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yeu cau minh chung</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">To</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Han</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Toi da</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tu cham</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giai trinh</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chung</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tham dinh</th>
+                                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
+                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
+                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
+                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tối đa</th>
+                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
+                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
+                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
+                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Thẩm định</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
@@ -333,13 +333,13 @@ const CriteriaOverviewPage = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-1">Nhan xet</label>
+                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-1">Nhận xét</label>
                                         <textarea
                                             value={gradedComment}
                                             onChange={(e) => setGradedComment(e.target.value)}
                                             rows={2}
                                             className="input w-full text-sm"
-                                            placeholder="Nhan xet chung..."
+                                            placeholder="Nhận xét chung..."
                                         />
                                     </div>
 
@@ -348,7 +348,7 @@ const CriteriaOverviewPage = () => {
                                         disabled={isSavingGrade}
                                         className="btn btn-primary text-xs !py-2 !px-6"
                                     >
-                                        {isSavingGrade ? 'Dang luu...' : 'Luu tham dinh'}
+                                        {isSavingGrade ? 'Đang lưu...' : 'Lưu thẩm định'}
                                     </button>
                                 </div>
                             )}
@@ -358,7 +358,7 @@ const CriteriaOverviewPage = () => {
 
                 {overviewData.length === 0 && (
                     <div className="text-center py-20 text-gray-400 font-bold">
-                        Chua co don vi nao duoc giao tieu chi nay.
+                        Chưa có đơn vị nào được giao tiêu chí này.
                     </div>
                 )}
             </div>

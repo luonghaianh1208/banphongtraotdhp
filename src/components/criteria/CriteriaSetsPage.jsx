@@ -221,7 +221,7 @@ const CriteriaSetsPage = () => {
                 .map(blockId => UNIT_BLOCKS.find(block => block.id === blockId)?.name || blockId)
                 .join(', ');
         }
-        return 'Tat ca khoi';
+        return 'Tất cả khối';
     };
 
     // Unit selection block
@@ -268,37 +268,37 @@ const CriteriaSetsPage = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-8">
                 <div>
                     <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                        Cau hinh <span className="text-primary-600 dark:text-primary-400">Bo Tieu Chi</span>
+                        Cấu hình <span className="text-primary-600 dark:text-primary-400">Bộ Tiêu Chí</span>
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-2">
                         <span className="flex h-2 w-2 rounded-full bg-primary-500"></span>
-                        He thong hien co <strong className="text-gray-900 dark:text-white">{criteriaSets.length}</strong> bo tieu chi
+                        Hệ thống hiện có <strong className="text-gray-900 dark:text-white">{criteriaSets.length}</strong> bộ tiêu chí
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <button onClick={exportCriteriaTemplate} className="btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200/50 shadow-sm">
-                        <MdDownload size={20} /> <span className="hidden sm:inline">Tai mau Excel</span>
+                        <MdDownload size={20} /> <span className="hidden sm:inline">Tải mẫu Excel</span>
                     </button>
                     <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                     <button onClick={() => fileInputRef.current?.click()} className="btn bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200/50 shadow-sm">
                         <MdUpload size={20} /> <span className="hidden sm:inline">Upload Excel</span>
                     </button>
                     <button onClick={() => setShowModal(true)} className="btn btn-primary shadow-glow">
-                        <span className="text-lg font-bold mr-1">+</span> Tao thu cong
+                        <span className="text-lg font-bold mr-1">+</span> Tạo thủ công
                     </button>
                     {selected.length > 0 && (
                         <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 animate-fade-in">
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">Da chon {selected.length}:</span>
+                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">Đã chọn {selected.length}:</span>
                             <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1 border border-blue-200 dark:border-blue-800">
                                 <MdPerson size={14} className="text-blue-500" />
                                 <select onChange={e => { if (e.target.value) handleBulkAssign(e.target.value); e.target.value = ''; }}
                                     className="text-xs border-none outline-none bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer min-w-[120px]">
-                                    <option value="">Phan cong cho...</option>
+                                    <option value="">Phân công cho...</option>
                                     {staff.map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
                                 </select>
                             </div>
                             <button onClick={handleBulkDelete} className="btn btn-danger text-xs !py-1.5 !px-3">
-                                <MdDelete size={16} /> Xoa
+                                <MdDelete size={16} /> Xóa
                             </button>
                         </div>
                     )}
@@ -312,7 +312,7 @@ const CriteriaSetsPage = () => {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-200 outline-none placeholder-gray-400"
-                        placeholder="Tim kiem tieu chi..."
+                        placeholder="Tìm kiếm tiêu chí..."
                     />
                     {searchQuery && (
                         <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-red-500 transition-colors">
@@ -327,7 +327,7 @@ const CriteriaSetsPage = () => {
                         onChange={e => setFilterBlock(e.target.value)}
                         className="bg-transparent text-sm text-gray-700 dark:text-gray-200 outline-none cursor-pointer min-w-[140px]"
                     >
-                        <option value="">Tat ca khoi</option>
+                        <option value="">Tất cả khối</option>
                         {UNIT_BLOCKS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </select>
                 </div>
@@ -340,10 +340,10 @@ const CriteriaSetsPage = () => {
                     )}
                 >
                     <MdSelectAll size={16} />
-                    {allFilteredSelected ? 'Bo chon tat ca' : 'Chon tat ca (' + filteredSets.length + ')'}
+                    {allFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả (' + filteredSets.length + ')'}
                 </button>
                 {(searchQuery || filterBlock) && (
-                    <span className="text-xs text-gray-400 italic">Hien thi {filteredSets.length}/{criteriaSets.length}</span>
+                    <span className="text-xs text-gray-400 italic">Hiển thị {filteredSets.length}/{criteriaSets.length}</span>
                 )}
             </div>
 
@@ -351,10 +351,10 @@ const CriteriaSetsPage = () => {
                 {criteriaSets.length === 0 ? (
                     <div className="py-24 glass rounded-3xl flex flex-col items-center justify-center border-dashed border-2 border-gray-200 dark:border-gray-800">
                         <MdUpload size={40} className="text-gray-300 animate-bounce mb-6" />
-                        <p className="text-xl font-black text-gray-500">Chua co bo tieu chi nao</p>
+                        <p className="text-xl font-black text-gray-500">Chưa có bộ tiêu chí nào</p>
                         <div className="flex gap-3 mt-8">
                             <button onClick={() => fileInputRef.current?.click()} className="btn bg-blue-600 text-white hover:bg-blue-700"><MdUpload size={20} /> Upload Excel</button>
-                            <button onClick={() => setShowModal(true)} className="btn btn-primary">Tao thu cong</button>
+                            <button onClick={() => setShowModal(true)} className="btn btn-primary">Tạo thủ công</button>
                         </div>
                     </div>
                 ) : (
@@ -362,14 +362,14 @@ const CriteriaSetsPage = () => {
                         <table className="min-w-[1120px] w-full text-sm">
                             <thead className="bg-gray-50/90 dark:bg-gray-800/80">
                                 <tr className="border-b border-gray-200/70 dark:border-gray-700/70">
-                                    <th className="w-14 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Chon</th>
-                                    <th className="min-w-[320px] px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Bo tieu chi</th>
-                                    <th className="w-24 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Nam</th>
-                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Muc cham</th>
-                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tong diem</th>
-                                    <th className="min-w-[220px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Doi tuong ap dung</th>
-                                    <th className="w-32 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Da giao</th>
-                                    <th className="min-w-[260px] px-5 py-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-500">Thao tac</th>
+                                    <th className="w-14 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Chọn</th>
+                                    <th className="min-w-[320px] px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Bộ tiêu chí</th>
+                                    <th className="w-24 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Năm</th>
+                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Mục chấm</th>
+                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tổng điểm</th>
+                                    <th className="min-w-[220px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đối tượng áp dụng</th>
+                                    <th className="w-32 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Đã giao</th>
+                                    <th className="min-w-[260px] px-5 py-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-500">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
@@ -389,7 +389,7 @@ const CriteriaSetsPage = () => {
                                                     <div className="mt-2 h-1.5 w-10 rounded-full bg-primary-500 flex-shrink-0"></div>
                                                     <div className="min-w-0">
                                                         <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">{set.title}</p>
-                                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 italic line-clamp-2">{set.description || 'Chua co mo ta.'}</p>
+                                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 italic line-clamp-2">{set.description || 'Chưa có mô tả.'}</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -407,16 +407,16 @@ const CriteriaSetsPage = () => {
                                             </td>
                                             <td className="px-4 py-5 text-center align-top">
                                                 {assignmentCount > 0 ? (
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400"><MdSend size={13} /> {assignmentCount} don vi</span>
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400"><MdSend size={13} /> {assignmentCount} đơn vị</span>
                                                 ) : (
-                                                    <span className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800/60 px-3 py-1.5 text-xs font-bold text-gray-400">Chua giao</span>
+                                                    <span className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800/60 px-3 py-1.5 text-xs font-bold text-gray-400">Chưa giao</span>
                                                 )}
                                             </td>
                                             <td className="px-5 py-5 align-top">
                                                 <div className="flex justify-end gap-2">
-                                                    <Link to={'/criteria-set/' + set.id} className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 shadow-sm hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"><MdVisibility size={16} /> Chi tiet</Link>
-                                                    <button onClick={() => handleClone(set)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"><MdContentCopy size={16} /> Nhan ban</button>
-                                                    <button onClick={() => handleDelete(set.id, set.title)} className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 shadow-sm hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"><MdDelete size={16} /> Xoa</button>
+                                                    <Link to={'/criteria-set/' + set.id} className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 shadow-sm hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"><MdVisibility size={16} /> Chi tiết</Link>
+                                                    <button onClick={() => handleClone(set)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"><MdContentCopy size={16} /> Nhân bản</button>
+                                                    <button onClick={() => handleDelete(set.id, set.title)} className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 shadow-sm hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"><MdDelete size={16} /> Xóa</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -435,12 +435,12 @@ const CriteriaSetsPage = () => {
                     <div className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-premium p-6 w-[95vw] max-w-[1200px] relative z-10 border border-white/20 dark:border-gray-800/50 animate-fade-in-up max-h-[92vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4 shrink-0">
                             <div>
-                                <h3 className="text-xl font-black text-gray-900 dark:text-white">Xem truoc va chinh sua du lieu Excel</h3>
-                                <p className="text-xs text-gray-500 mt-1">{importRows.length} dong, moi tieu chi se luu thanh 1 bo rieng biet</p>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white">Xem trước và chỉnh sửa dữ liệu Excel</h3>
+                                <p className="text-xs text-gray-500 mt-1">{importRows.length} dòng, mỗi tiêu chí sẽ lưu thành 1 bộ riêng biệt</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-gray-500">Nam:</span>
+                                    <span className="text-xs font-bold text-gray-500">Năm:</span>
                                     <input value={importYear} onChange={e => setImportYear(e.target.value)} className="input !w-20 text-center font-bold text-sm !py-1.5" placeholder="2026" />
                                 </div>
                                 <button onClick={() => setShowImportPreview(false)} className="p-2 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 rounded-full transition-all"><MdClose size={20} /></button>
@@ -451,15 +451,15 @@ const CriteriaSetsPage = () => {
                                 <thead className="sticky top-0 z-10">
                                     <tr className="bg-emerald-600 text-white">
                                         <th className="px-2 py-2.5 text-left font-black whitespace-nowrap w-8">#</th>
-                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Tieu chi</th>
-                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[160px]">Noi dung</th>
+                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Tiêu chí</th>
+                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[160px]">Nội dung</th>
                                         <th className="px-2 py-2.5 text-center font-black w-12">STT</th>
-                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Dieu kien cham</th>
-                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Yeu cau MC</th>
-                                        <th className="px-2 py-2.5 text-center font-black w-16">To</th>
-                                        <th className="px-2 py-2.5 text-center font-black w-16">Diem</th>
-                                        <th className="px-2 py-2.5 text-center font-black whitespace-nowrap w-24">Thoi han</th>
-                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[150px]">Don vi</th>
+                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Điều kiện chấm</th>
+                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[200px]">Yêu cầu MC</th>
+                                        <th className="px-2 py-2.5 text-center font-black w-16">Tổ</th>
+                                        <th className="px-2 py-2.5 text-center font-black w-16">Điểm</th>
+                                        <th className="px-2 py-2.5 text-center font-black whitespace-nowrap w-24">Thời hạn</th>
+                                        <th className="px-2 py-2.5 text-left font-black whitespace-nowrap min-w-[150px]">Đơn vị</th>
                                         <th className="px-2 py-2.5 text-center font-black w-8"></th>
                                     </tr>
                                 </thead>
@@ -477,7 +477,7 @@ const CriteriaSetsPage = () => {
                                                 <td className="px-1 py-1"><input value={row.toTheoDoi} onChange={e => updateRow(idx, 'toTheoDoi', e.target.value)} className="w-full text-center px-1 py-1 rounded border border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none bg-transparent text-xs font-bold" /></td>
                                                 <td className="px-1 py-1"><input type="number" value={row.khungDiem} onChange={e => updateRow(idx, 'khungDiem', Number(e.target.value) || 0)} className="w-full text-center px-1 py-1 rounded border border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none bg-transparent text-xs font-black text-emerald-600 dark:text-emerald-400" /></td>
                                                 <td className="px-1 py-1"><input value={row.deadline} onChange={e => updateRow(idx, 'deadline', e.target.value)} className="w-full text-center px-1 py-1 rounded border border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none bg-transparent text-xs" /></td>
-                                                <td className="px-1 py-1"><input value={row.donVi} onChange={e => updateRow(idx, 'donVi', e.target.value)} className="w-full px-1.5 py-1 rounded border border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none bg-transparent text-xs" placeholder="VD: Khoi Xa..." /></td>
+                                                <td className="px-1 py-1"><input value={row.donVi} onChange={e => updateRow(idx, 'donVi', e.target.value)} className="w-full px-1.5 py-1 rounded border border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none bg-transparent text-xs" placeholder="VD: Khối Xã..." /></td>
                                                 <td className="px-1 py-1 text-center"><button onClick={() => deleteRow(idx)} className="p-1 text-gray-300 hover:text-red-500 transition-colors rounded"><MdDelete size={14} /></button></td>
                                             </tr>
                                         );
@@ -486,9 +486,9 @@ const CriteriaSetsPage = () => {
                             </table>
                         </div>
                         <div className="flex gap-4 shrink-0">
-                            <button onClick={() => setShowImportPreview(false)} className="flex-1 btn btn-secondary !py-3" disabled={isSubmitting}>Huy bo</button>
+                            <button onClick={() => setShowImportPreview(false)} className="flex-1 btn btn-secondary !py-3" disabled={isSubmitting}>Hủy bỏ</button>
                             <button onClick={handleConfirmImport} className="flex-[2] btn btn-primary shadow-glow !py-3 disabled:opacity-50" disabled={isSubmitting}>
-                                {isSubmitting ? (<div className="flex items-center justify-center gap-2"><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Dang luu...</span></div>) : 'Luu thanh bo tieu chi rieng biet'}
+                                {isSubmitting ? (<div className="flex items-center justify-center gap-2"><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Đang lưu...</span></div>) : 'Lưu thành bộ tiêu chí riêng biệt'}
                             </button>
                         </div>
                     </div>
@@ -503,32 +503,32 @@ const CriteriaSetsPage = () => {
                     <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-premium p-8 max-w-xl w-full relative z-10 border border-white/20 dark:border-gray-800/50 animate-fade-in-up max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-8 shrink-0">
                             <div>
-                                <h3 className="text-3xl font-black text-gray-900 dark:text-white">Tao Bo Tieu Chi</h3>
-                                <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-black">Khoi tao, chinh sua chi tiet sau</p>
+                                <h3 className="text-3xl font-black text-gray-900 dark:text-white">Tạo Bộ Tiêu Chí</h3>
+                                <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-black">Khởi tạo, chỉnh sửa chi tiết sau</p>
                             </div>
                             <button onClick={() => setShowModal(false)} className="p-3 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 rounded-full transition-all"><MdClose size={24} /></button>
                         </div>
                         <form onSubmit={handleCreate} className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Ten *</label>
-                                    <input required value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} className="input" placeholder="VD: Tieu chi 1: To chuc..." />
+                                    <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Tên *</label>
+                                    <input required value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} className="input" placeholder="VD: Tiêu chí 1: Tổ chức..." />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Nam</label>
+                                    <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Năm</label>
                                     <input value={formData.academicYear} onChange={e => setFormData(p => ({ ...p, academicYear: e.target.value }))} className="input text-center font-bold" placeholder="2026" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Mo ta</label>
-                                <textarea value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} className="input min-h-[80px] resize-none !py-4" placeholder="Noi dung, muc dich..." rows={2} />
+                                <label className="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Mô tả</label>
+                                <textarea value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} className="input min-h-[80px] resize-none !py-4" placeholder="Nội dung, mục đích..." rows={2} />
                             </div>
                             {renderUnitSelection(formData, setFormData)}
-                            <p className="text-xs text-gray-400 text-center italic bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl">Sau khi tao, them noi dung va muc cham trong trang chi tiet.</p>
+                            <p className="text-xs text-gray-400 text-center italic bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl">Sau khi tạo, thêm nội dung và mục chấm trong trang chi tiết.</p>
                             <div className="flex gap-4 pt-4 shrink-0">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 btn btn-secondary !py-4" disabled={isSubmitting}>Huy</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 btn btn-secondary !py-4" disabled={isSubmitting}>Hủy</button>
                                 <button type="submit" className="flex-[2] btn btn-primary shadow-glow !py-4 disabled:opacity-50" disabled={isSubmitting}>
-                                    {isSubmitting ? <div className="flex items-center justify-center gap-2"><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Dang tao...</div> : 'Tao va mo Chi tiet'}
+                                    {isSubmitting ? <div className="flex items-center justify-center gap-2"><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Đang tạo...</div> : 'Tạo và mở Chi tiết'}
                                 </button>
                             </div>
                         </form>
@@ -550,4 +550,3 @@ const CriteriaSetsPage = () => {
 };
 
 export default CriteriaSetsPage;
-
