@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { MdAssignment, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdGrade } from 'react-icons/md';
+import { MdAssignment, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdGrade, MdList, MdChat } from 'react-icons/md';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -10,6 +10,7 @@ import {
     saveUnitCriteriaResponse,
     submitCriteriaSubmission,
     subscribeToUnitCriteriaSubmission,
+    submitUnitJustification
 } from '../../firebase/criteriaFirestore';
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
@@ -29,6 +30,7 @@ const UnitSubmitPage = () => {
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
     const [gradedData, setGradedData] = useState({ scores: {}, comment: '', total: null });
+    const [activeTab, setActiveTab] = useState('bTC'); // 'bTC' or 'giaiTrinh'
 
     useEffect(() => {
         const fetchData = async () => {
@@ -239,6 +241,26 @@ const UnitSubmitPage = () => {
         }
     };
 
+    const handleSubmitJustification = async () => {
+        if (!userProfile) return;
+        if (assignmentRevoked || isPeriodLocked) {
+            toast.error('Không thể gửi giải trình lúc này.');
+            return;
+        }
+
+        const unitId = userProfile.id;
+        setSaving(true);
+        try {
+            await submitUnitJustification(criteriaSetId, unitId, responses);
+            toast.success('Đã gửi giải trình thành công!');
+        } catch (err) {
+            console.error('Lỗi khi gửi giải trình:', err);
+            toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div className="max-w-[1920px] w-full mx-auto pb-32 relative px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4 mb-8">
@@ -318,26 +340,36 @@ const UnitSubmitPage = () => {
                 )}
             </div>
 
-            <div className="glass-card overflow-hidden">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex gap-2 mb-0">
+                <button
+                    onClick={() => setActiveTab('bTC')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${activeTab === 'bTC' ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl text-primary-600 border-t-2 border-primary-500 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 relative' : 'bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                >
+                    <MdList size={20} /> Bộ tiêu chí
+                </button>
+                <button
+                    onClick={() => setActiveTab('giaiTrinh')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${activeTab === 'giaiTrinh' ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl text-amber-600 border-t-2 border-amber-500 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 relative' : 'bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                >
+                    <MdChat size={20} /> Giải trình
+                </button>
+            </div>
+
+            <div className="glass-card overflow-hidden rounded-tl-none">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                     <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white">Bảng tự chấm theo hàng ngang</h3>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Mỗi mục chấm nằm trên một dòng để cấp dưới và cấp trên đối chiếu cùng một cấu trúc.
-                        </p>
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                            {activeTab === 'bTC' ? 'Bảng tự chấm (Toàn bộ tiêu chí)' : 'Bảng yêu cầu giải trình'}
+                        </h3>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                         <div className="flex flex-wrap gap-2 text-xs font-bold">
                             <span className="rounded-full bg-primary-50 px-3 py-1.5 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
-                                {tableRows.length} mục
+                                {activeTab === 'bTC' ? tableRows.length : tableRows.filter(r => gradedData.scores[r.id]?.requireJustification).length} mục
                             </span>
                             <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
                                 Tổng tối đa {criteriaSet.totalMaxScore || 0} điểm
                             </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/30">
-                            <span className="font-bold">💡 Mẹo nhập liệu:</span>
-                            <span>Bấm <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-[10px] font-black shadow-sm">Enter</kbd> để xuống dòng tiếp theo. Bấm <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-[10px] font-black shadow-sm">Shift + Enter</kbd> để ngắt dòng trong ô.</span>
                         </div>
                     </div>
                 </div>
@@ -347,37 +379,48 @@ const UnitSubmitPage = () => {
                         <table className="min-w-[1600px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
-                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
-                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Tiêu chí</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-[120px] bg-gray-50/80 dark:bg-gray-900/90 z-10">Nội dung</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
-                                    <th className="min-w-[260px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
-                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">YC minh chứng</th>
+                                    <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
                                     <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
-                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Max</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
-                                    <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
-                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
-                                    {isGraded && <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Cấp trên</th>}
-                                    {isGraded && <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>}
+                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn nộp</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tối đa</th>
+                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
+                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên chấm (trước giải trình)</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
+                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm chấm sau giải trình</th>
+                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
                                 {tableRows.map((row, index) => {
                                     const res = responses[row.id] || {};
+                                    const graded = gradedData.scores[row.id] || {};
                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
 
+                                    if (activeTab === 'giaiTrinh' && !graded.requireJustification) {
+                                        return null;
+                                    }
+
+                                    const isRowLocked = isReadOnly || activeTab === 'giaiTrinh';
+                                    const isJustificationUnlocked = !isPeriodLocked && activeTab === 'giaiTrinh';
+
                                     return (
                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
-                                            <td className="px-4 py-4">
+                                            <td className="px-4 py-4 sticky left-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
                                                 {showTc ? (
                                                     <div className="font-black text-gray-900 dark:text-white">{row.tcTitle}</div>
                                                 ) : (
                                                     <span className="text-xs font-bold text-gray-300 dark:text-gray-700">↳</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-4">
+                                            <td className="px-4 py-4 sticky left-[120px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
                                                 {row.ndTitle ? (
                                                     showNd ? (
                                                         <div className="font-semibold text-gray-700 dark:text-gray-200">{row.ndTitle}</div>
@@ -394,29 +437,49 @@ const UnitSubmitPage = () => {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="whitespace-pre-line font-medium text-gray-700 dark:text-gray-200">
+                                                <div className="whitespace-pre-line font-medium text-gray-700 dark:text-gray-200 text-xs">
                                                     {row.dieuKienCham || '—'}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="whitespace-pre-line text-sm text-blue-700 dark:text-blue-300">
+                                                <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
                                                     {row.yeucauMinhChung || '—'}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
                                                 {row.toTheoDoi ? (
-                                                    <span className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                                                         {row.toTheoDoi}
                                                     </span>
                                                 ) : (
                                                     <span className="text-sm text-gray-400">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
+                                            <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
                                             <td className="px-4 py-4 text-center">
-                                                <span className="inline-flex rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                                <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                     {row.khungDiem}
                                                 </span>
+                                            </td>
+                                            <td className="px-3 py-4">
+                                                <TextareaAutosize
+                                                    minRows={1}
+                                                    maxRows={5}
+                                                    value={res.notes || ''}
+                                                    onChange={(e) => handleResponseChange(row.id, 'notes', e.target.value)}
+                                                    disabled={isRowLocked}
+                                                    className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${isRowLocked ? 'bg-gray-50' : ''}`}
+                                                    placeholder="Đánh giá của đơn vị..."
+                                                />
+                                            </td>
+                                            <td className="px-3 py-4">
+                                                <div className="min-w-[140px]">
+                                                    <EvidenceUpload
+                                                        files={res.evidenceFiles || []}
+                                                        onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
+                                                        readOnly={isRowLocked && !isJustificationUnlocked}
+                                                    />
+                                                </div>
                                             </td>
                                             <td className="px-2 py-4">
                                                 <input
@@ -426,57 +489,68 @@ const UnitSubmitPage = () => {
                                                     step="0.5"
                                                     value={res.selfScore ?? ''}
                                                     onChange={(e) => handleResponseChange(row.id, 'selfScore', e.target.value)}
-                                                    onKeyDown={(e) => handleKeyDown(e, 'tuCham')}
-                                                    data-col="tuCham"
-                                                    disabled={isReadOnly}
-                                                    className="input w-20 text-center font-black text-emerald-600 dark:text-emerald-400"
+                                                    disabled={isRowLocked}
+                                                    className={`input w-16 text-center text-sm font-black text-emerald-600 dark:text-emerald-400 mx-auto block ${isRowLocked ? 'bg-gray-50' : ''}`}
                                                     placeholder="0"
                                                 />
                                             </td>
+                                            
+                                            {/* Điểm cấp trên (trước GT) */}
+                                            <td className="px-2 py-4 text-center">
+                                                {graded.officialScore != null ? (
+                                                    <span className="inline-flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 text-sm font-black text-emerald-700 dark:text-emerald-400">
+                                                        {graded.officialScore}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-300">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* Y/C Giải trình (Hiển thị trạng thái từ cấp trên) */}
+                                            <td className="px-2 py-4 text-center">
+                                                {graded.requireJustification ? (
+                                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
+                                                        <MdCheckCircle size={16} />
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-300">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* Nội dung giải trình */}
                                             <td className="px-3 py-4">
                                                 <TextareaAutosize
                                                     minRows={1}
-                                                    maxRows={10}
-                                                    value={res.notes || ''}
-                                                    onChange={(e) => handleResponseChange(row.id, 'notes', e.target.value)}
-                                                    onKeyDown={(e) => handleKeyDown(e, 'giaiTrinh')}
-                                                    data-col="giaiTrinh"
-                                                    disabled={isReadOnly}
-                                                    className="input min-w-[180px] w-full px-3 py-2 text-sm resize-none"
-                                                    placeholder="Nhập giải trình..."
+                                                    maxRows={5}
+                                                    value={res.justificationText || ''}
+                                                    onChange={(e) => handleResponseChange(row.id, 'justificationText', e.target.value)}
+                                                    disabled={!isJustificationUnlocked}
+                                                    className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${!isJustificationUnlocked ? 'bg-gray-50' : 'border-amber-300 focus:border-amber-500'}`}
+                                                    placeholder="Nhập nội dung giải trình..."
                                                 />
                                             </td>
-                                            <td className="px-3 py-4">
-                                                <div className="min-w-[160px]">
-                                                    <EvidenceUpload
-                                                        files={res.evidenceFiles || []}
-                                                        onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
-                                                        readOnly={isReadOnly}
-                                                    />
-                                                </div>
+
+                                            {/* Điểm sau GT */}
+                                            <td className="px-2 py-4 text-center">
+                                                {graded.afterJustificationScore != null ? (
+                                                    <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
+                                                        {graded.afterJustificationScore}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-300">—</span>
+                                                )}
                                             </td>
-                                            {isGraded && (
-                                                <td className="px-2 py-4 text-center">
-                                                    {getGradedScore(row.id) != null ? (
-                                                        <span className="inline-flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-sm font-black text-emerald-700 dark:text-emerald-400">
-                                                            {getGradedScore(row.id)}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-300">—</span>
-                                                    )}
-                                                </td>
-                                            )}
-                                            {isGraded && (
-                                                <td className="px-3 py-4">
-                                                    {getGradedFeedback(row.id) ? (
-                                                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line min-w-[140px]">
-                                                            {getGradedFeedback(row.id)}
-                                                        </p>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-300">—</span>
-                                                    )}
-                                                </td>
-                                            )}
+
+                                            {/* Nhận xét */}
+                                            <td className="px-3 py-4">
+                                                {graded.feedback ? (
+                                                    <p className="text-[11px] text-gray-600 dark:text-gray-400 whitespace-pre-line min-w-[140px]">
+                                                        {graded.feedback}
+                                                    </p>
+                                                ) : (
+                                                    <span className="text-xs text-gray-300">—</span>
+                                                )}
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -502,28 +576,46 @@ const UnitSubmitPage = () => {
                             Quay lại
                         </button>
                         <div className="flex gap-4">
-                            <button
-                                type="button"
-                                onClick={handleSaveDraft}
-                                disabled={saving}
-                                className="px-8 py-3 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-all flex items-center gap-2"
-                            >
-                                {saving ? <span className="animate-spin h-4 w-4 border-b-2 border-primary-700 rounded-full"></span> : <MdSave size={18} />}
-                                <span>Lưu</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={saving}
-                                className="btn-primary px-10 py-3 flex items-center gap-2 group/submit"
-                            >
-                                {saving ? (
-                                    <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></span>
-                                ) : (
-                                    <MdSend size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                )}
-                                <span>Nộp báo cáo</span>
-                            </button>
+                            {activeTab === 'giaiTrinh' ? (
+                                <button
+                                    type="button"
+                                    onClick={handleSubmitJustification}
+                                    disabled={saving || isPeriodLocked}
+                                    className="btn-primary bg-amber-500 hover:bg-amber-600 border-amber-600 text-white px-10 py-3 flex items-center gap-2 group/submit shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                                >
+                                    {saving ? (
+                                        <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></span>
+                                    ) : (
+                                        <MdSend size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                    )}
+                                    <span>Gửi giải trình</span>
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveDraft}
+                                        disabled={saving}
+                                        className="px-8 py-3 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-all flex items-center gap-2"
+                                    >
+                                        {saving ? <span className="animate-spin h-4 w-4 border-b-2 border-primary-700 rounded-full"></span> : <MdSave size={18} />}
+                                        <span>Lưu</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSubmit}
+                                        disabled={saving}
+                                        className="btn-primary px-10 py-3 flex items-center gap-2 group/submit"
+                                    >
+                                        {saving ? (
+                                            <span className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></span>
+                                        ) : (
+                                            <MdSend size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                        )}
+                                        <span>Nộp báo cáo</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

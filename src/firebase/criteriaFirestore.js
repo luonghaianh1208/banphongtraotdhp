@@ -426,12 +426,33 @@ export const subscribeToAllCriteriaSubmissions = (criteriaSetId, callback, onErr
 // Cấp trên chấm điểm
 export const gradeCriteriaSubmission = async (submissionId, gradedScores, comment, gradedBy) => {
     const ref = doc(db, 'criteriaSubmissions', submissionId);
+    const totalGradedScore = Object.values(gradedScores || {}).reduce((s, v) => {
+        if (typeof v === 'object') {
+            const score = v.afterJustificationScore !== undefined && v.afterJustificationScore !== null && v.afterJustificationScore !== ''
+                ? Number(v.afterJustificationScore)
+                : Number(v.officialScore || 0);
+            return s + score;
+        }
+        return s + (Number(v) || 0);
+    }, 0);
+
     return updateDoc(ref, {
         gradedScores: gradedScores || {},
-        totalGradedScore: Object.values(gradedScores || {}).reduce((s, v) => s + (Number(v?.officialScore ?? v) || 0), 0),
+        totalGradedScore,
         gradedComment: comment || '',
         gradedBy,
         gradedAt: serverTimestamp(),
         status: 'graded',
     });
+};
+
+// Đơn vị nộp giải trình
+export const submitUnitJustification = async (criteriaSetId, unitId, responses) => {
+    const compId = `${criteriaSetId}_${unitId}`;
+    const ref = doc(db, 'criteriaSubmissions', compId);
+    return setDoc(ref, {
+        responses,
+        justifiedAt: serverTimestamp(),
+        justificationStatus: 'submitted'
+    }, { merge: true });
 };

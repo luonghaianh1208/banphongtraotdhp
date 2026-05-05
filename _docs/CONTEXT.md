@@ -7,21 +7,23 @@ Cap nhat lan cuoi: 2026-05-05
 Cai thien UX trang don vi: compact evidence list, hien thi diem cham va nhan xet cua cap tren.
 
 ## Da lam trong session nay
-
-- Redesign EvidenceUpload tu grid cards sang compact list voi icon, ten file dep, badge extension.
-- Them 2 cot "Cap tren" va "Nhan xet" vao bang tieu chi phia don vi (chi hien khi status = graded).
-- Hien thi tong diem cap tren cham va nhan xet chung o thanh sticky.
-- Thu nho padding/min-width cac cot cu de co them khong gian cho cot moi.
-- Xac nhan Firestore rules da cho phep unit doc grading data (khong can sua backend).
-- Doc doi chieu codebase voi 6 file trong `/_docs`
-- Xac dinh nhieu noi dung cu khong con dung voi source hien tai
-- Cap nhat lai:
-  - `ARCHITECTURE.md`
-  - `BUGS.md`
-  - `CHANGELOG.md`
-  - `CONTEXT.md`
-  - `PROJECT.md`
-  - `TASKS.md`
+ 
+ - Redesign EvidenceUpload tu grid cards sang compact list voi icon, ten file dep, badge extension.
+ - Them 2 cot "Cap tren" va "Nhan xet" vao bang tieu chi phia don vi (chi hien khi status = graded).
+ - Hien thi tong diem cap tren cham va nhan xet chung o thanh sticky.
+ - Thu nho padding/min-width cac cot cu de co them khong gian cho cot moi.
+ - Xac nhan Firestore rules da cho phep unit doc grading data (khong can sua backend).
+ - Hoan thien phan quyen truy cap Bo Tieu Chi: Admin co toan quyen, Member chi duoc xem (View-Only).
+ - Hoan thien phan quyen cham diem: Admin duoc cham tat ca, Manager va Member chi duoc cham nhung tieu chi duoc phan cong.
+ - Doc doi chieu codebase voi 6 file trong `/_docs`
+ - Xac dinh nhieu noi dung cu khong con dung voi source hien tai
+ - Cap nhat lai:
+   - `ARCHITECTURE.md`
+   - `BUGS.md`
+   - `CHANGELOG.md`
+   - `CONTEXT.md`
+   - `PROJECT.md`
+   - `TASKS.md`
 
 ## Ket qua quan trong
 

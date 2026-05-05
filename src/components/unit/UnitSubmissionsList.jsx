@@ -43,6 +43,7 @@ const UnitSubmissionsList = () => {
                     enriched.map(item => {
                         const cs = item.criteriaSet;
                         const deadline = cs?.tieuChi?.[0]?.noiDung?.[0]?.muc?.[0]?.deadline;
+                        const isValidDeadline = deadline && !isNaN(new Date(deadline).getTime());
                         const totalMucs = cs?.tieuChi?.reduce((sum, tc) =>
                             sum + (tc.noiDung || []).reduce((s, nd) => s + (nd.muc || []).length, 0), 0) || 0;
 
@@ -64,7 +65,7 @@ const UnitSubmissionsList = () => {
                                                 <MdAssignment size={18} className="text-gray-400" />
                                                 <span className="text-sm font-medium">Số mục chấm: <span className="text-gray-900 dark:text-gray-200 font-bold">{totalMucs}</span></span>
                                             </div>
-                                            {deadline && (
+                                            {isValidDeadline && (
                                                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                                                     <MdAccessTime size={18} className="text-gray-400" />
                                                     <span className="text-sm font-medium">Hạn nộp: <span className="text-red-600 dark:text-red-400 font-bold">{new Date(deadline).toLocaleDateString('vi-VN')}</span></span>

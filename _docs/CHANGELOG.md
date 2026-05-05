@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026-05-05 PM3] - Role-Based Access Control cho Bo tieu chi
+
+### Đã thay đổi
+- **Phân quyền Criteria**: Admin/Manager có toàn quyền tạo/sửa/xóa bộ tiêu chí.
+- **Member View-Only**: Account role `member` chỉ được xem bộ tiêu chí (ẩn nút Tạo mới, Xóa, Import, Export, Checkbox).
+- **Quyền chấm điểm**: Admin được chấm điểm tất cả các tiêu chí. Manager và Member chỉ được chấm điểm những tiêu chí được phân công.
+
+### File bị ảnh hưởng
+- `src/App.jsx`
+- `src/utils/constants.js`
+- `src/components/criteria/CriteriaSetsPage.jsx`
+- `src/components/criteria/CriteriaDetailPage.jsx`
+
 ## [2026-05-05 PM2] - Compact evidence list + Grading visibility
 
 ### Đã thay đổi

@@ -11,9 +11,9 @@ Cap nhat lan cuoi: 2026-05-05
   - giao va cham bo tieu chi cho don vi
   - nhan ho so ke hoach / hoi thi tu don vi
 - Nhom nguoi dung:
-  - `admin`: duyet thanh vien, duyet task, quan ly config, users, units
-  - `manager`: quan ly task, penalties, criteria, plans nhung khong duyet task
-  - `member`: xem task duoc giao, gui duyet, upload file, ghi chu
+  - `admin`: duyet thanh vien, duyet task, quan ly config, users, units, toan quyen quan ly bo tieu chi va cham diem tat ca.
+  - `manager`: quan ly task, penalties, plans, quan ly bo tieu chi, cham diem tieu chi duoc phan cong.
+  - `member`: xem task duoc giao, chi duoc xem bo tieu chi (view-only), va cham diem tieu chi duoc phan cong.
   - `unit`: vao portal rieng de nop criteria va ho so plan/contest
 
 ## Tech stack hien tai

@@ -122,6 +122,10 @@ Ghi chu:
 - Unit criteria submission:
   - draft duoc luu bang composite id `${criteriaSetId}_${unitId}`
   - submit xong thi chuyen sang read-only o frontend
+- Phan quyen bo tieu chi:
+  - `admin`: toan quyen them/sua/xoa bo tieu chi, va cham diem tat ca cac muc.
+  - `manager`: quan ly bo tieu chi, nhung chi cham diem nhung muc duoc phan cong.
+  - `member`: chi co quyen xem (view-only) cac bo tieu chi, nhung co quyen cham diem cac muc duoc phan cong.
 - First admin bootstrap:
   - `functions/index.js` su dung transaction tren `system/firstAdminAssigned`
 
