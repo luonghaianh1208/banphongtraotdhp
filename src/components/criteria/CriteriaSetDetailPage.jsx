@@ -210,19 +210,11 @@ const CriteriaSetDetailPage = () => {
         return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div></div>;
     }
 
-    if (!localSet) {
-        return (
-            <div className="card p-12 text-center">
-                <p className="text-xl font-bold text-gray-400">Không tìm thấy bộ tiêu chí</p>
-                <Link to="/criteria-sets" className="btn btn-primary mt-6">Quay lại</Link>
-            </div>
-        );
-    }
 
     const tieuChiList = localSet.tieuChi || [];
 
     return (
-        <div className="max-w-6xl mx-auto pb-12 px-4 animate-fade-in-up">
+        <div className="w-full px-4 md:px-8 lg:px-12 mx-auto pb-12 animate-fade-in-up">
             {/* ===== HEADER ===== */}
             <div className="mb-8 bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-emerald-100/20 dark:border-emerald-500/10">
                 <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
