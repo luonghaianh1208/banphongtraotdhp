@@ -66,7 +66,7 @@ const MainLayout = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 scrollbar-thin scrollbar-thumb-emerald-500/20 hover:scrollbar-thumb-emerald-500/40">
-          <div className="w-full max-w-[1600px] mx-auto animate-fade-in-up">
+          <div className="w-full max-w-[1920px] mx-auto animate-fade-in-up">
             <Outlet />
           </div>
         </main>

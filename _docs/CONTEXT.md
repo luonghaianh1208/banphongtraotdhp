@@ -4,13 +4,15 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Muc tieu session
 
-Dong bo lai toan bo thu muc `/_docs` voi codebase hien tai.
+Cai thien UX trang don vi: compact evidence list, hien thi diem cham va nhan xet cua cap tren.
 
 ## Da lam trong session nay
 
-- Tích hợp `react-textarea-autosize` cho các ô textarea ở bảng tiêu chí.
-- Thêm tính năng điều hướng bằng bàn phím (Enter) cho `CriteriaSetDetailPage.jsx` và `UnitSubmitPage.jsx`.
-- Dong bo lai toan bo thu muc `/_docs` voi codebase hien tai.
+- Redesign EvidenceUpload tu grid cards sang compact list voi icon, ten file dep, badge extension.
+- Them 2 cot "Cap tren" va "Nhan xet" vao bang tieu chi phia don vi (chi hien khi status = graded).
+- Hien thi tong diem cap tren cham va nhan xet chung o thanh sticky.
+- Thu nho padding/min-width cac cot cu de co them khong gian cho cot moi.
+- Xac nhan Firestore rules da cho phep unit doc grading data (khong can sua backend).
 - Doc doi chieu codebase voi 6 file trong `/_docs`
 - Xac dinh nhieu noi dung cu khong con dung voi source hien tai
 - Cap nhat lai:

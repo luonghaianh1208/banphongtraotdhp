@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MdArrowBack, MdSearch, MdClose, MdAssignment, MdGrade } from 'react-icons/md';
+import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
 import { useSetAssignments } from '../../hooks/useAssignments';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
@@ -70,17 +71,25 @@ const CriteriaOverviewPage = () => {
         setGradedScores((prev) => {
             const current = prev[mucId];
             if (current && typeof current === 'object') {
-                return {
-                    ...prev,
-                    [mucId]: { ...current, officialScore: value },
-                };
+                return { ...prev, [mucId]: { ...current, officialScore: value } };
             }
-            return {
-                ...prev,
-                [mucId]: value,
-            };
+            return { ...prev, [mucId]: { officialScore: value, feedback: '' } };
         });
     };
+
+    const handleFeedbackChange = (mucId, value) => {
+        setGradedScores((prev) => {
+            const current = prev[mucId];
+            if (current && typeof current === 'object') {
+                return { ...prev, [mucId]: { ...current, feedback: value } };
+            }
+            return { ...prev, [mucId]: { officialScore: '', feedback: value } };
+        });
+    };
+
+    const getFeedbackValue = (scoreEntry) => (
+        typeof scoreEntry === 'object' ? (scoreEntry?.feedback ?? '') : ''
+    );
 
     const handleGrade = async (submissionId) => {
         setIsSavingGrade(true);
@@ -209,21 +218,22 @@ const CriteriaOverviewPage = () => {
                                     </div>
 
                                     <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800">
-                                        <table className="min-w-[1900px] w-full text-sm">
+                                        <table className="min-w-[1700px] w-full text-sm">
                                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                                 <tr>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
-                                                    <th className="px-3 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
-                                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
-                                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tối đa</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
-                                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
-                                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Thẩm định</th>
+                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
+                                                    <th className="min-w-[240px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">YC minh chứng</th>
+                                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
+                                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Max</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
+                                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
+                                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Thẩm định</th>
+                                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét mục</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
@@ -235,14 +245,14 @@ const CriteriaOverviewPage = () => {
 
                                                     return (
                                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
-                                                            <td className="px-4 py-4">
+                                                            <td className="px-3 py-4">
                                                                 {showTc ? (
                                                                     <div className="font-black text-gray-900 dark:text-white">{row.tcTitle}</div>
                                                                 ) : (
                                                                     <span className="text-xs font-bold text-gray-300 dark:text-gray-700">↳</span>
                                                                 )}
                                                             </td>
-                                                            <td className="px-4 py-4">
+                                                            <td className="px-3 py-4">
                                                                 {row.ndTitle ? (
                                                                     showNd ? (
                                                                         <div className="font-semibold text-gray-700 dark:text-gray-200">{row.ndTitle}</div>
@@ -253,67 +263,52 @@ const CriteriaOverviewPage = () => {
                                                                     <span className="text-sm text-gray-400">—</span>
                                                                 )}
                                                             </td>
-                                                            <td className="px-3 py-4 text-center">
-                                                                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-emerald-50 px-2 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                                            <td className="px-2 py-4 text-center">
+                                                                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-emerald-50 px-1.5 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                                     {row.stt}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-4">
-                                                                <div className="whitespace-pre-line font-medium text-gray-700 dark:text-gray-200">
+                                                            <td className="px-3 py-4">
+                                                                <div className="whitespace-pre-line text-xs font-medium text-gray-700 dark:text-gray-200">
                                                                     {row.dieuKienCham || '—'}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-4 py-4">
-                                                                <div className="whitespace-pre-line text-sm text-blue-700 dark:text-blue-300">
+                                                            <td className="px-3 py-4">
+                                                                <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
                                                                     {row.yeucauMinhChung || '—'}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-4 py-4">
+                                                            <td className="px-2 py-4">
                                                                 {row.toTheoDoi ? (
-                                                                    <span className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                                                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                                                                         {row.toTheoDoi}
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-sm text-gray-400">—</span>
+                                                                    <span className="text-xs text-gray-400">—</span>
                                                                 )}
                                                             </td>
-                                                            <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
-                                                            <td className="px-4 py-4 text-center">
-                                                                <span className="inline-flex rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                                            <td className="px-2 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1.5 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                                     {row.khungDiem}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-4 text-center">
-                                                                <span className="text-lg font-black text-blue-600 dark:text-blue-400">
+                                                            <td className="px-2 py-4 text-center">
+                                                                <span className="text-sm font-black text-blue-600 dark:text-blue-400">
                                                                     {res.selfScore ?? '—'}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-4">
-                                                                <div className="min-w-[240px] whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">
+                                                            <td className="px-3 py-4">
+                                                                <div className="min-w-[160px] whitespace-pre-line text-xs text-gray-600 dark:text-gray-300">
                                                                     {res.notes || '—'}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-4 py-4">
-                                                                {evidenceFiles.length > 0 ? (
-                                                                    <div className="min-w-[240px] space-y-2">
-                                                                        {evidenceFiles.map((file, fileIndex) => (
-                                                                            <a
-                                                                                key={`${row.id}-${fileIndex}`}
-                                                                                href={file.url}
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="block truncate rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
-                                                                                title={file.name}
-                                                                            >
-                                                                                {file.name}
-                                                                            </a>
-                                                                        ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-sm text-gray-400">—</span>
-                                                                )}
+                                                            <td className="px-3 py-4">
+                                                                <div className="min-w-[140px]">
+                                                                    <EvidenceUpload files={evidenceFiles} readOnly={true} />
+                                                                </div>
                                                             </td>
-                                                            <td className="px-4 py-4">
+                                                            <td className="px-2 py-4">
                                                                 <input
                                                                     type="number"
                                                                     min="0"
@@ -321,8 +316,17 @@ const CriteriaOverviewPage = () => {
                                                                     step="0.5"
                                                                     value={getOfficialScoreValue(gradedScores[row.id])}
                                                                     onChange={(e) => handleGradedScoreChange(row.id, e.target.value)}
-                                                                    className="input w-28 text-center font-black text-emerald-600 dark:text-emerald-400"
+                                                                    className="input w-20 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                                     placeholder={`/${row.khungDiem}`}
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-4">
+                                                                <textarea
+                                                                    value={getFeedbackValue(gradedScores[row.id])}
+                                                                    onChange={(e) => handleFeedbackChange(row.id, e.target.value)}
+                                                                    rows={2}
+                                                                    className="input min-w-[160px] w-full text-xs resize-none"
+                                                                    placeholder="Nhận xét..."
                                                                 />
                                                             </td>
                                                         </tr>

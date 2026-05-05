@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-05-05 PM2] - Compact evidence list + Grading visibility
+
+### Đã thay đổi
+- **EvidenceUpload**: Redesign từ grid cards sang compact list (icon + tên file + badge). Tên file hiển thị đẹp hơn (bỏ timestamp prefix, thay `_` thành space).
+- **UnitSubmitPage**: Thêm 2 cột mới "Cấp trên" và "Nhận xét" (chỉ hiện khi status = graded). Thu nhỏ padding/min-width các cột cũ để có thêm không gian.
+- **Grading summary**: Hiển thị tổng điểm cấp trên chấm và nhận xét chung ở thanh sticky trên cùng.
+- Không cần sửa Firestore rules (đã allow read cho authenticated users).
+
+### File bị ảnh hưởng
+- `src/components/criteria/EvidenceUpload.jsx` (rewrite)
+- `src/components/unit/UnitSubmitPage.jsx` (add grading columns + compact layout)
+
 ## [2026-05-05 PM] - Tối ưu UX bảng tiêu chí
 
 ### Đã thay đổi
