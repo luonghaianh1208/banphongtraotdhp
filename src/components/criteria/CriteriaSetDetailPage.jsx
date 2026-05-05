@@ -12,6 +12,7 @@ import { useSetAssignments } from '../../hooks/useAssignments';
 import { updateCriteriaSet, assignCriteriaToUnits, revokeCriteriaAssignment } from '../../firebase/criteriaFirestore';
 import { exportCriteriaSetToExcel } from '../../utils/exportExcel';
 import toast from 'react-hot-toast';
+import TextareaAutosize from 'react-textarea-autosize';
 
 // Unique ID generator
 let _uid = 0;
@@ -164,6 +165,18 @@ const CriteriaSetDetailPage = () => {
     const toggleTC = (tcId) => setExpandedTC(p => ({ ...p, [tcId]: !p[tcId] }));
     const getUserName = (uid) => staff.find(u => u.id === uid)?.displayName || '';
 
+    // === Enter key navigation ===
+    const handleKeyDown = (e, colName) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const inputs = Array.from(document.querySelectorAll(`[data-col="${colName}"]`));
+            const index = inputs.indexOf(e.target);
+            if (index > -1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        }
+    };
+
     // Computed stats
     const stats = useMemo(() => {
         if (!localSet) return { tc: 0, nd: 0, muc: 0, score: 0 };
@@ -280,7 +293,12 @@ const CriteriaSetDetailPage = () => {
                     />
                 </div>
 
-
+                {/* Keyboard Shortcut Hint */}
+                <div className="mt-4 flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10 px-3 py-2 rounded-lg border border-emerald-100/50 dark:border-emerald-800/30">
+                    <span className="font-bold">Mẹo nhập liệu:</span>
+                    <span>Nhấn <kbd className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 font-sans font-bold shadow-sm">Enter</kbd> để nhảy xuống dòng dưới, </span>
+                    <span><kbd className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 font-sans font-bold shadow-sm">Shift + Enter</kbd> để xuống dòng trong ô.</span>
+                </div>
             </div>
 
             {/* ===== TIÊU CHÍ LIST ===== */}
@@ -394,31 +412,39 @@ const CriteriaSetDetailPage = () => {
                                                                     <>
                                                                         <td className="px-3 py-4 text-center">
                                                                             <input
+                                                                                data-col="stt"
+                                                                                onKeyDown={e => handleKeyDown(e, 'stt')}
                                                                                 value={row.stt}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'stt', Number(e.target.value) || '')}
                                                                                 className="input w-16 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4">
-                                                                            <textarea
+                                                                            <TextareaAutosize
+                                                                                data-col="dieuKienCham"
+                                                                                onKeyDown={e => handleKeyDown(e, 'dieuKienCham')}
                                                                                 value={row.dieuKienCham}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'dieuKienCham', e.target.value)}
-                                                                                className="input min-h-[88px] w-full resize-y text-sm"
-                                                                                rows={3}
+                                                                                className="input w-full resize-none text-sm leading-relaxed"
+                                                                                minRows={1}
                                                                                 placeholder="Nhập điều kiện chấm..."
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4">
-                                                                            <textarea
+                                                                            <TextareaAutosize
+                                                                                data-col="yeucauMinhChung"
+                                                                                onKeyDown={e => handleKeyDown(e, 'yeucauMinhChung')}
                                                                                 value={row.yeucauMinhChung}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'yeucauMinhChung', e.target.value)}
-                                                                                className="input min-h-[88px] w-full resize-y text-sm"
-                                                                                rows={3}
+                                                                                className="input w-full resize-none text-sm leading-relaxed"
+                                                                                minRows={1}
                                                                                 placeholder="Nhập yêu cầu minh chứng..."
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4">
                                                                             <input
+                                                                                data-col="toTheoDoi"
+                                                                                onKeyDown={e => handleKeyDown(e, 'toTheoDoi')}
                                                                                 value={row.toTheoDoi}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'toTheoDoi', e.target.value)}
                                                                                 className="input w-full font-bold text-blue-600 dark:text-blue-400"
@@ -427,6 +453,8 @@ const CriteriaSetDetailPage = () => {
                                                                         </td>
                                                                         <td className="px-4 py-4">
                                                                             <input
+                                                                                data-col="khungDiem"
+                                                                                onKeyDown={e => handleKeyDown(e, 'khungDiem')}
                                                                                 type="number"
                                                                                 value={row.khungDiem}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'khungDiem', Number(e.target.value) || 0)}
@@ -436,6 +464,8 @@ const CriteriaSetDetailPage = () => {
                                                                         </td>
                                                                         <td className="px-4 py-4">
                                                                             <input
+                                                                                data-col="deadline"
+                                                                                onKeyDown={e => handleKeyDown(e, 'deadline')}
                                                                                 value={row.deadline}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'deadline', e.target.value)}
                                                                                 className="input w-full"

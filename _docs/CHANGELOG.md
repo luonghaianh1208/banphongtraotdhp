@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-05-05 PM] - Tối ưu UX bảng tiêu chí
+
+### Đã thay đổi
+- Tích hợp `react-textarea-autosize` cho các ô textarea ở `CriteriaSetDetailPage.jsx` và `UnitSubmitPage.jsx`.
+- Thêm tính năng điều hướng bằng bàn phím (Enter để nhảy dòng tiếp theo, Shift+Enter để ngắt dòng).
+- Thêm chú thích "Mẹo nhập liệu" trên giao diện ở trang admin và trang đơn vị.
+
+### File bị ảnh hưởng
+- `src/components/criteria/CriteriaSetDetailPage.jsx`
+- `src/components/unit/UnitSubmitPage.jsx`
+
 ## [2026-05-05] - Dong bo lai thu muc `_docs` voi codebase
 
 ### Da sua tai lieu

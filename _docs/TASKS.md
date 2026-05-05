@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Tích hợp `react-textarea-autosize` và điều hướng bàn phím cho các bảng nhập liệu tiêu chí - 2026-05-05
 - [x] Audit lai toan bo `/_docs` theo source code hien tai - 2026-05-05
 - [x] Cap nhat `ARCHITECTURE.md`, `PROJECT.md`, `CONTEXT.md` theo hien trang - 2026-05-05
 - [x] Mo lai cac bug trong docs bi danh dau nham la "fixed" - 2026-05-05

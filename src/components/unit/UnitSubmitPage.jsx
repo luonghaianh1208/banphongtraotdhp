@@ -14,6 +14,7 @@ import {
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
+import TextareaAutosize from 'react-textarea-autosize';
 
 const UnitSubmitPage = () => {
     const { criteriaSetId } = useParams();
@@ -124,6 +125,22 @@ const UnitSubmitPage = () => {
     const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
     const tableRows = buildCriteriaTableRows(criteriaSet);
 
+    const handleKeyDown = (e, colName) => {
+        if (e.key === 'Enter') {
+            if (e.shiftKey) {
+                // Allow default Shift+Enter behavior (newline) for textareas
+                return;
+            }
+            // Prevent default Enter behavior (newline) and jump to next row
+            e.preventDefault();
+            const inputsInCol = Array.from(document.querySelectorAll(`[data-col="${colName}"]`));
+            const currentIndex = inputsInCol.indexOf(e.target);
+            if (currentIndex > -1 && currentIndex < inputsInCol.length - 1) {
+                inputsInCol[currentIndex + 1].focus();
+            }
+        }
+    };
+
     const handleResponseChange = (mucId, field, value) => {
         if (isReadOnly) return;
         setResponses((prev) => ({
@@ -203,7 +220,7 @@ const UnitSubmitPage = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto pb-32 relative">
+        <div className="max-w-[1920px] w-full mx-auto pb-32 relative px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4 mb-8">
                 <button
                     onClick={() => navigate('/unit/submissions')}
@@ -274,13 +291,19 @@ const UnitSubmitPage = () => {
                             Mỗi mục chấm nằm trên một dòng để cấp dưới và cấp trên đối chiếu cùng một cấu trúc.
                         </p>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs font-bold">
-                        <span className="rounded-full bg-primary-50 px-3 py-1.5 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
-                            {tableRows.length} mục
-                        </span>
-                        <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
-                            Tổng tối đa {criteriaSet.totalMaxScore || 0} điểm
-                        </span>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-wrap gap-2 text-xs font-bold">
+                            <span className="rounded-full bg-primary-50 px-3 py-1.5 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
+                                {tableRows.length} mục
+                            </span>
+                            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                Tổng tối đa {criteriaSet.totalMaxScore || 0} điểm
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/30">
+                            <span className="font-bold">💡 Mẹo nhập liệu:</span>
+                            <span>Bấm <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-[10px] font-black shadow-sm">Enter</kbd> để xuống dòng tiếp theo. Bấm <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-[10px] font-black shadow-sm">Shift + Enter</kbd> để ngắt dòng trong ô.</span>
+                        </div>
                     </div>
                 </div>
 
@@ -366,18 +389,23 @@ const UnitSubmitPage = () => {
                                                     step="0.5"
                                                     value={res.selfScore ?? ''}
                                                     onChange={(e) => handleResponseChange(row.id, 'selfScore', e.target.value)}
+                                                    onKeyDown={(e) => handleKeyDown(e, 'tuCham')}
+                                                    data-col="tuCham"
                                                     disabled={isReadOnly}
                                                     className="input w-28 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                     placeholder="0"
                                                 />
                                             </td>
                                             <td className="px-4 py-4">
-                                                <textarea
+                                                <TextareaAutosize
+                                                    minRows={1}
+                                                    maxRows={10}
                                                     value={res.notes || ''}
                                                     onChange={(e) => handleResponseChange(row.id, 'notes', e.target.value)}
+                                                    onKeyDown={(e) => handleKeyDown(e, 'giaiTrinh')}
+                                                    data-col="giaiTrinh"
                                                     disabled={isReadOnly}
-                                                    rows={4}
-                                                    className="input min-w-[260px] w-full px-3 py-2 text-sm resize-y"
+                                                    className="input min-w-[260px] w-full px-3 py-2 text-sm resize-none"
                                                     placeholder="Nhập giải trình hoặc mô tả minh chứng..."
                                                 />
                                             </td>

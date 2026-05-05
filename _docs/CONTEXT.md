@@ -8,6 +8,9 @@ Dong bo lai toan bo thu muc `/_docs` voi codebase hien tai.
 
 ## Da lam trong session nay
 
+- Tích hợp `react-textarea-autosize` cho các ô textarea ở bảng tiêu chí.
+- Thêm tính năng điều hướng bằng bàn phím (Enter) cho `CriteriaSetDetailPage.jsx` và `UnitSubmitPage.jsx`.
+- Dong bo lai toan bo thu muc `/_docs` voi codebase hien tai.
 - Doc doi chieu codebase voi 6 file trong `/_docs`
 - Xac dinh nhieu noi dung cu khong con dung voi source hien tai
 - Cap nhat lai:
