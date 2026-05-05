@@ -6,7 +6,7 @@ import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 
 const UnitSubmissionsList = () => {
     const { userProfile } = useAuth();
-    const unitId = userProfile?.unitId;
+    const unitId = userProfile?.id || userProfile?.unitId;
     const { assignments, loading } = useUnitAssignments(unitId);
     const { criteriaSets } = useCriteriaSets();
 

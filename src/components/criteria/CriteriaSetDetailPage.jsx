@@ -175,6 +175,37 @@ const CriteriaSetDetailPage = () => {
         return { tc: tieuChi.length, nd, muc, score };
     }, [localSet]);
 
+    const buildEditableRows = (tc) => (
+        (tc.noiDung || []).flatMap((nd, ndIndex) => {
+            const ndId = nd.id || `nd_${ndIndex}`;
+            const mucList = (nd.muc && nd.muc.length > 0)
+                ? nd.muc
+                : [{
+                    id: `${ndId}__empty`,
+                    __empty: true,
+                    stt: '',
+                    dieuKienCham: '',
+                    yeucauMinhChung: '',
+                    toTheoDoi: '',
+                    khungDiem: '',
+                    deadline: '',
+                }];
+
+            return mucList.map((muc, mucIndex) => ({
+                id: muc.id,
+                ndId,
+                ndTitle: nd.title || '',
+                stt: muc.stt || mucIndex + 1,
+                dieuKienCham: muc.dieuKienCham || '',
+                yeucauMinhChung: muc.yeucauMinhChung || '',
+                toTheoDoi: muc.toTheoDoi || '',
+                khungDiem: muc.__empty ? '' : (muc.khungDiem ?? 0),
+                deadline: muc.deadline || '',
+                isEmpty: !!muc.__empty,
+            }));
+        })
+    );
+
     if (loading) {
         return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div></div>;
     }
@@ -301,108 +332,143 @@ const CriteriaSetDetailPage = () => {
                             {/* TC Body */}
                             {isOpen && (
                                 <div className="p-4 space-y-4">
-                                    {(tc.noiDung || []).map((nd) => (
-                                        <div key={nd.id} className="space-y-2">
-                                            {/* ND Header */}
-                                            <div className="flex items-center gap-2 px-2">
-                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
-                                                <input
-                                                    value={nd.title || ''}
-                                                    onChange={e => updateNDTitle(tc.id, nd.id, e.target.value)}
-                                                    className="text-sm font-black text-gray-700 dark:text-gray-200 uppercase tracking-tight bg-transparent border-b border-transparent hover:border-emerald-300 focus:border-emerald-500 focus:outline-none flex-1 transition-all"
-                                                    placeholder="Tên nội dung..."
-                                                />
-                                                <button onClick={() => { if (confirm('Xóa nội dung này?')) removeND(tc.id, nd.id); }}
-                                                    className="p-1 text-gray-400 hover:text-red-500 rounded transition-all">
-                                                    <MdDelete size={14} />
-                                                </button>
-                                            </div>
+                                    {(tc.noiDung || []).length > 0 ? (
+                                        <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800/60">
+                                            <table className="min-w-[1320px] w-full text-sm">
+                                                <thead className="bg-gray-50/90 dark:bg-gray-900/70">
+                                                    <tr>
+                                                        <th className="min-w-[240px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
+                                                        <th className="w-20 px-3 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
+                                                        <th className="min-w-[320px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                                        <th className="min-w-[320px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng và nguyên tắc chấm</th>
+                                                        <th className="w-28 px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
+                                                        <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm</th>
+                                                        <th className="w-36 px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
+                                                        <th className="w-36 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
+                                                    {buildEditableRows(tc).map((row, index, rows) => {
+                                                        const showNd = index === 0 || rows[index - 1].ndId !== row.ndId;
+                                                        const ndRowCount = rows.filter(item => item.ndId === row.ndId).length;
 
-                                            {/* Mục list */}
-                                            <div className="space-y-2">
-                                                {(nd.muc || []).map(m => (
-                                                    <div key={m.id} className="bg-gray-50/80 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50 group/muc">
-                                                        <div className="flex items-start gap-3">
-                                                            <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm">
-                                                                <input
-                                                                    value={m.stt || ''}
-                                                                    onChange={e => updateMuc(tc.id, nd.id, m.id, 'stt', Number(e.target.value) || '')}
-                                                                    className="w-full text-center bg-transparent border-none focus:outline-none font-black text-sm"
-                                                                />
-                                                            </span>
-                                                            <div className="flex-1 min-w-0 space-y-2">
-                                                                {/* Điều kiện chấm */}
-                                                                <div>
-                                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Điều kiện chấm</span>
-                                                                    <textarea
-                                                                        value={m.dieuKienCham || ''}
-                                                                        onChange={e => updateMuc(tc.id, nd.id, m.id, 'dieuKienCham', e.target.value)}
-                                                                        className="w-full text-sm text-gray-700 dark:text-gray-200 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none resize-none mt-0.5 transition-all"
-                                                                        rows={2}
-                                                                        placeholder="Nhập điều kiện chấm..."
-                                                                    />
-                                                                </div>
-                                                                {/* Yêu cầu MC */}
-                                                                <div>
-                                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Yêu cầu MC & nguyên tắc chấm</span>
-                                                                    <textarea
-                                                                        value={m.yeucauMinhChung || ''}
-                                                                        onChange={e => updateMuc(tc.id, nd.id, m.id, 'yeucauMinhChung', e.target.value)}
-                                                                        className="w-full text-xs text-gray-600 dark:text-gray-300 bg-blue-50/50 dark:bg-blue-900/10 p-2 rounded-lg border border-transparent hover:border-blue-200 focus:border-blue-400 focus:outline-none resize-none mt-0.5 transition-all"
-                                                                        rows={2}
-                                                                        placeholder="Yêu cầu minh chứng..."
-                                                                    />
-                                                                </div>
-                                                                {/* Bottom info row */}
-                                                                <div className="flex flex-wrap gap-2 items-center text-[11px]">
-                                                                    <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 rounded-md px-2 py-0.5">
-                                                                        <span className="text-blue-500 font-bold">Tổ:</span>
-                                                                        <input
-                                                                            value={m.toTheoDoi || ''}
-                                                                            onChange={e => updateMuc(tc.id, nd.id, m.id, 'toTheoDoi', e.target.value)}
-                                                                            className="bg-transparent text-blue-600 dark:text-blue-400 font-bold w-16 border-none focus:outline-none text-[11px]"
-                                                                            placeholder="PT"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-md px-2 py-0.5">
-                                                                        <input
-                                                                            type="number"
-                                                                            value={m.khungDiem ?? ''}
-                                                                            onChange={e => updateMuc(tc.id, nd.id, m.id, 'khungDiem', Number(e.target.value) || 0)}
-                                                                            className="bg-transparent text-emerald-600 dark:text-emerald-400 font-bold w-10 border-none focus:outline-none text-[11px] text-center"
-                                                                            placeholder="0"
-                                                                        />
-                                                                        <span className="text-emerald-500 font-bold">đ</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 rounded-md px-2 py-0.5">
-                                                                        <span className="text-amber-500 font-bold">Hạn:</span>
-                                                                        <input
-                                                                            value={m.deadline || ''}
-                                                                            onChange={e => updateMuc(tc.id, nd.id, m.id, 'deadline', e.target.value)}
-                                                                            className="bg-transparent text-amber-600 dark:text-amber-400 font-bold w-24 border-none focus:outline-none text-[11px]"
-                                                                            placeholder="30/10/2026"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            {/* Delete muc button */}
-                                                            <button onClick={() => removeMuc(tc.id, nd.id, m.id)}
-                                                                className="flex-shrink-0 p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover/muc:opacity-100 transition-all rounded-lg">
-                                                                <MdDelete size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {/* Add muc */}
-                                                <button onClick={() => addMuc(tc.id, nd.id)}
-                                                    className="w-full py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-400 hover:text-emerald-500 hover:border-emerald-300 font-bold flex items-center justify-center gap-1 transition-all">
-                                                    <MdAdd size={16} /> Thêm mục chấm
-                                                </button>
-                                            </div>
+                                                        return (
+                                                            <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
+                                                                {showNd && (
+                                                                    <td rowSpan={ndRowCount} className="px-4 py-4">
+                                                                        <div className="space-y-3 min-w-[220px]">
+                                                                            <input
+                                                                                value={row.ndTitle}
+                                                                                onChange={e => updateNDTitle(tc.id, row.ndId, e.target.value)}
+                                                                                className="w-full bg-transparent text-sm font-black text-gray-700 dark:text-gray-200 border-b border-transparent hover:border-emerald-300 focus:border-emerald-500 focus:outline-none transition-all"
+                                                                                placeholder="Tên nội dung..."
+                                                                            />
+                                                                            <div className="flex flex-wrap gap-2">
+                                                                                <button
+                                                                                    onClick={() => addMuc(tc.id, row.ndId)}
+                                                                                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
+                                                                                >
+                                                                                    <MdAdd size={14} /> Thêm mục
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        if (confirm('Xóa nội dung này?')) removeND(tc.id, row.ndId);
+                                                                                    }}
+                                                                                    className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                                                                                >
+                                                                                    <MdDelete size={14} /> Xóa nội dung
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                )}
+
+                                                                {row.isEmpty ? (
+                                                                    <td colSpan={7} className="px-4 py-6">
+                                                                        <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/20 dark:text-gray-400 md:flex-row md:items-center md:justify-between">
+                                                                            <span>Nội dung này chưa có mục chấm.</span>
+                                                                            <button
+                                                                                onClick={() => addMuc(tc.id, row.ndId)}
+                                                                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                                                                            >
+                                                                                <MdAdd size={14} /> Thêm mục đầu tiên
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                ) : (
+                                                                    <>
+                                                                        <td className="px-3 py-4 text-center">
+                                                                            <input
+                                                                                value={row.stt}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'stt', Number(e.target.value) || '')}
+                                                                                className="input w-16 text-center font-black text-emerald-600 dark:text-emerald-400"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4">
+                                                                            <textarea
+                                                                                value={row.dieuKienCham}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'dieuKienCham', e.target.value)}
+                                                                                className="input min-h-[88px] w-full resize-y text-sm"
+                                                                                rows={3}
+                                                                                placeholder="Nhập điều kiện chấm..."
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4">
+                                                                            <textarea
+                                                                                value={row.yeucauMinhChung}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'yeucauMinhChung', e.target.value)}
+                                                                                className="input min-h-[88px] w-full resize-y text-sm"
+                                                                                rows={3}
+                                                                                placeholder="Nhập yêu cầu minh chứng..."
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4">
+                                                                            <input
+                                                                                value={row.toTheoDoi}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'toTheoDoi', e.target.value)}
+                                                                                className="input w-full font-bold text-blue-600 dark:text-blue-400"
+                                                                                placeholder="PT"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4">
+                                                                            <input
+                                                                                type="number"
+                                                                                value={row.khungDiem}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'khungDiem', Number(e.target.value) || 0)}
+                                                                                className="input w-24 text-center font-black text-emerald-600 dark:text-emerald-400"
+                                                                                placeholder="0"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4">
+                                                                            <input
+                                                                                value={row.deadline}
+                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'deadline', e.target.value)}
+                                                                                className="input w-full"
+                                                                                placeholder="30/10/2026"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="px-4 py-4 text-center">
+                                                                            <button
+                                                                                onClick={() => removeMuc(tc.id, row.ndId, row.id)}
+                                                                                className="inline-flex items-center gap-1 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                                                                            >
+                                                                                <MdDelete size={14} /> Xóa mục
+                                                                            </button>
+                                                                        </td>
+                                                                    </>
+                                                                )}
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 px-6 py-8 text-center text-sm font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800/20 dark:text-gray-400">
+                                            Tiêu chí này chưa có nội dung đánh giá.
+                                        </div>
+                                    )}
 
-                                    {/* Add nội dung */}
                                     <button onClick={() => addND(tc.id)}
                                         className="w-full py-2.5 border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-400 hover:text-blue-600 hover:border-blue-400 font-bold flex items-center justify-center gap-1 transition-all">
                                         <MdAdd size={16} /> Thêm nội dung đánh giá

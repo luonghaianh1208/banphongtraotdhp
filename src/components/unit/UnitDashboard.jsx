@@ -7,7 +7,7 @@ import { usePlans } from '../../hooks/usePlans';
 
 const UnitDashboard = () => {
     const { userProfile } = useAuth();
-    const unitId = userProfile?.unitId;
+    const unitId = userProfile?.id || userProfile?.unitId;
     const { assignments, loading: assignLoading } = useUnitAssignments(unitId);
     const { criteriaSets } = useCriteriaSets();
     const { plans, loading: plansLoading } = usePlans();
