@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026-05-06 PM3] - Doi ten sidebar + Tach tab Giai trinh
+
+### Da sua
+- **constants.js**: Doi label sidebar `Chi tieu` thanh `Bo tieu chi` o cong cap tren.
+- **UnitLayout.jsx**: Doi label sidebar `Chi tieu` thanh `Bo tieu chi` o cong co so. Them item sidebar moi `Giai trinh` dung query param `?tab=giaiTrinh`. Cap nhat active state logic.
+- **UnitSubmitPage.jsx**: Bo 2 subtab buttons ben trong trang, thay bang doc `tab` tu URL searchParams (`useSearchParams`). Giao dien trang giờ chi hien tab tuong ung — khong con subtab.
+- **UnitSubmissionsList.jsx**: Doi tieu de trang tu `Bao cao Chi tieu Thi dua` thanh `Bo tieu chi Thi dua`.
+
+### File bi anh huong
+- `src/utils/constants.js`
+- `src/components/unit/UnitLayout.jsx`
+- `src/components/unit/UnitSubmitPage.jsx`
+- `src/components/unit/UnitSubmissionsList.jsx`
+
 ## [2026-05-06 PM2] - Bo cot STT, thu nho Evidence, dong bo 2 trang
 
 ### Da sua
