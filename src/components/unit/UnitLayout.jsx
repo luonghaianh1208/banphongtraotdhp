@@ -80,7 +80,7 @@ const UnitLayout = () => {
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/5 dark:bg-primary-500/2 blur-[100px] pointer-events-none" />
 
-                <div className="max-w-7xl mx-auto animate-fade-in-up">
+                <div className="max-w-[1920px] w-full mx-auto animate-fade-in-up">
                     <Outlet />
                 </div>
             </main>
