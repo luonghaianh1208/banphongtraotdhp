@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Dong bo CriteriaOverviewPage + CriteriaDetailPage du 14 cot giong UnitSubmitPage (xoa STT, doi ten Max/YC/Diem, them cot Danh gia/Giai trinh/Diem sau GT) - 2026-05-06
 - [x] Doi ten Chi tieu thanh Bo tieu chi o sidebar ca 2 cong, tach Giai trinh thanh tab sidebar rieng, dong bo admin page - 2026-05-06
 - [x] Bo cot STT va Y/C Giai trinh khoi UnitSubmitPage, thu nho cot Minh chung, dong bo CriteriaDetailPage - 2026-05-06
 - [x] Chuan hoa bang 16 cot dong bo UnitSubmitPage + CriteriaDetailPage, fix syntax bug handleSubmit - 2026-05-06

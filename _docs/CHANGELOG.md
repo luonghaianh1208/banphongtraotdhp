@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-05-06 PM4] - Dong bo bang cap tren voi cong co so
+
+### Da sua
+- CriteriaOverviewPage: Xoa cot STT, doi "Max" → "Diem toi da", them cot "Danh gia cua don vi", "Noi dung giai trinh", "Diem sau GT". Dong bo du 14 cot giong UnitSubmitPage
+- CriteriaDetailPage: Doi "YC minh chung" → "Yeu cau minh chung", "Diem" → "Diem toi da"
+- Ca 2 trang cap tren hien dung thu tu va ten cot giong cong co so
+
 ## [2026-05-06 PM3] - Doi ten sidebar + Tach tab Giai trinh
 
 ### Da sua

@@ -8,15 +8,14 @@ import { PRIORITIES, UNIT_BLOCKS } from './constants';
 // CRITERIA — Export template & Import & Export
 // ======================================
 
-// 9 cột mới: Tiêu chí | Nội dung | Mục | Điều kiện | Yêu cầu MC | Tổ theo dõi | Khung điểm | Thời hạn | Đơn vị
+// 8 cột mới (không có STT): Tiêu chí | Nội dung | Điều kiện chấm | Yêu cầu minh chứng | Tổ theo dõi | Điểm tối đa | Thời hạn | Đơn vị
 const CRITERIA_HEADERS = [
   'Tiêu chí',
   'Nội dung đánh giá',
-  'Mục (STT)',
   'Điều kiện chấm điểm',
   'Yêu cầu minh chứng & nguyên tắc chấm',
   'Tổ theo dõi',
-  'Khung điểm',
+  'Điểm tối đa',
   'Thời hạn nộp minh chứng',
   'Đơn vị áp dụng',
 ];
@@ -29,15 +28,14 @@ export const exportCriteriaTemplate = () => {
 
   // Row hướng dẫn
   const guide = {};
-  guide[CRITERIA_HEADERS[0]] = '(1) Nhập tên tiêu chí ở cột A. Các muc cùng tiêu chí để trống.';
+  guide[CRITERIA_HEADERS[0]] = '(1) Nhập tên tiêu chí ở cột A. Các mục cùng tiêu chí để trống.';
   guide[CRITERIA_HEADERS[1]] = '(2) Nhập nội dung đánh giá (nhóm con). Cùng nội dung để trống.';
-  guide[CRITERIA_HEADERS[2]] = '(3) Số thứ tự mục: 1, 2, 3...';
-  guide[CRITERIA_HEADERS[3]] = '(4) Điều kiện chấm';
-  guide[CRITERIA_HEADERS[4]] = '(5) Yêu cầu minh chứng chi tiết';
-  guide[CRITERIA_HEADERS[5]] = '(6) VD: PT, TTNTH';
-  guide[CRITERIA_HEADERS[6]] = '(7) Điểm tối đa (số)';
-  guide[CRITERIA_HEADERS[7]] = '(8) VD: 30/10/2026';
-  guide[CRITERIA_HEADERS[8]] = '(9) VD: Khối Xã, Phường, Đặc khu';
+  guide[CRITERIA_HEADERS[2]] = '(3) Điều kiện chấm';
+  guide[CRITERIA_HEADERS[3]] = '(4) Yêu cầu minh chứng chi tiết';
+  guide[CRITERIA_HEADERS[4]] = '(5) VD: PT, TTNTH';
+  guide[CRITERIA_HEADERS[5]] = '(6) Điểm tối đa (số)';
+  guide[CRITERIA_HEADERS[6]] = '(7) VD: 30/10/2026';
+  guide[CRITERIA_HEADERS[7]] = '(8) VD: Khối Xã, Phường, Đặc khu';
   rows.push(guide);
 
   // Row trống
@@ -46,28 +44,27 @@ export const exportCriteriaTemplate = () => {
   rows.push(empty);
 
   // Sample data
-  const makeRow = (tc, nd, stt, dk, yc, to, diem, han, dv) => {
+  const makeRow = (tc, nd, dk, yc, to, diem, han, dv) => {
     const r = {};
     r[CRITERIA_HEADERS[0]] = tc;
     r[CRITERIA_HEADERS[1]] = nd;
-    r[CRITERIA_HEADERS[2]] = stt;
-    r[CRITERIA_HEADERS[3]] = dk;
-    r[CRITERIA_HEADERS[4]] = yc;
-    r[CRITERIA_HEADERS[5]] = to;
-    r[CRITERIA_HEADERS[6]] = diem;
-    r[CRITERIA_HEADERS[7]] = han;
-    r[CRITERIA_HEADERS[8]] = dv;
+    r[CRITERIA_HEADERS[2]] = dk;
+    r[CRITERIA_HEADERS[3]] = yc;
+    r[CRITERIA_HEADERS[4]] = to;
+    r[CRITERIA_HEADERS[5]] = diem;
+    r[CRITERIA_HEADERS[6]] = han;
+    r[CRITERIA_HEADERS[7]] = dv;
     return r;
   };
 
-  rows.push(makeRow('Tiêu chí 1: Tổ chức, cán bộ Đoàn - Hội - Đội', '1. Công tác tổ chức', 1, 'Đoàn các xã, phường...', '- Có quyết định: 03 điểm\n- Không có: 0 điểm', 'PT', 3, '30/10/2026', 'Khối Xã, Phường, Đặc khu'));
-  rows.push(makeRow('', '', 2, 'Ban chấp hành Đoàn...', '- Đạt 100%: 04 điểm\n- Dưới 70%: 0 điểm', 'PT', 4, '30/6/2026', ''));
-  rows.push(makeRow('', '2. Công tác cán bộ', 3, 'Tổ chức đào tạo...', '- Có hoạt động: 03 điểm', 'TTNTH', 3, '30/11/2026', ''));
-  rows.push(makeRow('', '', 4, 'Công tác thi đua...', '- Đạt yêu cầu: 3 điểm', 'TTNTH', 3, '30/11/2026', ''));
+  rows.push(makeRow('Tiêu chí 1: Tổ chức, cán bộ Đoàn - Hội - Đội', '1. Công tác tổ chức', 'Đoàn các xã, phường...', '- Có quyết định: 03 điểm\n- Không có: 0 điểm', 'PT', 3, '30/10/2026', 'Khối Xã, Phường, Đặc khu'));
+  rows.push(makeRow('', '', 'Ban chấp hành Đoàn...', '- Đạt 100%: 04 điểm\n- Dưới 70%: 0 điểm', 'PT', 4, '30/6/2026', ''));
+  rows.push(makeRow('', '2. Công tác cán bộ', 'Tổ chức đào tạo...', '- Có hoạt động: 03 điểm', 'TTNTH', 3, '30/11/2026', ''));
+  rows.push(makeRow('', '', 'Công tác thi đua...', '- Đạt yêu cầu: 3 điểm', 'TTNTH', 3, '30/11/2026', ''));
 
   const ws = XLSX.utils.json_to_sheet(rows);
   ws['!cols'] = [
-    { wch: 40 }, { wch: 35 }, { wch: 10 }, { wch: 40 },
+    { wch: 40 }, { wch: 35 }, { wch: 40 },
     { wch: 45 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 30 },
   ];
 
@@ -135,13 +132,13 @@ export const importCriteriaExcel = (file) => {
 
         const colTC = findCol(['Tiêu chí', 'tieu chi']) || keys[0];
         const colND = findCol(['Nội dung', 'noi dung']) || keys[1];
-        const colSTT = findCol(['Mục', 'STT', 'muc']) || keys[2];
-        const colDK = findCol(['Điều kiện', 'dieu kien']) || keys[3];
-        const colYC = findCol(['Yêu cầu', 'yeu cau', 'minh chứng']) || keys[4];
-        const colTo = findCol(['Tổ theo dõi', 'to theo doi', 'Tổ']) || keys[5];
-        const colDiem = findCol(['Khung điểm', 'khung diem', 'Điểm', 'diem']) || keys[6];
-        const colDeadline = findCol(['Thời hạn', 'thoi han', 'hạn nộp']) || keys[7];
-        const colUnit = findCol(['Đơn vị', 'don vi', 'áp dụng']) || keys[8] || null;
+        const colSTT = findCol(['Mục', 'STT', 'muc']); // optional, may not exist
+        const colDK = findCol(['Điều kiện', 'dieu kien']) || keys[2];
+        const colYC = findCol(['Yêu cầu', 'yeu cau', 'minh chứng']) || keys[3];
+        const colTo = findCol(['Tổ theo dõi', 'to theo doi', 'Tổ']) || keys[4];
+        const colDiem = findCol(['Điểm tối đa', 'Khung điểm', 'khung diem', 'Điểm', 'diem']) || keys[5];
+        const colDeadline = findCol(['Thời hạn', 'thoi han', 'hạn nộp']) || keys[6];
+        const colUnit = findCol(['Đơn vị', 'don vi', 'áp dụng']) || keys[7] || null;
 
         // Build flat rows for editable table + structure
         const flatRows = [];
@@ -152,7 +149,7 @@ export const importCriteriaExcel = (file) => {
         for (const row of dataRows) {
           const tcVal = String(row[colTC] || '').trim();
           const ndVal = String(row[colND] || '').trim();
-          const sttVal = row[colSTT];
+          const sttVal = colSTT ? row[colSTT] : null;
           const dkVal = String(row[colDK] || '').trim();
           const ycVal = String(row[colYC] || '').trim();
           const toVal = String(row[colTo] || '').trim();
@@ -278,7 +275,7 @@ export const buildCriteriaSetsFromRows = (flatRows, year) => {
 
 
 /**
- * Export bộ tiêu chí hiện có ra file Excel (9 cột)
+ * Export bộ tiêu chí hiện có ra file Excel (8 cột, không STT)
  */
 export const exportCriteriaSetToExcel = (criteriaSet) => {
   const rows = [];
@@ -291,13 +288,12 @@ export const exportCriteriaSetToExcel = (criteriaSet) => {
         const r = {};
         r[CRITERIA_HEADERS[0]] = isFirstRowOfTC ? tc.title : '';
         r[CRITERIA_HEADERS[1]] = isFirstRowOfND ? nd.title : '';
-        r[CRITERIA_HEADERS[2]] = m.stt || '';
-        r[CRITERIA_HEADERS[3]] = m.dieuKienCham || '';
-        r[CRITERIA_HEADERS[4]] = m.yeucauMinhChung || '';
-        r[CRITERIA_HEADERS[5]] = m.toTheoDoi || '';
-        r[CRITERIA_HEADERS[6]] = m.khungDiem || 0;
-        r[CRITERIA_HEADERS[7]] = m.deadline || '';
-        r[CRITERIA_HEADERS[8]] = '';
+        r[CRITERIA_HEADERS[2]] = m.dieuKienCham || '';
+        r[CRITERIA_HEADERS[3]] = m.yeucauMinhChung || '';
+        r[CRITERIA_HEADERS[4]] = m.toTheoDoi || '';
+        r[CRITERIA_HEADERS[5]] = m.khungDiem || 0;
+        r[CRITERIA_HEADERS[6]] = m.deadline || '';
+        r[CRITERIA_HEADERS[7]] = '';
         rows.push(r);
         isFirstRowOfTC = false;
         isFirstRowOfND = false;
@@ -313,7 +309,7 @@ export const exportCriteriaSetToExcel = (criteriaSet) => {
 
   const ws = XLSX.utils.json_to_sheet(rows);
   ws['!cols'] = [
-    { wch: 40 }, { wch: 35 }, { wch: 10 }, { wch: 40 },
+    { wch: 40 }, { wch: 35 }, { wch: 40 },
     { wch: 45 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 30 },
   ];
 

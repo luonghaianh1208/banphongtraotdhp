@@ -232,6 +232,7 @@ const CriteriaOverviewPage = () => {
                                                     <th className="min-w-[100px] px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
                                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
                                                     <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
@@ -326,6 +327,25 @@ const CriteriaOverviewPage = () => {
                                                                     className="input w-16 text-center font-black text-emerald-600 dark:text-emerald-400 mx-auto block"
                                                                     placeholder="0"
                                                                 />
+                                                            </td>
+                                                            {/* Y/C Giải trình - Checkbox */}
+                                                            <td className="px-2 py-4 text-center">
+                                                                <label className="flex items-center justify-center cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={typeof gradedScores[row.id] === 'object' ? (gradedScores[row.id]?.requireJustification || false) : false}
+                                                                        onChange={(e) => {
+                                                                            setGradedScores((prev) => {
+                                                                                const current = prev[row.id];
+                                                                                if (current && typeof current === 'object') {
+                                                                                    return { ...prev, [row.id]: { ...current, requireJustification: e.target.checked } };
+                                                                                }
+                                                                                return { ...prev, [row.id]: { officialScore: '', feedback: '', requireJustification: e.target.checked, afterJustificationScore: '' } };
+                                                                            });
+                                                                        }}
+                                                                        className="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600"
+                                                                    />
+                                                                </label>
                                                             </td>
                                                             {/* Nội dung giải trình - Readonly */}
                                                             <td className="px-3 py-4">
