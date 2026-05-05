@@ -29,7 +29,8 @@ const UnitLayout = () => {
 
     const unitNavItems = [
         { path: '/unit/dashboard', label: 'Tổng quan' },
-        { path: '/unit/submissions', label: 'Chỉ tiêu' },
+        { path: '/unit/submissions', label: 'Bộ tiêu chí' },
+        { path: '/unit/submissions?tab=giaiTrinh', label: 'Giải trình' },
         { path: '/unit/plans', label: 'Kế hoạch & Hội thi' },
     ];
 
@@ -53,18 +54,35 @@ const UnitLayout = () => {
                 </div>
 
                 <div className="p-4 flex-1 flex flex-col gap-1.5 mt-4">
-                    {unitNavItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-300 font-bold group ${location.pathname === item.path || (item.path !== '/unit/dashboard' && location.pathname.includes(item.path))
-                                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 scale-[1.02]'
-                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200'
-                                }`}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
+                    {unitNavItems.map((item) => {
+                        const [itemPath, itemQuery] = item.path.split('?');
+                        const currentFullPath = location.pathname + location.search;
+                        let isActive = false;
+
+                        if (itemQuery) {
+                            // Tab with query param (Giải trình)
+                            isActive = currentFullPath === item.path || 
+                                       (location.pathname.includes('/unit/submit/') && location.search.includes('tab=giaiTrinh'));
+                        } else if (itemPath === '/unit/submissions') {
+                            // Bộ tiêu chí — active when on submissions without giaiTrinh query
+                            isActive = (location.pathname === itemPath || location.pathname.includes('/unit/submit/')) && !location.search.includes('tab=giaiTrinh');
+                        } else {
+                            isActive = location.pathname === itemPath;
+                        }
+
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-300 font-bold group ${isActive
+                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 scale-[1.02]'
+                                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200'
+                                    }`}
+                            >
+                                {item.label}
+                            </Link>
+                        );
+                    })}
 
                     <button
                         onClick={handleLogout}

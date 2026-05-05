@@ -29,8 +29,8 @@ const UnitSubmissionsList = () => {
         <div className="max-w-6xl mx-auto space-y-8 pb-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Báo cáo Chỉ tiêu Thi đua</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Danh sách tiêu chí được giao cho đơn vị.</p>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Bộ tiêu chí Thi đua</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Danh sách bộ tiêu chí được giao cho đơn vị.</p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-900/30">
                     <MdSend className="text-primary-600 dark:text-primary-400" />

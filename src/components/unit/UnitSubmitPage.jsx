@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MdAssignment, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdGrade, MdList, MdChat } from 'react-icons/md';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -30,7 +30,8 @@ const UnitSubmitPage = () => {
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
     const [gradedData, setGradedData] = useState({ scores: {}, comment: '', total: null });
-    const [activeTab, setActiveTab] = useState('bTC'); // 'bTC' or 'giaiTrinh'
+    const [searchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') === 'giaiTrinh' ? 'giaiTrinh' : 'bTC';
 
     useEffect(() => {
         const fetchData = async () => {
@@ -340,22 +341,9 @@ const UnitSubmitPage = () => {
                 )}
             </div>
 
-            <div className="flex gap-2 mb-0">
-                <button
-                    onClick={() => setActiveTab('bTC')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${activeTab === 'bTC' ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl text-primary-600 border-t-2 border-primary-500 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 relative' : 'bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                >
-                    <MdList size={20} /> Bộ tiêu chí
-                </button>
-                <button
-                    onClick={() => setActiveTab('giaiTrinh')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${activeTab === 'giaiTrinh' ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl text-amber-600 border-t-2 border-amber-500 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 relative' : 'bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                >
-                    <MdChat size={20} /> Giải trình
-                </button>
-            </div>
 
-            <div className="glass-card overflow-hidden rounded-tl-none">
+
+            <div className="glass-card overflow-hidden">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                     <div>
                         <h3 className="text-lg font-black text-gray-900 dark:text-white">
