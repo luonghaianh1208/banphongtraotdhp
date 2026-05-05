@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-05-06] - Chuan hoa bang 16 cot dong bo & fix syntax bug
+
+### Da sua
+- **UnitSubmitPage**: Fix syntax bug — `handleSubmitJustification` bi long trong `handleSubmit` do thieu `};` dong ham.
+- **UnitSubmitPage**: Them 2 cot con thieu vao bang: "Y/C Giai trinh" (hien thi trang thai checkbox cua cap tren) va "Noi dung giai trinh" (luon hien thi o ca 2 tab, chi editable o tab Giai trinh).
+- Ca 2 trang UnitSubmitPage va CriteriaDetailPage gio deu hien day du 16 cot dong bo.
+
+### File bi anh huong
+- `src/components/unit/UnitSubmitPage.jsx`
+
 ## [2026-05-05 PM3] - Role-Based Access Control cho Bo tieu chi
 
 ### Đã thay đổi

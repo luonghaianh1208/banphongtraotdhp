@@ -1,64 +1,38 @@
 # Ngu canh Session Hien tai
 
-Cap nhat lan cuoi: 2026-05-05
+Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Cai thien UX trang don vi: compact evidence list, hien thi diem cham va nhan xet cua cap tren.
+Chuan hoa giao dien bang 16 cot dong bo giua UnitSubmitPage (co so) va CriteriaDetailPage (quan ly). Fix syntax bug va bo sung cot con thieu.
 
 ## Da lam trong session nay
- 
- - Redesign EvidenceUpload tu grid cards sang compact list voi icon, ten file dep, badge extension.
- - Them 2 cot "Cap tren" va "Nhan xet" vao bang tieu chi phia don vi (chi hien khi status = graded).
- - Hien thi tong diem cap tren cham va nhan xet chung o thanh sticky.
- - Thu nho padding/min-width cac cot cu de co them khong gian cho cot moi.
- - Xac nhan Firestore rules da cho phep unit doc grading data (khong can sua backend).
- - Hoan thien phan quyen truy cap Bo Tieu Chi: Admin co toan quyen, Member chi duoc xem (View-Only).
- - Hoan thien phan quyen cham diem: Admin duoc cham tat ca, Manager va Member chi duoc cham nhung tieu chi duoc phan cong.
- - Doc doi chieu codebase voi 6 file trong `/_docs`
- - Xac dinh nhieu noi dung cu khong con dung voi source hien tai
- - Cap nhat lai:
-   - `ARCHITECTURE.md`
-   - `BUGS.md`
-   - `CHANGELOG.md`
-   - `CONTEXT.md`
-   - `PROJECT.md`
-   - `TASKS.md`
+
+- Kiem tra code 3 file chinh (UnitSubmitPage, CriteriaDetailPage, EvidenceUpload) so voi ke hoach 16 cot.
+- Phat hien va fix 2 loi trong UnitSubmitPage:
+  1. Syntax bug: `handleSubmitJustification` bi long trong `handleSubmit` do thieu `};`.
+  2. Thieu cot 13 (Y/C Giai trinh) va cot 14 (Noi dung giai trinh) khong hien o tab Bo tieu chi.
+- Sau khi fix, ca 2 trang deu hien day du 16 cot dong bo theo ke hoach.
+- EvidenceUpload da san sang voi tinh nang gan link URL (da kiem tra, khop 100%).
+- CriteriaDetailPage da khop 100% ke hoach (bang ngang, 16 cot, logic khoa/mo dung).
 
 ## Ket qua quan trong
 
-- Tai lieu cu danh dau "13/13 bugs fixed" khong con dung.
-- Da mo lai cac loi van ton tai trong code:
-  - BUG-002
-  - BUG-005
-  - BUG-014
-  - BUG-015
-  - BUG-016
-  - BUG-017
-  - BUG-018
-  - BUG-019
-- Architecture docs da doi tu "mo ta du an ly tuong" sang "anh chup he thong dang chay".
+- UnitSubmitPage gio hien 16 cot o ca 2 tab (Bo tieu chi va Giai trinh).
+- Cot "Y/C Giai trinh" o trang co so chi doc (hien trang thai checkbox cua cap tren).
+- Cot "Noi dung giai trinh" luon hien nhung chi editable khi dang o tab Giai trinh.
 
-## Khong lam trong session nay
+## Quyet dinh ky thuat da chot
 
-- Khong sua source code app
-- Khong deploy Firebase / Netlify
-- Khong chay build hay lint vi chi thay doi tai lieu
-
-## Quyet dinh ky thuat da chot cho tai lieu
-
-- Chi ghi "fixed" khi co the verify truc tiep tu code hien tai.
-- Changelog duoc giu vai tro lich su, nhung se co entry moi neu mot bug cu can mo lai.
-- Module legacy / orphan se duoc ghi ro la "khong duoc route" thay vi tiep tuc xem nhu feature dang hoat dong.
+- Tat ca 16 cot phai luon hien thi o moi tab, chi khac nhau trang thai khoa/mo khoa.
+- Tab Giai trinh loc chi hien nhung tieu chi co `requireJustification === true`.
+- Co so bam "Gui giai trinh" de nop noi dung giai trinh rieng biet (khong trung voi nut Nop bao cao).
 
 ## Nhung diem can nho neu tiep tuc session sau
 
-- Neu bat dau sua code, nen uu tien theo thu tu:
+- Nen test toan bo luong: Co so nop → Admin tham dinh (YC giai trinh) → Co so giai trinh → Admin cham lai diem sau giai trinh.
+- Nen uu tien fix cac bug van con mo:
   1. BUG-002: pending approval bypass
-  2. BUG-005 + BUG-014: unit portal dang co loi shape profile va logout
+  2. BUG-005 + BUG-014: unit portal shape profile va logout
   3. BUG-017: plan detail field mismatch
   4. BUG-018 / BUG-019: data integrity va notification reliability
-- Sau moi dot sua code, cap nhat lai:
-  - `_docs/BUGS.md`
-  - `_docs/TASKS.md`
-  - `_docs/CHANGELOG.md`
