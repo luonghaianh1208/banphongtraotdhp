@@ -213,6 +213,16 @@ const CriteriaSetsPage = () => {
         (set.tieuChi || []).forEach(tc => { (tc.noiDung || []).forEach(nd => { c += (nd.muc || []).length; }); });
         return c;
     };
+    const getAssignmentCount = (setId) => allAssignments.filter(a => a.criteriaSetId === setId && a.status === 'active').length;
+    const getApplicableTargets = (set) => {
+        if (set.donViText) return set.donViText;
+        if (set.targetBlocks?.length > 0) {
+            return set.targetBlocks
+                .map(blockId => UNIT_BLOCKS.find(block => block.id === blockId)?.name || blockId)
+                .join(', ');
+        }
+        return 'Tat ca khoi';
+    };
 
     // Unit selection block
     const renderUnitSelection = (state, setState) => (
@@ -341,7 +351,114 @@ const CriteriaSetsPage = () => {
                 )}
             </div>
 
-            {/* Card Grid */}
+            <div className="overflow-hidden rounded-[2rem] border border-gray-100 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/50 shadow-sm backdrop-blur-sm">
+                {criteriaSets.length === 0 ? (
+                    <div className="py-24 glass rounded-3xl flex flex-col items-center justify-center border-dashed border-2 border-gray-200 dark:border-gray-800">
+                        <MdUpload size={40} className="text-gray-300 animate-bounce mb-6" />
+                        <p className="text-xl font-black text-gray-500">ChÆ°a cÃ³ bá»™ tiÃªu chÃ­ nÃ o</p>
+                        <div className="flex gap-3 mt-8">
+                            <button onClick={() => fileInputRef.current?.click()} className="btn bg-blue-600 text-white hover:bg-blue-700"><MdUpload size={20} /> Upload Excel</button>
+                            <button onClick={() => setShowModal(true)} className="btn btn-primary">Táº¡o thá»§ cÃ´ng</button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-[1120px] w-full text-sm">
+                            <thead className="bg-gray-50/90 dark:bg-gray-800/80">
+                                <tr className="border-b border-gray-200/70 dark:border-gray-700/70">
+                                    <th className="w-14 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Chá»n</th>
+                                    <th className="min-w-[320px] px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Bá»™ tiÃªu chÃ­</th>
+                                    <th className="w-24 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">NÄƒm</th>
+                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Má»¥c cháº¥m</th>
+                                    <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tá»•ng Ä‘iá»ƒm</th>
+                                    <th className="min-w-[220px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Äá»‘i tÆ°á»£ng Ã¡p dá»¥ng</th>
+                                    <th className="w-32 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">ÄÃ£ giao</th>
+                                    <th className="min-w-[260px] px-5 py-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-500">Thao tÃ¡c</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                                {filteredSets.map((set) => {
+                                    const assignmentCount = getAssignmentCount(set.id);
+                                    const isSelected = selected.includes(set.id);
+
+                                    return (
+                                        <tr
+                                            key={set.id}
+                                            className={`transition-colors hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 ${isSelected ? 'bg-emerald-50/70 dark:bg-emerald-900/15' : 'bg-transparent'}`}
+                                        >
+                                            <td className="px-4 py-5 text-center align-top">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleSelect(set.id)}
+                                                    className="w-5 h-5 rounded-lg border-gray-300 text-primary-600 cursor-pointer"
+                                                />
+                                            </td>
+                                            <td className="px-5 py-5 align-top">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="mt-2 h-1.5 w-10 rounded-full bg-primary-500 flex-shrink-0"></div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">{set.title}</p>
+                                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 italic line-clamp-2">{set.description || 'ChÆ°a cÃ³ mÃ´ táº£.'}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-5 text-center align-top">
+                                                <span className="inline-flex min-w-[64px] justify-center rounded-2xl bg-gray-50 dark:bg-gray-800/50 px-3 py-2 text-xs font-bold text-gray-800 dark:text-gray-200">
+                                                    {set.academicYear || 'â€”'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-5 text-center align-top">
+                                                <span className="inline-flex min-w-[64px] justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20 px-3 py-2 text-lg font-black text-blue-600 dark:text-blue-400">
+                                                    {countMuc(set)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-5 text-center align-top">
+                                                <span className="inline-flex min-w-[64px] justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                                    {set.totalMaxScore || 0}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-5 align-top">
+                                                <span className="inline-flex rounded-full bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                                    {getApplicableTargets(set)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-5 text-center align-top">
+                                                {assignmentCount > 0 ? (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+                                                        <MdSend size={13} />
+                                                        {assignmentCount} Ä‘Æ¡n vá»‹
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800/60 px-3 py-1.5 text-xs font-bold text-gray-400">
+                                                        ChÆ°a giao
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-5 align-top">
+                                                <div className="flex justify-end gap-2">
+                                                    <Link to={`/criteria-set/${set.id}`} className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 shadow-sm hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                                        <MdVisibility size={16} /> Chi tiáº¿t
+                                                    </Link>
+                                                    <button onClick={() => handleClone(set)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400">
+                                                        <MdContentCopy size={16} /> NhÃ¢n báº£n
+                                                    </button>
+                                                    <button onClick={() => handleDelete(set.id, set.title)} className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 shadow-sm hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400">
+                                                        <MdDelete size={16} /> XÃ³a
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {false && (
+            /* Card Grid */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredSets.map((set, idx) => (
                     <div key={set.id}
@@ -415,8 +532,9 @@ const CriteriaSetsPage = () => {
                     </div>
                 )}
             </div>
+            )}
 
-            {/* ====== IMPORT PREVIEW MODAL — EDITABLE TABLE ====== */}
+            {/* ====== IMPORT PREVIEW MODAL ? EDITABLE TABLE ====== */}
             {showImportPreview && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
                     <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-md animate-fade-in" onClick={() => !isSubmitting && setShowImportPreview(false)}></div>
@@ -584,3 +702,4 @@ const CriteriaSetsPage = () => {
 };
 
 export default CriteriaSetsPage;
+

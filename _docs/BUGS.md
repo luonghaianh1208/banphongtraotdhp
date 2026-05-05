@@ -1,100 +1,162 @@
-# Bug Tracker — HubConnect
+# Bug Tracker - HubConnect
 
-## Hướng dẫn
-Thêm bug mới theo format bên dưới.
-Trạng thái: open | in-progress | fixed | wont-fix
+Cap nhat lan cuoi: 2026-05-05
 
----
-
-## 🔴 NGHIÊM TRỌNG
-
-## [BUG-001] Race condition tạo admin đầu tiên
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Cloud Function `initFirstAdmin` + Firestore Transaction trong `AuthContext.jsx`.
+Trang thai:
+- `open`: dang ton tai trong code hien tai
+- `fixed`: da verify khong con tai hien tu code hien tai
+- `legacy`: bug lich su hoac module cu khong con duoc noi vao flow chinh
 
 ---
 
-## [BUG-002] First user bypass pending approval sau khi refresh
-- **Trạng thái**: ✅ fixed
-- **Fix**: Bỏ vế fallback, chỉ dùng `status === 'approved'`.
+## Dang mo
+
+## [BUG-002] Google login co the bypass pending approval
+- Trang thai: `open`
+- Muc do: `critical`
+- Vi tri:
+  - `src/firebase/auth.js`
+  - `src/context/AuthContext.jsx`
+- Mo ta:
+  - `loginWithGoogle()` tao document `users/{uid}` voi `isActive: true` va khong set `status`.
+  - `AuthContext` suy dien profile khong co `status` thanh `approved` neu `isActive !== false`.
+  - Ket qua: user noi bo dang nhap bang Google lan dau co the vao app ngay thay vi dung o `/pending`.
+
+## [BUG-005] `userProfile.unitId` van sai o mot phan module unit
+- Trang thai: `open`
+- Muc do: `high`
+- Vi tri:
+  - `src/components/unit/UnitDashboard.jsx`
+  - `src/components/unit/UnitSubmissionsList.jsx`
+  - mot phan dependency array trong `src/components/unit/UnitSubmitPage.jsx`
+- Mo ta:
+  - Profile unit duoc nap voi `id` la Firestore/Auth uid.
+  - Nhieu component van doc `userProfile.unitId`, nen `useUnitAssignments()` nhan `undefined`.
+  - Hieu ung: dashboard va danh sach submissions cua unit co nguy co khong load assignment duoc.
+
+## [BUG-014] Nut dang xuat trong Unit portal se loi runtime
+- Trang thai: `open`
+- Muc do: `high`
+- Vi tri:
+  - `src/components/unit/UnitLayout.jsx`
+  - `src/context/AuthContext.jsx`
+- Mo ta:
+  - `UnitLayout` destructure `logout` tu `useAuth()`.
+  - `AuthContext` hien khong expose `logout`.
+  - Khi bam dang xuat o portal unit, handler goi mot gia tri `undefined`.
+
+## [BUG-015] `useSubmissions` la hook vo hieu
+- Trang thai: `open`
+- Muc do: `medium`
+- Vi tri:
+  - `src/hooks/useSubmissions.js`
+  - `src/firebase/criteriaFirestore.js`
+- Mo ta:
+  - Hook import `subscribeToAllSubmissions` va `subscribeToUnitSubmission`.
+  - Hai API nay khong ton tai trong `criteriaFirestore`.
+  - Hook hien chua duoc dung o route chinh, nhung neu noi vao UI se loi ngay.
+
+## [BUG-016] `PeriodsManagePage` ton tai nhung khong route toi dau
+- Trang thai: `open`
+- Muc do: `medium`
+- Vi tri:
+  - `src/components/criteria/PeriodsManagePage.jsx`
+  - `src/App.jsx`
+- Mo ta:
+  - Page quan ly `submissionPeriods` van nam trong source.
+  - App khong import, khong khai bao route, khong co menu dan vao.
+  - `_docs` truoc day co ghi nhan module nay nhu dang hoat dong, nhung hien tai no la orphan screen.
+
+## [BUG-017] Admin plan detail doc sai field va co the hien thi rong
+- Trang thai: `open`
+- Muc do: `medium`
+- Vi tri:
+  - `src/components/criteria/PlanDetailPage.jsx`
+  - `src/components/unit/UnitPlanDetail.jsx`
+  - `src/firebase/criteriaFirestore.js`
+- Mo ta:
+  - `PlanDetailPage` doc `plan.category` va `plan.files`.
+  - Flow tao/sua plan hien tai dung `type`, va unit detail lai doc `plan.attachments`.
+  - Contest entry hien duoc luu thanh `docs` trong `contestEntries`, khong phai cac field participant ma `PlanDetailPage` dang render.
+  - He qua: man hinh admin detail co the hien sai badge, sai tep dinh kem, hoac bang du lieu rong.
+
+## [BUG-018] Restore task khong xu ly penalty lien quan
+- Trang thai: `open`
+- Muc do: `medium`
+- Vi tri:
+  - `src/firebase/firestore.js`
+- Mo ta:
+  - `restoreTask()` va `restoreTasks()` chi flip `isDeleted` / `deletedAt`.
+  - Penalty da tao cho task khong duoc xoa hay danh dau lai.
+  - Nguy co user restore task nhung van con penalty cu.
+
+## [BUG-019] Notification van la fire-and-forget
+- Trang thai: `open`
+- Muc do: `low`
+- Vi tri:
+  - `src/firebase/firestore.js`
+- Mo ta:
+  - `addNotification()` bat loi va chi `console.error`, khong rethrow.
+  - Cac caller khong biet notification that bai.
+  - Mat notification hien tai khong rollback luong nghiep vu nao.
 
 ---
 
-## [BUG-003] Dữ liệu bài nộp lưu 2 collection khác nhau
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Xóa code cũ `submissions`, thống nhất sang `criteriaSubmissions`.
+## Da verify da fix
 
----
-
-## [BUG-004] Field tự chấm không khớp
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Thêm fallback `responses[].selfScore` và `.notes` cho cả format mới và format cũ (`groups → conditions`) trong `CriteriaDetailPage.jsx`.
-
----
-
-## [BUG-005] `userProfile.unitId` undefined
-- **Trạng thái**: ✅ fixed
-- **Fix**: Đổi `userProfile.unitId` → `userProfile.id` trong `UnitSubmitPage`.
-
----
+## [BUG-001] Race condition tao admin dau tien
+- Trang thai: `fixed`
+- Vi tri:
+  - `functions/index.js`
+  - `src/context/AuthContext.jsx`
+- Ghi chu:
+  - Da dung Cloud Function `initFirstAdmin` + Firestore transaction.
 
 ## [BUG-006] Duplicate penalty multi-admin
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Cloud Function `createPenaltyIdempotent` + Transaction + composite key `userId_taskId_penaltyTypeId`. Hook `useAutoOverduePenalties` gọi CF thay vì `createPenalty` trực tiếp.
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/hooks/useAutoOverduePenalties.js`
+  - `functions/index.js`
+  - `src/firebase/firestore.js`
+- Ghi chu:
+  - Client goi `createPenaltyIdempotent`.
+  - Backend dung transaction va composite key.
+
+## [BUG-007] Huy gui duyet khong thong bao cho nguoi tao task
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/task/TaskDetail.jsx`
+
+## [BUG-008] Unit sua bai sau khi dot bi khoa
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/unit/UnitSubmitPage.jsx`
+  - `firestore.rules`
+
+## [BUG-009] Rule `criteriaSubmissions` qua long
+- Trang thai: `fixed`
+- Vi tri:
+  - `firestore.rules`
+
+## [BUG-010] Logic hien thi criteria detail khong hop format moi
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/criteria/CriteriaDetailPage.jsx`
+
+## [BUG-013] Draft criteria submission bi duplicate khi luu nhieu lan
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/firebase/criteriaFirestore.js`
 
 ---
 
-## 🟠 QUAN TRỌNG
+## Tong ket nhanh
 
-## [BUG-007] Hủy phê duyệt không gửi Notification
-- **Trạng thái**: ✅ fixed
-- **Fix**: Thêm `addNotification` vào `handleCancelSubmit` trong `TaskDetail.jsx`.
+| Muc | So luong |
+|---|---:|
+| Open | 8 |
+| Fixed (da verify) | 6 |
 
----
-
-## [BUG-008] Đơn vị sửa được bài sau khi đợt khóa
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Firestore Rules check `submissionPeriods/{periodId}.status` trước khi cho update. Thêm `periodId` vào `saveUnitCriteriaResponse`. FE guard `isPeriodLocked` trong `UnitSubmitPage.jsx`.
-
----
-
-## [BUG-009] `criteriaSubmissions` Firestore Rules quá lỏng
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Thêm `isUnit()` + `unitId == request.auth.uid` vào rules.
-
----
-
-## [BUG-010] Member nội bộ không thấy tiêu chí được phân công
-- **Trạng thái**: ✅ fixed
-- **Fix**: Sửa filter trong `CriteriaDetailPage.jsx`.
-
----
-
-## [BUG-011] `publishPeriodResults` không tính điểm
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Cloud Function loop `criteriaSubmissions`, tính `totalGradedScore`, lưu vào `results`.
-
----
-
-## 🟡 NHỎ
-
-## [BUG-012] `UnitSubmissionsList` đọc sai cấu trúc tiêu chí
-- **Trạng thái**: ✅ fixed
-- **Fix**: Đổi path sang `tieuChi → noiDung → muc`.
-
----
-
-## [BUG-013] Race condition draft 2 tabs
-- **Trạng thái**: ✅ fixed (2026-04-25)
-- **Fix**: Composite ID `criteriaSetId_unitId` + `setDoc({ merge: true })`.
-
----
-
-## Thống kê
-
-| Mức độ | Số lượng | Trạng thái |
-|---|---|---|
-| 🔴 Nghiêm trọng | 6 | 6 fixed |
-| 🟠 Quan trọng | 5 | 5 fixed |
-| 🟡 Nhỏ | 2 | 2 fixed |
-| **Tổng** | **13** | **13 fixed** |
+Ghi chu:
+- Tai lieu cu danh dau "13/13 bugs fixed" khong con phu hop voi code hien tai.
+- BUG-002 va BUG-005 duoc mo lai sau khi doi chieu truc tiep voi source ngay 2026-05-05.

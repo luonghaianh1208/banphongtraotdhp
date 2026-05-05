@@ -1,21 +1,31 @@
 # Task Board
 
-## 🔴 Đang làm
-(đã hoàn thành các bug critical)
+Cap nhat lan cuoi: 2026-05-05
 
-## 🟡 Cần làm tiếp
-- [ ] Rollback Xoá Penalty khi phục hồi Task/Hỗ trợ Extend Deadline an toàn — Đồng bộ luồng (Data Integrity) — Độ ưu tiên: TB
-- [ ] Cleanup Notifications rác quá thời hạn / Quá trình xử lý Notifications Fire-And-Forget mảng catch block. — Độ ưu tiên: THẤP
+## Dang uu tien tiep theo
 
-## ✅ Đã hoàn thành
-- [x] Sửa 13 Bugs Nghiêm Trọng/Quan Trọng (BUG-001 đến BUG-013) — hoàn thành ngày 2026-04-25
-- [x] Deploy Cloud Functions (`initFirstAdmin`, `publishPeriodResults`) — hoàn thành ngày 2026-04-25
-- [x] Deploy Firestore Rules bảo mật `criteriaSubmissions` — hoàn thành ngày 2026-04-25
-- [x] Sửa Lỗ Hổng Criteria Rules (Block `criteriaSubmissions` leak và Lock Submission theo Revoked Assignment) — hoàn thành ngày 2026-04-24
-- [x] Fix Performance 1: `userMap` -> `useMemo` trong TaskDetail (O(1) access) — hoàn thành ngày 2026-04-24
-- [x] Fix Performance 2: `taskUserMap` -> `DashboardPage.jsx` giải quyết Nested Map O(n×m) — hoàn thành ngày 2026-04-24
-- [x] Khởi tạo documentation trong `_docs/`. — hoàn thành ngày 2026-04-24
+- [ ] Sua BUG-002: Google login khong duoc tu approve user noi bo moi
+- [ ] Sua BUG-005 + BUG-014: dong bo shape profile unit va fix logout trong Unit portal
+- [ ] Sua BUG-017: thong nhat field cua plan detail (`type` / `attachments` / `contestEntries`)
+- [ ] Sua BUG-018: restore task can xu ly penalty lien quan
+- [ ] Sua BUG-019: thong bao can co co che bao loi ro hon thay vi fire-and-forget
 
-## ❌ Đã bỏ / không làm nữa
-- Port React Components sang TypeScript (không cần thiết để phát triển do framework đã quá ổn định định dạng JS).
-- Chỉnh sửa React Portals cho modal popup do quá rủi ro đứt gãy luồng rendering UI cũ.
+## Cong viec can don dep ky thuat
+
+- [ ] Xoa hoac noi lai `src/components/criteria/PeriodsManagePage.jsx`
+- [ ] Xoa hoac sua `src/hooks/useSubmissions.js` de khong con import API khong ton tai
+- [ ] Rasoat lai module unit de thay het `userProfile.unitId` bang shape profile thuc te
+
+## Da hoan thanh
+
+- [x] Audit lai toan bo `/_docs` theo source code hien tai - 2026-05-05
+- [x] Cap nhat `ARCHITECTURE.md`, `PROJECT.md`, `CONTEXT.md` theo hien trang - 2026-05-05
+- [x] Mo lai cac bug trong docs bi danh dau nham la "fixed" - 2026-05-05
+- [x] Fix transaction `initFirstAdmin` - 2026-04-25
+- [x] Fix duplicate overdue penalty bang idempotent Cloud Function - 2026-04-25
+- [x] Tighten rules cho `criteriaSubmissions` - 2026-04-25
+
+## Da bo / khong uu tien
+
+- Port toan bo React components sang TypeScript
+- Refactor modal/portal chi de lam dep code khi chua co bug cu the

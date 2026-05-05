@@ -1,63 +1,151 @@
-# Hệ Thống Kiến Trúc & Logic (Architecture)
+# He Thong Kien Truc va Logic
 
-## Sơ đồ luồng Authentication
+Cap nhat lan cuoi: 2026-05-05
+
+## 1. Luong dang nhap va dieu huong
+
 ```text
-[Người dùng truy cập]
-       |
-    (Chưa đăng nhập) ----> Chuyển hướng sang `/login` 
-       |                        |
-       |                   [Đăng nhập bằng Email/Pass hoặc Google]
-       |                        |
-    (Đã đăng nhập)  <-----------+
-       |
-[Kiểm tra Firestore `users/{uid}`]
-       |-- Nếu User mới -> Đang chờ duyệt (Trạng thái pending) -> Chuyển về màn hình Pending
-       |-- Nếu Đã duyệt, lấy Role (admin, manager, member, unit):
-             |-- Role: 'unit' ----> Redirect `/unit/dashboard` (Menu riêng của unit)
-             |-- Default ---------> Redirect `/dashboard` (hoặc `/today`)
+[Nguoi dung vao app]
+      |
+      v
+  AuthContext nghe onAuthStateChanged
+      |
+      +-- Chua dang nhap -> /login
+      |
+      +-- Da dang nhap:
+            |
+            +-- Tim profile trong users/{uid}
+            |     |
+            |     +-- Khong co -> check units theo email
+            |     |     |
+            |     |     +-- Neu khop unit -> dung profile tu units/{uid}
+            |     |     +-- Neu khong -> tao users/{uid} mac dinh member
+            |     |
+            |     +-- Co profile -> subscribe realtime vao users/{uid} hoac units/{uid}
+            |
+            +-- role=unit va status=approved -> /unit/dashboard
+            +-- status=pending -> /pending
+            +-- con lai -> route noi bo qua MainLayout
 ```
 
-## Module & Features Chính
-- **Auth & Onboarding**: Quản lý đăng nhập, cấp role, cấp quyền. Admin duyệt người dùng mới.
-- **Task Management (Công Việc)**: Admin/Manager tạo công việc, giao cho Members. Track tiến độ.
-- **Criteria Management (Tiêu Chí)**: Quản lý các bộ chỉ tiêu đánh giá đơn vị (criteriaSets, assignments). 
-- **Unit Submissions (Nộp Báo Cáo)**: Điểm nộp cho các đơn vị cung cấp chứng minh (evidence upload).
-- **Auto-Penalty System (Hệ Thống Phạt)**: Tự động phạt member nếu trễ deadline task hoặc không cập nhật quá 3 ngày.
-- **Notifications**: Thông báo in-app realtime cho user.
+Ghi chu:
+- UI hien tai chi mo luong dang nhap Google tren `src/pages/LoginPage.jsx`.
+- Helper dang nhap email/password van ton tai trong `src/firebase/auth.js` nhung khong duoc dung tu giao dien chinh.
+- `AuthContext` suy dien `status` tu `isActive` neu document khong co field `status`.
 
-## Quản Lý Dữ Liệu Firestore (Collections)
-1. **`users`**: Người dùng hệ thống. Fields: `role` ('admin', 'manager', 'member', 'unit'), `status` ('active', 'pending'), `displayName`, vv.
-2. **`tasks`**: Chứa công việc. Fields: `title`, `assignees`, `status` ('pending', 'in_progress', 'pending_approval', 'completed'), `deadline`, `createdAt`.
-3. **`penalties`**: Các hình phạt trễ deadline.
-4. **`notifications`**: Thông báo trong hệ thống.
-5. **`units`**: Thông tin cấu hình phòng ban/đơn vị.
-6. **`criteriaSets` / `criteriaAssignments` / `criteriaSubmissions`**: Data model cho việc quản lý Bộ tiêu chí -> Giao cho đơn vị -> Đơn vị nộp.
-7. **`plans` / `submissions`**: Mô hình quản lý nộp hồ sơ kế hoạch riêng lẻ.
-8. **`config`**: Cấu hình chung của ứng dụng (VD hạn nộp, cấu hình điểm, penalty amount).
+## 2. Nhom route chinh
 
-## React Contexts
-- **AuthContext**: State chứa người dùng hiện tại `currentUser` (Firebase Auth) và profil `userProfile` (từ Firestore metadata).
-- **NotificationContext**: Quản lý list notification, hàm mark read và Unread Count (đã dùng useMemo).
-- **TaskConfigContext**: Quản lý global setting của ứng dụng từ col `config`.
+- `src/App.jsx` chia app thanh 3 nhom:
+- Public: `/login`
+- Pending-only: `/pending`
+- Internal staff: `/`, `/tasks`, `/dashboard`, `/members`, `/trash`, `/task-config`, `/penalties`, `/settings`, `/system-info`, `/criteria-*`, `/plans-*`, `/units`
+- Unit portal: `/unit/dashboard`, `/unit/submissions`, `/unit/submit/:criteriaSetId`, `/unit/plans`, `/unit/plans/:planId`
 
-## Custom Hooks Chính
-- **Data Fetching Hooks**: `useTasks`, `useUsers`, `useUnits`, `usePenalties`, `useSubmissions`, `useCriteriaSets`. Trọn bộ trả về local state lắng nghe real-time (`onSnapshot`).
-- **`useTaskCRUD` / `useTaskActions`**: Logic thay đổi trạng thái, extend, delete array. 
-- **`useAutoOverduePenalties`**: Lắng nghe Task, tính toán overdue, sinh doc penalties tự động.
-- **`useAssignments`**: Cập nhật logic load phân công bộ tiêu chí.
+## 3. Module nghiep vu
 
-## Business Logic Quan Trọng
-1. **Trạng Thái Task (Task Status Engine)**: Status real của `task` không lưu chữ cứng "QUÁ HẠN". Trạng thái hiển thị (Urgent, Overdue, v.v.) được compute động trong `statusUtils.js` bằng cách so sánh `deadline` gốc và `extendDeadline` với giờ hiện tại.
-2. **Tính Phạt Tự Động**: Component chạy ngầm. Quét task `!isCompleted` -> Soạn deadline thực tế. Tạo penalty nếu phát hiện chưa có. (Dùng Promise.allSettled).
-3. **Phân Quyền Chấm Điểm**: Đơn vị nộp bài -> Tự động chuyển read-only. Admin/Manager chấm bài và nhập comment, gõ điểm.
-4. **Hệ Thống Phân Công (Assignment)**: Cho phép chọn nhiều Đơn vị cùng 1 lúc và giao cho họ Cùng 1 Criteria Set (tạo nhiều records `criteriaAssignments`).
+- Task management:
+  - CRUD task, soft delete, restore, permanent delete
+  - submit for approval, approve, revert approve, remind, extend deadline
+  - attachment upload qua Firebase Storage
+- Member management:
+  - pending approval, role change, delete account qua Cloud Functions
+- Penalty management:
+  - config penalty types trong `config/penaltyTypes`
+  - auto overdue penalty qua `useAutoOverduePenalties`
+  - manual mark paid / undo / delete
+- Criteria management:
+  - tao va sua `criteriaSets`
+  - giao criteria cho nhieu `units` qua `criteriaAssignments`
+  - unit nop bai vao `criteriaSubmissions`
+  - admin/manager cham diem va nhan xet
+- Plan and contest workflow:
+  - admin/manager tao `plans`
+  - unit nop ho so vao `contestEntries`
+  - admin xem chi tiet va cap nhat trang thai
 
-## Firestore Rules Giải Thích
-- **Kiểm soát tạo/đọc**: Hầu hết yêu cầu `isAuthenticated()`.
-- **`criteriaSubmissions`**: **Chặn** người ngoài; Chỉ đơn vị (isUnit) mới được tạo/sửa đúng bài nộp của chính mình (chặn qua Auth Uid). Admin/Manager được update bài đó để chấm điểm.
-- **Tasks**: Tuỳ Role, Assignees vào mới được update. Member chỉ thay đổi file đính kèm/trạng thái. 
+## 4. Firestore collections dang duoc dung
 
-## Firebase Storage
-- Các file đính kèm `Task` lưu ở `/task_attachments/<taskId>/`
-- Avatar người dùng `/user_avatars/<userId>`
-- Minh chứng tiêu chí (evidence) `/criteria_evidence/<criteriaSetId>/<unitId>/`
+- `users`: profile noi bo, role `admin|manager|member`, status `pending|approved|rejected`
+- `units`: profile don vi, role co dinh `unit`
+- `tasks`: task noi bo, co `status` nghiep vu (`active|extended|pending_approval|completed`)
+- `penalties`: phieu phat
+- `notifications`: inbox realtime theo `userId`
+- `config`: categories, priorities, penaltyTypes
+- `criteriaSets`: bo tieu chi
+- `criteriaAssignments`: map criteria set -> unit
+- `criteriaSubmissions`: bai nop theo criteria set cua unit
+- `submissionPeriods`: dot bao cao; hien co helper va rules, nhung UI quan ly dot dang khong duoc route vao app
+- `plans`: ke hoach / hoi thi
+- `contestEntries`: ho so don vi nop cho plan
+- `system`: metadata he thong, hien dung cho `firstAdminAssigned`
+
+## 5. Storage va file upload
+
+- Task attachments: `tasks/<taskId>/...`
+- Criteria / plan evidence: `evidence/...`
+- Rules hien tai nam trong `storage.rules`
+- Gioi han kich thuoc:
+  - task attachments: 10MB/file
+  - evidence: 25MB/file
+
+## 6. Context va custom hooks quan trong
+
+- `AuthContext`
+  - quan ly `currentUser`, `userProfile`, role helpers, pending state
+  - goi Cloud Function `initFirstAdmin`
+- `NotificationContext`
+  - subscribe `notifications`
+  - mark read / unread / all read
+- `TaskConfigContext`
+  - load realtime `categories`, `priorities`, `penaltyTypes`
+- `useTasks`
+  - admin/manager load tat ca task active
+  - member load task duoc giao
+- `useTaskCRUD`, `useTaskActions`
+  - gom logic tao/sua task va approve/extend/remind
+- `useAssignments`, `useCriteriaSets`, `usePlans`, `useUnits`, `useContestEntries`
+  - wrapper subscribe firestore cho module criteria/unit/plan
+
+## 7. Quy tac nghiep vu quan trong
+
+- Display status cua task duoc tinh dong trong `src/utils/statusUtils.js`
+  - `completed`
+  - `pending_approval`
+  - `extended`
+  - hoac tinh theo deadline: `not_due`, `near_due`, `urgent`, `overdue`
+- Overdue penalty client-side:
+  - `useAutoOverduePenalties` loc task overdue
+  - goi Cloud Function `createPenaltyIdempotent` de tranh duplicate
+- Approve task:
+  - client thu goi Cloud Function `approveTask`
+  - sau do van update Firestore truc tiep de dam bao UI dong bo
+- Unit criteria submission:
+  - draft duoc luu bang composite id `${criteriaSetId}_${unitId}`
+  - submit xong thi chuyen sang read-only o frontend
+- First admin bootstrap:
+  - `functions/index.js` su dung transaction tren `system/firstAdminAssigned`
+
+## 8. Cloud Functions dang co
+
+- `createUser`
+- `setUserRole`
+- `approveTask`
+- `extendDeadline`
+- `disableUser`
+- `sendDeadlineReminders`
+- `autoTaskReminder`
+- `autoOverduePenalty`
+- `autoDataRetention`
+- `lockSubmissionPeriod`
+- `publishPeriodResults`
+- `createUnit`
+- `deleteUser`
+- `deleteUnit`
+- `initFirstAdmin`
+- `createPenaltyIdempotent`
+
+## 9. Diem can luu y khi doc code
+
+- `src/hooks/useSubmissions.js` dang import API khong ton tai trong `src/firebase/criteriaFirestore.js`; hook nay hien khong duoc route/module nao dung.
+- `src/components/criteria/PeriodsManagePage.jsx` ton tai trong source nhung khong duoc route vao `src/App.jsx`.
+- Module unit hien phu thuoc manh vao shape profile trong `AuthContext`; xem them `_docs/BUGS.md` cho cac diem lech dang mo.

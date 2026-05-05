@@ -1,28 +1,57 @@
-# Ngữ cảnh Session Hiện Tại
+# Ngu canh Session Hien tai
 
-## Đang làm tính năng
-Fix toàn bộ 13 bugs backend & security — **ĐÃ HOÀN THÀNH**
+Cap nhat lan cuoi: 2026-05-05
 
-## Đã làm đến bước
-- Fix xong 13/13 bugs
-- Build thành công (`vite build`)
-- Cập nhật BUGS.md, CHANGELOG.md
+## Muc tieu session
 
-## Vấn đề đang gặp
-Không có.
+Dong bo lai toan bo thu muc `/_docs` voi codebase hien tai.
 
-## Quyết định kỹ thuật đã chốt
-- Dùng Cloud Firestore Security Rules giới hạn bảo mật thay vì check logic tại frontend.
-- Composite document ID (`criteriaSetId_unitId`) cho `criteriaSubmissions` để chống race condition.
-- `setDoc({ merge: true })` thay vì `addDoc` cho idempotent upsert.
-- Cloud Function `initFirstAdmin` dùng Firestore Transaction để atomic assign admin đầu tiên.
-- `publishPeriodResults` Cloud Function tính điểm tổng server-side trước khi set `status: 'published'`.
-- Penalty creation dùng Transaction + composite key `taskId_userId_penaltyTypeId`.
-- Không force migrate TypeScript để giữ tốc độ code.
+## Da lam trong session nay
 
-## File KHÔNG được thay đổi trong session này
-- `src/firebase/config.js`
+- Doc doi chieu codebase voi 6 file trong `/_docs`
+- Xac dinh nhieu noi dung cu khong con dung voi source hien tai
+- Cap nhat lai:
+  - `ARCHITECTURE.md`
+  - `BUGS.md`
+  - `CHANGELOG.md`
+  - `CONTEXT.md`
+  - `PROJECT.md`
+  - `TASKS.md`
 
-## Ghi chú thêm
-- Cần deploy Cloud Functions sau khi merge: `firebase deploy --only functions`
-- Cần deploy Firestore Rules: `firebase deploy --only firestore:rules`
+## Ket qua quan trong
+
+- Tai lieu cu danh dau "13/13 bugs fixed" khong con dung.
+- Da mo lai cac loi van ton tai trong code:
+  - BUG-002
+  - BUG-005
+  - BUG-014
+  - BUG-015
+  - BUG-016
+  - BUG-017
+  - BUG-018
+  - BUG-019
+- Architecture docs da doi tu "mo ta du an ly tuong" sang "anh chup he thong dang chay".
+
+## Khong lam trong session nay
+
+- Khong sua source code app
+- Khong deploy Firebase / Netlify
+- Khong chay build hay lint vi chi thay doi tai lieu
+
+## Quyet dinh ky thuat da chot cho tai lieu
+
+- Chi ghi "fixed" khi co the verify truc tiep tu code hien tai.
+- Changelog duoc giu vai tro lich su, nhung se co entry moi neu mot bug cu can mo lai.
+- Module legacy / orphan se duoc ghi ro la "khong duoc route" thay vi tiep tuc xem nhu feature dang hoat dong.
+
+## Nhung diem can nho neu tiep tuc session sau
+
+- Neu bat dau sua code, nen uu tien theo thu tu:
+  1. BUG-002: pending approval bypass
+  2. BUG-005 + BUG-014: unit portal dang co loi shape profile va logout
+  3. BUG-017: plan detail field mismatch
+  4. BUG-018 / BUG-019: data integrity va notification reliability
+- Sau moi dot sua code, cap nhat lai:
+  - `_docs/BUGS.md`
+  - `_docs/TASKS.md`
+  - `_docs/CHANGELOG.md`
