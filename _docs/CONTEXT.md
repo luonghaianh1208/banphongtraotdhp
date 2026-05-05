@@ -4,30 +4,29 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Chuan hoa giao dien bang 16 cot dong bo giua UnitSubmitPage (co so) va CriteriaDetailPage (quan ly). Fix syntax bug va bo sung cot con thieu.
+Bo cot STT, thu nho cot Minh chung, bo cot Y/C Giai trinh khoi UnitSubmitPage (tab Bo tieu chi). Dong bo CriteriaDetailPage.
 
 ## Da lam trong session nay
 
-- Kiem tra code 3 file chinh (UnitSubmitPage, CriteriaDetailPage, EvidenceUpload) so voi ke hoach 16 cot.
-- Phat hien va fix 2 loi trong UnitSubmitPage:
-  1. Syntax bug: `handleSubmitJustification` bi long trong `handleSubmit` do thieu `};`.
-  2. Thieu cot 13 (Y/C Giai trinh) va cot 14 (Noi dung giai trinh) khong hien o tab Bo tieu chi.
-- Sau khi fix, ca 2 trang deu hien day du 16 cot dong bo theo ke hoach.
-- EvidenceUpload da san sang voi tinh nang gan link URL (da kiem tra, khop 100%).
-- CriteriaDetailPage da khop 100% ke hoach (bang ngang, 16 cot, logic khoa/mo dung).
+- Bo cot STT o ca 2 trang (UnitSubmitPage + CriteriaDetailPage) — tieu chi da co cau truc ro, khong can STT.
+- Bo cot "Y/C Giai trinh" khoi tab Bo tieu chi cua UnitSubmitPage — da co tab Giai trinh rieng.
+- Giu cot "Y/C Giai trinh" checkbox o CriteriaDetailPage de admin van toggle duoc.
+- Thu nho cot Minh chung: giam min-width tu 160px xuong 100px, dung max-w-[180px] de compact.
+- Giam min-width bang tu 1600px xuong 1400px o ca 2 trang.
+- Build thanh cong, push code len main.
 
 ## Ket qua quan trong
 
-- UnitSubmitPage gio hien 16 cot o ca 2 tab (Bo tieu chi va Giai trinh).
-- Cot "Y/C Giai trinh" o trang co so chi doc (hien trang thai checkbox cua cap tren).
-- Cot "Noi dung giai trinh" luon hien nhung chi editable khi dang o tab Giai trinh.
+- UnitSubmitPage (co so): 14 cot (bo STT va Y/C Giai trinh).
+- CriteriaDetailPage (cap tren): 15 cot (bo STT, giu Y/C Giai trinh checkbox).
+- Tab "Bo tieu chi" va "Giai trinh" van la 2 tab ngang hang doc lap.
 
 ## Quyet dinh ky thuat da chot
 
-- Tat ca 16 cot phai luon hien thi o moi tab, chi khac nhau trang thai khoa/mo khoa.
-- Tab Giai trinh loc chi hien nhung tieu chi co `requireJustification === true`.
-- Co so bam "Gui giai trinh" de nop noi dung giai trinh rieng biet (khong trung voi nut Nop bao cao).
-
+- STT khong can thiet khi cot Tieu chi va Noi dung da co dinh 2 cot dau.
+- Cot Y/C Giai trinh chi can thiet o phia admin (CriteriaDetailPage) de toggle.
+- Co so khong can thay cot Y/C Giai trinh vi nhung tieu chi nam trong tab Giai trinh tuc la phai giai trinh roi.
+- Minh chung can compact, khong de file name tran ra ngang.
 ## Nhung diem can nho neu tiep tuc session sau
 
 - Nen test toan bo luong: Co so nop → Admin tham dinh (YC giai trinh) → Co so giai trinh → Admin cham lai diem sau giai trinh.

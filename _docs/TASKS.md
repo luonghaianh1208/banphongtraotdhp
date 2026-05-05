@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Bo cot STT va Y/C Giai trinh khoi UnitSubmitPage, thu nho cot Minh chung, dong bo CriteriaDetailPage - 2026-05-06
 - [x] Chuan hoa bang 16 cot dong bo UnitSubmitPage + CriteriaDetailPage, fix syntax bug handleSubmit - 2026-05-06
 - [x] Hoan thien phan quyen Role-Based (Admin, Manager, Member) cho chuc nang Bo Tieu Chi va Cham diem - 2026-05-05
 - [x] Tích hợp `react-textarea-autosize` và điều hướng bàn phím cho các bảng nhập liệu tiêu chí - 2026-05-05

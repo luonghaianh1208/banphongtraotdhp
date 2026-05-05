@@ -213,7 +213,7 @@ const CriteriaDetailPage = () => {
 
                 {tableRows.length > 0 ? (
                     <div className="overflow-x-auto">
-                        <table className="min-w-[1400px] w-full text-sm">
+                        <table className="min-w-[1600px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
                                     <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Tiêu chí</th>

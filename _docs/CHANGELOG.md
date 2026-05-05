@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-05-06 PM2] - Bo cot STT, thu nho Evidence, dong bo 2 trang
+
+### Da sua
+- **UnitSubmitPage**: Bo cot STT (khong can thiet khi tieu chi da co cau truc ro rang). Bo cot "Y/C Giai trinh" khoi tab Bo tieu chi (da co tab Giai trinh rieng).
+- **CriteriaDetailPage**: Bo cot STT de dong bo voi UnitSubmitPage. Giu cot "Y/C Giai trinh" checkbox de admin van co the danh dau.
+- Thu nho cot Minh chung (min-w giam tu 160px xuong 100px, file name compact hon).
+- Giam min-width bang tu 1600px xuong 1400px de toi uu khong gian ngang.
+
+### File bi anh huong
+- `src/components/unit/UnitSubmitPage.jsx`
+- `src/components/criteria/CriteriaDetailPage.jsx`
+
 ## [2026-05-06] - Chuan hoa bang 16 cot dong bo & fix syntax bug
 
 ### Da sua
