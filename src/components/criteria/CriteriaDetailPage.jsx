@@ -213,25 +213,24 @@ const CriteriaDetailPage = () => {
 
                 {tableRows.length > 0 ? (
                     <div className="overflow-x-auto">
-                        <table className="min-w-[1600px] w-full text-sm">
+                        <table className="min-w-[1400px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
                                     <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Tiêu chí</th>
-                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Nội dung</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-[120px] bg-gray-50/80 dark:bg-gray-900/90 z-10">Nội dung</th>
                                     <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">YC minh chứng</th>
                                     <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
                                     <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn nộp</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm</th>
-                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
-                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
+                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
+                                    <th className="min-w-[100px] px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
-                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
+                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
-                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
+                                    <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
@@ -267,11 +266,7 @@ const CriteriaDetailPage = () => {
                                                     <span className="text-sm text-gray-400">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-4 text-center">
-                                                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-emerald-50 px-2 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-                                                    {row.stt}
-                                                </span>
-                                            </td>
+
                                             <td className="px-4 py-4">
                                                 <div className="whitespace-pre-line font-medium text-gray-700 dark:text-gray-200 text-xs">
                                                     {row.dieuKienCham || '—'}
@@ -302,8 +297,8 @@ const CriteriaDetailPage = () => {
                                                     {res.notes || <span className="text-gray-400 italic">Không có mô tả</span>}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-4">
-                                                <div className="min-w-[140px]">
+                                            <td className="px-2 py-4">
+                                                <div className="max-w-[180px]">
                                                     <EvidenceUpload
                                                         files={res.evidenceFiles || []}
                                                         onChange={() => {}}
