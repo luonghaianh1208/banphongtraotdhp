@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { MdAssignment, MdSave, MdSend, MdArrowBack, MdCheckCircle } from 'react-icons/md';
+import { MdAssignment, MdSave, MdSend, MdArrowBack, MdCheckCircle, MdGrade } from 'react-icons/md';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -28,6 +28,7 @@ const UnitSubmitPage = () => {
     const [submissionStatus, setSubmissionStatus] = useState(null);
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
+    const [gradedData, setGradedData] = useState({ scores: {}, comment: '', total: null });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -102,6 +103,13 @@ const UnitSubmitPage = () => {
                     return prev;
                 });
                 setSubmissionStatus(sub.status);
+                if (sub.gradedScores || sub.totalGradedScore != null) {
+                    setGradedData({
+                        scores: sub.gradedScores || {},
+                        comment: sub.gradedComment || '',
+                        total: sub.totalGradedScore ?? null,
+                    });
+                }
             },
             (err) => console.error(err)
         );
@@ -123,7 +131,19 @@ const UnitSubmitPage = () => {
     }
 
     const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
+    const isGraded = submissionStatus === 'graded';
     const tableRows = buildCriteriaTableRows(criteriaSet);
+
+    const getGradedScore = (mucId) => {
+        const entry = gradedData.scores[mucId];
+        if (entry == null) return null;
+        return typeof entry === 'object' ? (entry.officialScore ?? null) : entry;
+    };
+    const getGradedFeedback = (mucId) => {
+        const entry = gradedData.scores[mucId];
+        if (entry && typeof entry === 'object') return entry.feedback || '';
+        return '';
+    };
 
     const handleKeyDown = (e, colName) => {
         if (e.key === 'Enter') {
@@ -279,8 +299,23 @@ const UnitSubmitPage = () => {
                         <div className="text-4xl font-black text-primary-600 dark:text-primary-400 whitespace-nowrap">
                             {currentTotalScore} <span className="text-lg text-gray-400 dark:text-gray-600">/ {criteriaSet.totalMaxScore}</span>
                         </div>
+                        {isGraded && gradedData.total != null && (
+                            <div className="flex items-center gap-2 pl-6 border-l border-emerald-200 dark:border-emerald-800">
+                                <MdGrade className="text-emerald-500" size={20} />
+                                <div>
+                                    <span className="block text-[10px] font-black uppercase text-emerald-500 tracking-widest">Cấp trên chấm</span>
+                                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{gradedData.total}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
+                {isGraded && gradedData.comment && (
+                    <div className="mt-2 glass-card px-5 py-3 border-0 bg-emerald-50/80 dark:bg-emerald-900/20 border-l-4 border-l-emerald-500">
+                        <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest">Nhận xét chung từ cấp trên</span>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-line">{gradedData.comment}</p>
+                    </div>
+                )}
             </div>
 
             <div className="glass-card overflow-hidden">
@@ -309,20 +344,22 @@ const UnitSubmitPage = () => {
 
                 {tableRows.length > 0 ? (
                     <div className="overflow-x-auto">
-                        <table className="min-w-[1760px] w-full text-sm">
+                        <table className="min-w-[1600px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
-                                    <th className="px-3 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
-                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
-                                    <th className="min-w-[260px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
-                                    <th className="px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
-                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tối đa</th>
-                                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
-                                    <th className="min-w-[280px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
-                                    <th className="min-w-[340px] px-4 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tệp minh chứng</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">STT</th>
+                                    <th className="min-w-[260px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
+                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">YC minh chứng</th>
+                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
+                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Max</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Tự chấm</th>
+                                    <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Giải trình</th>
+                                    <th className="min-w-[180px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
+                                    {isGraded && <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Cấp trên</th>}
+                                    {isGraded && <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
@@ -381,7 +418,7 @@ const UnitSubmitPage = () => {
                                                     {row.khungDiem}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-4">
+                                            <td className="px-2 py-4">
                                                 <input
                                                     type="number"
                                                     min="0"
@@ -392,11 +429,11 @@ const UnitSubmitPage = () => {
                                                     onKeyDown={(e) => handleKeyDown(e, 'tuCham')}
                                                     data-col="tuCham"
                                                     disabled={isReadOnly}
-                                                    className="input w-28 text-center font-black text-emerald-600 dark:text-emerald-400"
+                                                    className="input w-20 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                     placeholder="0"
                                                 />
                                             </td>
-                                            <td className="px-4 py-4">
+                                            <td className="px-3 py-4">
                                                 <TextareaAutosize
                                                     minRows={1}
                                                     maxRows={10}
@@ -405,12 +442,12 @@ const UnitSubmitPage = () => {
                                                     onKeyDown={(e) => handleKeyDown(e, 'giaiTrinh')}
                                                     data-col="giaiTrinh"
                                                     disabled={isReadOnly}
-                                                    className="input min-w-[260px] w-full px-3 py-2 text-sm resize-none"
-                                                    placeholder="Nhập giải trình hoặc mô tả minh chứng..."
+                                                    className="input min-w-[180px] w-full px-3 py-2 text-sm resize-none"
+                                                    placeholder="Nhập giải trình..."
                                                 />
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <div className="min-w-[320px]">
+                                            <td className="px-3 py-4">
+                                                <div className="min-w-[160px]">
                                                     <EvidenceUpload
                                                         files={res.evidenceFiles || []}
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
@@ -418,6 +455,28 @@ const UnitSubmitPage = () => {
                                                     />
                                                 </div>
                                             </td>
+                                            {isGraded && (
+                                                <td className="px-2 py-4 text-center">
+                                                    {getGradedScore(row.id) != null ? (
+                                                        <span className="inline-flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-sm font-black text-emerald-700 dark:text-emerald-400">
+                                                            {getGradedScore(row.id)}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-300">—</span>
+                                                    )}
+                                                </td>
+                                            )}
+                                            {isGraded && (
+                                                <td className="px-3 py-4">
+                                                    {getGradedFeedback(row.id) ? (
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line min-w-[140px]">
+                                                            {getGradedFeedback(row.id)}
+                                                        </p>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-300">—</span>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}
