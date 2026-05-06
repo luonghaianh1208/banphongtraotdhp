@@ -266,7 +266,7 @@ const UnitSubmitPage = () => {
         <div className="max-w-[1920px] w-full mx-auto pb-32 relative px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4 mb-8">
                 <button
-                    onClick={() => navigate('/unit/submissions')}
+                    onClick={() => navigate(activeTab === 'giaiTrinh' ? '/unit/submissions?tab=giaiTrinh' : '/unit/submissions')}
                     className="p-3 rounded-2xl glass-card hover:bg-white dark:hover:bg-gray-800 transition-colors group"
                 >
                     <MdArrowBack size={24} className="group-hover:-translate-x-1 transition-transform" />
@@ -353,7 +353,7 @@ const UnitSubmitPage = () => {
                     <div className="flex flex-col items-end gap-2">
                         <div className="flex flex-wrap gap-2 text-xs font-bold">
                             <span className="rounded-full bg-primary-50 px-3 py-1.5 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
-                                {activeTab === 'bTC' ? tableRows.length : tableRows.filter(r => gradedData.scores[r.id]?.requireJustification).length} mục
+                                {activeTab === 'bTC' ? tableRows.length : tableRows.filter(r => gradedData.scores[r.id]?.justificationDeadline).length} mục
                             </span>
                             <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
                                 Tổng tối đa {criteriaSet.totalMaxScore || 0} điểm

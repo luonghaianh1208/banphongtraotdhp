@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Implement multi-wave justification workflow: floating bar + DatePicker deadline + auto-lock expired + deadline column across all 3 pages - 2026-05-06
 - [x] Dong bo Excel template/import/export (xoa STT, doi Khung diem -> Diem toi da, 8 cot) + them checkbox Y/C Giai trinh vao CriteriaOverviewPage - 2026-05-06
 - [x] Dong bo CriteriaOverviewPage + CriteriaDetailPage du 14 cot giong UnitSubmitPage (xoa STT, doi ten Max/YC/Diem, them cot Danh gia/Giai trinh/Diem sau GT) - 2026-05-06
 - [x] Doi ten Chi tieu thanh Bo tieu chi o sidebar ca 2 cong, tach Giai trinh thanh tab sidebar rieng, dong bo admin page - 2026-05-06

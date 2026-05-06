@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026-05-06 PM6] - Multi-wave Justification Workflow
+
+### Them moi
+- **react-datepicker**: Tich hop chon ngay deadline giai trinh dep, thay the input date tho
+- **sendJustificationRequest()**: Ham Firestore batch de gui yeu cau giai trinh cho nhieu don vi cung luc
+- **Floating Justification Bar**: Thanh dieu khien noi o CriteriaOverviewPage va CriteriaDetailPage voi DatePicker + nut gui
+- **Cot "Thoi han GT"**: Hien thi deadline voi badge "Het han" khi qua han, o ca 3 trang
+- **Auto-lock**: UnitSubmitPage tu dong khoa textarea giai trinh khi qua deadline
+- **Filter giaiTrinh tab**: Chi hien muc co `justificationDeadline` (admin da gui yeu cau), khong hien tat ca
+
+### File bi anh huong
+- `src/firebase/criteriaFirestore.js` (them sendJustificationRequest)
+- `src/components/criteria/CriteriaOverviewPage.jsx`
+- `src/components/criteria/CriteriaDetailPage.jsx`
+- `src/components/unit/UnitSubmitPage.jsx`
+- `package.json` (them react-datepicker)
+
 ## [2026-05-06 PM5] - Dong bo Excel + Them Y/C Giai trinh
 
 ### Da sua

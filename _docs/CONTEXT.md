@@ -4,32 +4,38 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Bo cot STT, thu nho cot Minh chung, bo cot Y/C Giai trinh khoi UnitSubmitPage (tab Bo tieu chi). Dong bo CriteriaDetailPage.
+Implement multi-wave justification workflow: floating control bar, DatePicker deadline, auto-lock on expiry, deadline column across Admin + Unit portals.
 
 ## Da lam trong session nay
 
-- Bo cot STT o ca 2 trang (UnitSubmitPage + CriteriaDetailPage) — tieu chi da co cau truc ro, khong can STT.
-- Bo cot "Y/C Giai trinh" khoi tab Bo tieu chi cua UnitSubmitPage — da co tab Giai trinh rieng.
-- Giu cot "Y/C Giai trinh" checkbox o CriteriaDetailPage de admin van toggle duoc.
-- Thu nho cot Minh chung: giam min-width tu 160px xuong 100px, dung max-w-[180px] de compact.
-- Giam min-width bang tu 1600px xuong 1400px o ca 2 trang.
+- Them `sendJustificationRequest()` vao criteriaFirestore.js — batch write justification requests across multiple units.
+- CriteriaOverviewPage: Floating justification bar voi DatePicker, cross-unit selection tracking, "Thoi han GT" column.
+- CriteriaDetailPage: Justification checkbox (selection-based), DatePicker floating bar, deadline column voi badge "Het han".
+- UnitSubmitPage: "Thoi han GT" column, auto-lock textarea khi qua deadline, placeholder doi thanh "Het han giai trinh".
+- Filter tab Giai trinh: Chi hien muc co `justificationDeadline` (admin da gui yeu cau), khong con dung `requireJustification`.
+- Install `react-datepicker` dependency.
 - Build thanh cong, push code len main.
 
 ## Ket qua quan trong
 
-- UnitSubmitPage (co so): 14 cot (bo STT va Y/C Giai trinh).
-- CriteriaDetailPage (cap tren): 15 cot (bo STT, giu Y/C Giai trinh checkbox).
-- Tab "Bo tieu chi" va "Giai trinh" van la 2 tab ngang hang doc lap.
+- Admin co the batch-send justification requests voi deadline cho nhieu don vi cung luc.
+- Co so chi thay muc giai trinh khi admin da gui yeu cau (co deadline).
+- Textarea tu dong khoa khi qua han, van xem duoc noi dung cu nhung khong sua duoc.
+- Moi dot giai trinh co deadline rieng — ho tro multi-wave.
 
 ## Quyet dinh ky thuat da chot
 
-- STT khong can thiet khi cot Tieu chi va Noi dung da co dinh 2 cot dau.
-- Cot Y/C Giai trinh chi can thiet o phia admin (CriteriaDetailPage) de toggle.
-- Co so khong can thay cot Y/C Giai trinh vi nhung tieu chi nam trong tab Giai trinh tuc la phai giai trinh roi.
-- Minh chung can compact, khong de file name tran ra ngang.
+- Justification dung `justificationDeadline` (date string) thay vi boolean `requireJustification`.
+- Batch operation dung Firestore `writeBatch` de dam bao atomic across nhieu units.
+- Deadline comparison dung `new Date().toDateString()` de so sanh theo ngay, khong tinh gio.
+- Floating bar xuat hien khi co selection, bien mat khi clear — khong can toggle.
+- react-datepicker thay vi native date input de UX dep hon.
+
 ## Nhung diem can nho neu tiep tuc session sau
 
-- Nen test toan bo luong: Co so nop → Admin tham dinh (YC giai trinh) → Co so giai trinh → Admin cham lai diem sau giai trinh.
+- Test toan bo luong: Admin tick chon → chon deadline → gui → Co so nhan tab Giai trinh → nhap giai trinh → gui → Admin xem.
+- Can test edge case: qua deadline roi thi co so khong nhap duoc nua.
+- Can test multi-wave: Admin gui dot 1 cho noi dung A, roi gui dot 2 cho noi dung B voi deadline khac.
 - Nen uu tien fix cac bug van con mo:
   1. BUG-002: pending approval bypass
   2. BUG-005 + BUG-014: unit portal shape profile va logout
