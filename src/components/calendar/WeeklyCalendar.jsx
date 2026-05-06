@@ -1,23 +1,45 @@
 import { useState, useMemo } from 'react';
 import { isSameDay, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth } from 'date-fns';
-import { MdAdd, MdDateRange } from 'react-icons/md';
+import { MdAdd, MdDateRange, MdAccessTime } from 'react-icons/md';
 import MiniTaskCard from './MiniTaskCard';
 import PersonalTaskItem from './PersonalTaskItem';
 import PersonalTaskPopup from './PersonalTaskPopup';
+import PersonalTaskDetailPopup from './PersonalTaskDetailPopup';
 import EmptyState from '../common/EmptyState';
 
 const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
+const formatDeadlineTime = (task) => {
+  try {
+    const dl = task.deadline?.toDate ? task.deadline.toDate() : new Date(task.deadline);
+    return format(dl, 'HH:mm');
+  } catch { return ''; }
+};
+
 const WeeklyCalendar = ({
   weekDays, tasksByDay, userMap, onTaskClick, onApprove, canApprove,
-  personalTasks, onAddPersonal, onTogglePersonal, onDeletePersonal,
+  personalTasks, onAddPersonal, onTogglePersonal, onDeletePersonal, onEditPersonal,
   calendarMode, monthDays, monthTasksByDay, personalByDay,
 }) => {
   const [popupDate, setPopupDate] = useState(null);
+  const [detailTask, setDetailTask] = useState(null);
+  const [editingPersonal, setEditingPersonal] = useState(null);
   const today = new Date();
 
   const handleAddPersonal = async (data) => {
     await onAddPersonal(data);
+  };
+
+  const handleSavePersonal = async (data) => {
+    if (data.id) {
+      await onEditPersonal(data.id, { title: data.title, time: data.time, note: data.note });
+    } else {
+      await onAddPersonal(data);
+    }
+  };
+
+  const handleEditFromDetail = (task) => {
+    setEditingPersonal(task);
   };
 
   const days = calendarMode === 'month' ? monthDays : weekDays;
@@ -44,36 +66,85 @@ const WeeklyCalendar = ({
             return (
               <div
                 key={idx}
-                onClick={() => setPopupDate({ date: dateStr, label: `${DAY_LABELS[idx % 7]} ${format(day, 'dd/MM')}` })}
                 className={`min-h-[100px] p-1.5 cursor-pointer transition-all hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 ${
                   isToday ? 'bg-emerald-50 dark:bg-emerald-950/20 ring-2 ring-inset ring-emerald-500/30' : isCurMonth ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/50'
                 }`}
               >
-                <p className={`text-[11px] font-black mb-1 ${isToday ? 'text-emerald-600 dark:text-emerald-400' : isCurMonth ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>
-                  {format(day, 'd')}
-                  {isToday && <span className="ml-1 text-[8px] font-black uppercase tracking-widest">Nay</span>}
-                </p>
-                {dayTasks.slice(0, 2).map(t => (
-                  <div key={t.id} onClick={e => { e.stopPropagation(); onTaskClick(t); }}
-                    className="text-[9px] font-bold text-slate-700 dark:text-slate-300 bg-emerald-100/60 dark:bg-emerald-900/20 rounded px-1 py-0.5 mb-0.5 truncate cursor-pointer hover:bg-emerald-200/80">
-                    {t.title}
-                  </div>
-                ))}
+                {/* Date number + add button */}
+                <div className="flex items-center justify-between mb-1">
+                  <p className={`text-[11px] font-black ${isToday ? 'text-emerald-600 dark:text-emerald-400' : isCurMonth ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>
+                    {format(day, 'd')}
+                    {isToday && <span className="ml-1 text-[8px] font-black uppercase tracking-widest">Nay</span>}
+                  </p>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPopupDate({ date: dateStr, label: `${DAY_LABELS[idx % 7]} ${format(day, 'dd/MM')}` }); }}
+                    className="opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-60 p-0.5 rounded text-slate-300 hover:text-sky-500 transition-all"
+                    title="Thêm việc cá nhân"
+                  >
+                    <MdAdd size={14} />
+                  </button>
+                </div>
+
+                {/* Assigned tasks with time */}
+                {dayTasks.slice(0, 2).map(t => {
+                  const timeStr = formatDeadlineTime(t);
+                  return (
+                    <div key={t.id} onClick={e => { e.stopPropagation(); onTaskClick(t); }}
+                      className="text-[9px] font-bold text-slate-700 dark:text-slate-300 bg-emerald-100/60 dark:bg-emerald-900/20 rounded px-1 py-0.5 mb-0.5 truncate cursor-pointer hover:bg-emerald-200/80 flex items-center gap-0.5"
+                      title={`${t.title}${timeStr ? ` – ${timeStr}` : ''}`}
+                    >
+                      {timeStr && <span className="text-emerald-600 dark:text-emerald-400 shrink-0">{timeStr}</span>}
+                      <span className="truncate">{t.title}</span>
+                    </div>
+                  );
+                })}
                 {dayTasks.length > 2 && <p className="text-[8px] font-bold text-slate-400">+{dayTasks.length - 2} việc</p>}
+
+                {/* Personal tasks with time */}
                 {pTasks.slice(0, 2).map(t => (
-                  <div key={t.id} className="text-[9px] font-bold text-sky-600 dark:text-sky-400 bg-sky-100/60 dark:bg-sky-900/20 rounded px-1 py-0.5 mb-0.5 truncate">
-                    ✦ {t.title}
+                  <div key={t.id}
+                    onClick={e => { e.stopPropagation(); setDetailTask(t); }}
+                    className={`text-[9px] font-bold rounded px-1 py-0.5 mb-0.5 truncate cursor-pointer flex items-center gap-0.5 hover:bg-sky-200/80 dark:hover:bg-sky-800/30 transition-colors ${t.done ? 'text-slate-400 line-through bg-slate-100/60 dark:bg-slate-800/30' : 'text-sky-600 dark:text-sky-400 bg-sky-100/60 dark:bg-sky-900/20'}`}
+                    title={`${t.title}${t.time ? ` – ${t.time}` : ''}`}
+                  >
+                    {t.time && <span className="text-sky-500 dark:text-sky-400 shrink-0">{t.time}</span>}
+                    <span className="truncate">✦ {t.title}</span>
                   </div>
                 ))}
+                {pTasks.length > 2 && <p className="text-[8px] font-bold text-sky-400">+{pTasks.length - 2}</p>}
               </div>
             );
           })}
         </div>
+
+        {/* Personal task detail popup */}
+        {detailTask && (
+          <PersonalTaskDetailPopup
+            task={detailTask}
+            onClose={() => setDetailTask(null)}
+            onEdit={handleEditFromDetail}
+            onDelete={onDeletePersonal}
+            onToggle={onTogglePersonal}
+          />
+        )}
+
+        {/* Edit personal task popup */}
+        {editingPersonal && (
+          <PersonalTaskPopup
+            date={editingPersonal.date}
+            dateLabel={editingPersonal.date}
+            editingTask={editingPersonal}
+            onSave={handleSavePersonal}
+            onClose={() => setEditingPersonal(null)}
+          />
+        )}
+
+        {/* Add personal task popup */}
         {popupDate && (
           <PersonalTaskPopup
             date={popupDate.date}
             dateLabel={popupDate.label}
-            onSave={handleAddPersonal}
+            onSave={handleSavePersonal}
             onClose={() => setPopupDate(null)}
           />
         )}
@@ -84,8 +155,6 @@ const WeeklyCalendar = ({
   // === WEEK VIEW ===
   const totalWeekTasks = Object.values(tByDay).reduce((s, a) => s + a.length, 0);
   const totalPersonal = Object.values(personalByDay).reduce((s, a) => s + a.length, 0);
-
-  // Always render grid so user can add personal tasks
 
   return (
     <div>
@@ -126,7 +195,7 @@ const WeeklyCalendar = ({
                   <>
                     {dayTasks.length > 0 && <div className="border-t border-dashed border-sky-200 dark:border-sky-800/50 my-1" />}
                     {pTasks.map(t => (
-                      <PersonalTaskItem key={t.id} task={t} onToggle={onTogglePersonal} onDelete={onDeletePersonal} />
+                      <PersonalTaskItem key={t.id} task={t} onToggle={onTogglePersonal} onDelete={onDeletePersonal} onClick={() => setDetailTask(t)} />
                     ))}
                   </>
                 )}
@@ -179,7 +248,7 @@ const WeeklyCalendar = ({
                   <MiniTaskCard key={task.id} task={task} userMap={userMap} onClick={() => onTaskClick(task)} onApprove={onApprove} canApprove={canApprove} />
                 ))}
                 {pTasks.map(t => (
-                  <PersonalTaskItem key={t.id} task={t} onToggle={onTogglePersonal} onDelete={onDeletePersonal} />
+                  <PersonalTaskItem key={t.id} task={t} onToggle={onTogglePersonal} onDelete={onDeletePersonal} onClick={() => setDetailTask(t)} />
                 ))}
                 {dayTasks.length === 0 && pTasks.length === 0 && (
                   <p className="text-center text-xs font-bold text-slate-300 dark:text-slate-600 py-4 uppercase tracking-widest">Không có việc</p>
@@ -190,8 +259,31 @@ const WeeklyCalendar = ({
         })}
       </div>
 
+      {/* Detail popup for personal tasks */}
+      {detailTask && (
+        <PersonalTaskDetailPopup
+          task={detailTask}
+          onClose={() => setDetailTask(null)}
+          onEdit={handleEditFromDetail}
+          onDelete={onDeletePersonal}
+          onToggle={onTogglePersonal}
+        />
+      )}
+
+      {/* Edit popup */}
+      {editingPersonal && (
+        <PersonalTaskPopup
+          date={editingPersonal.date}
+          dateLabel={editingPersonal.date}
+          editingTask={editingPersonal}
+          onSave={handleSavePersonal}
+          onClose={() => setEditingPersonal(null)}
+        />
+      )}
+
+      {/* Add popup */}
       {popupDate && (
-        <PersonalTaskPopup date={popupDate.date} dateLabel={popupDate.label} onSave={handleAddPersonal} onClose={() => setPopupDate(null)} />
+        <PersonalTaskPopup date={popupDate.date} dateLabel={popupDate.label} onSave={handleSavePersonal} onClose={() => setPopupDate(null)} />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
-import { MdCheckCircle, MdPerson } from 'react-icons/md';
+import { MdCheckCircle, MdPerson, MdAccessTime } from 'react-icons/md';
+import { format } from 'date-fns';
 import PriorityBadge from '../task/PriorityBadge';
 import { getTaskDisplayStatus } from '../../utils/statusUtils';
 import { TASK_DISPLAY_STATUS } from '../../utils/constants';
@@ -12,12 +13,20 @@ const statusColorMap = {
   [TASK_DISPLAY_STATUS.PENDING_APPROVAL]: 'border-l-purple-500 bg-purple-50/30 dark:bg-purple-950/10',
 };
 
+const formatTime = (task) => {
+  try {
+    const dl = task.deadline?.toDate ? task.deadline.toDate() : new Date(task.deadline);
+    return format(dl, 'HH:mm');
+  } catch { return ''; }
+};
+
 const MiniTaskCard = ({ task, userMap, onClick, onApprove, canApprove }) => {
   const status = getTaskDisplayStatus(task);
   const assigneeNames = (task.assignees || [])
     .map(uid => userMap[uid]?.displayName?.split(' ').pop() || '?')
     .join(', ');
   const cardColor = statusColorMap[status] || 'border-l-slate-300 bg-white dark:bg-slate-800/50';
+  const timeStr = formatTime(task);
 
   return (
     <div
@@ -31,6 +40,12 @@ const MiniTaskCard = ({ task, userMap, onClick, onApprove, canApprove }) => {
         {task.title}
       </p>
       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+        {timeStr && (
+          <span className="flex items-center gap-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+            <MdAccessTime size={10} />
+            {timeStr}
+          </span>
+        )}
         <PriorityBadge priority={task.priority} />
         {assigneeNames && (
           <span className="flex items-center gap-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">

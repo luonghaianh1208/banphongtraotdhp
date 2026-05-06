@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { MdClose, MdAccessTime, MdStickyNote2 } from 'react-icons/md';
 
-const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose }) => {
-  const [title, setTitle] = useState('');
-  const [time, setTime] = useState('08:00');
-  const [note, setNote] = useState('');
+const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose, editingTask }) => {
+  const [title, setTitle] = useState(editingTask?.title || '');
+  const [time, setTime] = useState(editingTask?.time || '08:00');
+  const [note, setNote] = useState(editingTask?.note || '');
   const [saving, setSaving] = useState(false);
+
+  const isEditing = !!editingTask;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
     try {
-      await onSave({ title: title.trim(), time, note: note.trim(), date });
+      await onSave({ title: title.trim(), time, note: note.trim(), date, ...(isEditing ? { id: editingTask.id } : {}) });
       onClose();
     } catch { setSaving(false); }
   };
@@ -22,7 +24,7 @@ const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose }) => {
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700 animate-fade-in-up" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="text-sm font-black text-slate-900 dark:text-white">Thêm việc cá nhân</h3>
+            <h3 className="text-sm font-black text-slate-900 dark:text-white">{isEditing ? 'Sửa việc cá nhân' : 'Thêm việc cá nhân'}</h3>
             <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-0.5">{dateLabel}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><MdClose size={18} /></button>
@@ -59,7 +61,7 @@ const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose }) => {
             disabled={!title.trim() || saving}
             className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? 'Đang lưu...' : 'Lưu'}
+            {saving ? 'Đang lưu...' : isEditing ? 'Cập nhật' : 'Lưu'}
           </button>
         </form>
       </div>

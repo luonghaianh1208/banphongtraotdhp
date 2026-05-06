@@ -26,7 +26,7 @@ const TodayPage = () => {
   const { users, loading: usersLoading } = useUsers();
   const { currentUser, canManageTasks, canApprove } = useAuth();
   const { handleCreateTask, handleEditTask } = useTaskCRUD(currentUser);
-  const { personalTasks, addTask: addPersonal, toggleDone, removeTask: removePersonal } = usePersonalTasks(currentUser?.uid);
+  const { personalTasks, addTask: addPersonal, editTask: editPersonal, toggleDone, removeTask: removePersonal } = usePersonalTasks(currentUser?.uid);
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -204,6 +204,7 @@ const TodayPage = () => {
             onAddPersonal={addPersonal}
             onTogglePersonal={toggleDone}
             onDeletePersonal={removePersonal}
+            onEditPersonal={editPersonal}
             calendarMode={viewMode}
             monthDays={monthDays}
             monthTasksByDay={monthTasksByDay}
