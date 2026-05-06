@@ -78,7 +78,7 @@ const WeeklyCalendar = ({
                   </p>
                   <button
                     onClick={(e) => { e.stopPropagation(); setPopupDate({ date: dateStr, label: `${DAY_LABELS[idx % 7]} ${format(day, 'dd/MM')}` }); }}
-                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 focus:opacity-100 p-0.5 rounded text-slate-400 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-950/30 transition-all"
+                    className="w-5 h-5 flex items-center justify-center rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500 transition-all shadow-sm"
                     title="Thêm việc cá nhân"
                   >
                     <MdAdd size={14} />
