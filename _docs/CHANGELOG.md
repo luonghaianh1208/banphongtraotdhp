@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026-05-07b] - Members Tab for All Roles + Online Presence
+
+### Da them (Features)
+- **Tab Thanh vien cho tat ca roles**: Member va Manager gio truy cap duoc `/members` de xem danh sach thanh vien phong ban (view-only). Admin van giu full quyen quan ly.
+- **Online Presence Tracking**: Hook `usePresence` cap nhat `lastActiveAt` moi phut vao Firestore. Hien thi cham xanh Messenger-style khi user dang hoat dong.
+- **MembersPage card layout**: Chuyen tu table sang responsive card grid voi avatar, online dot, vai tro, va "X phut/gio truoc".
+- **Tim kiem thanh vien**: Thanh search filter theo ten hoac email.
+
+### File bi anh huong
+- `src/hooks/usePresence.js` — MOI: online heartbeat
+- `src/pages/MembersPage.jsx` — Rewrite hoan toan
+- `src/App.jsx` — Mo route cho member/manager
+- `src/utils/constants.js` — NAV_ITEMS update
+- `src/components/layout/MainLayout.jsx` — Tich hop usePresence
+
+---
+
 ## [2026-05-07] - Cascade Delete + UI Progress Notes & Justification Enhancement
 
 ### Da them (Features)
