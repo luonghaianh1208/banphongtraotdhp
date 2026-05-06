@@ -66,7 +66,7 @@ const WeeklyCalendar = ({
             return (
               <div
                 key={idx}
-                className={`min-h-[100px] p-1.5 cursor-pointer transition-all hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 ${
+                className={`group min-h-[100px] p-1.5 cursor-pointer transition-all hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 ${
                   isToday ? 'bg-emerald-50 dark:bg-emerald-950/20 ring-2 ring-inset ring-emerald-500/30' : isCurMonth ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/50'
                 }`}
               >
@@ -78,7 +78,7 @@ const WeeklyCalendar = ({
                   </p>
                   <button
                     onClick={(e) => { e.stopPropagation(); setPopupDate({ date: dateStr, label: `${DAY_LABELS[idx % 7]} ${format(day, 'dd/MM')}` }); }}
-                    className="opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-60 p-0.5 rounded text-slate-300 hover:text-sky-500 transition-all"
+                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 focus:opacity-100 p-0.5 rounded text-slate-400 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-950/30 transition-all"
                     title="Thêm việc cá nhân"
                   >
                     <MdAdd size={14} />
