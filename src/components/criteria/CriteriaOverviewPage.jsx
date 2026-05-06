@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MdArrowBack, MdSearch, MdClose, MdAssignment, MdGrade } from 'react-icons/md';
+import { MdArrowBack, MdSearch, MdClose, MdAssignment, MdGrade, MdSend, MdAccessTime } from 'react-icons/md';
 import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useSetAssignments } from '../../hooks/useAssignments';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
-import { subscribeToAllCriteriaSubmissions, gradeCriteriaSubmission } from '../../firebase/criteriaFirestore';
+import { subscribeToAllCriteriaSubmissions, gradeCriteriaSubmission, sendJustificationRequest } from '../../firebase/criteriaFirestore';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 
 const CriteriaOverviewPage = () => {
@@ -19,6 +21,48 @@ const CriteriaOverviewPage = () => {
     const [gradedScores, setGradedScores] = useState({});
     const [gradedComment, setGradedComment] = useState('');
     const [isSavingGrade, setIsSavingGrade] = useState(false);
+
+    // Justification workflow state
+    const [justificationSelections, setJustificationSelections] = useState({}); // { unitId: Set([mucId]) }
+    const [justificationDeadline, setJustificationDeadline] = useState(null);
+    const [isSendingJustification, setIsSendingJustification] = useState(false);
+
+    const toggleJustificationSelection = (unitId, mucId) => {
+        setJustificationSelections(prev => {
+            const unitSet = new Set(prev[unitId] || []);
+            if (unitSet.has(mucId)) unitSet.delete(mucId);
+            else unitSet.add(mucId);
+            const next = { ...prev };
+            if (unitSet.size === 0) delete next[unitId];
+            else next[unitId] = unitSet;
+            return next;
+        });
+    };
+
+    const totalJustificationItems = Object.values(justificationSelections).reduce((s, set) => s + set.size, 0);
+    const totalJustificationUnits = Object.keys(justificationSelections).length;
+
+    const handleSendJustification = async () => {
+        if (totalJustificationItems === 0) return toast.error('Chưa chọn nội dung nào.');
+        if (!justificationDeadline) return toast.error('Vui lòng chọn thời hạn giải trình.');
+        setIsSendingJustification(true);
+        try {
+            const selectionsByUnit = {};
+            for (const [unitId, mucSet] of Object.entries(justificationSelections)) {
+                selectionsByUnit[unitId] = [...mucSet];
+            }
+            const deadlineStr = justificationDeadline.toISOString().split('T')[0];
+            await sendJustificationRequest(criteriaSetId, selectionsByUnit, deadlineStr, 'admin');
+            toast.success(`Đã gửi yêu cầu giải trình cho ${totalJustificationUnits} đơn vị!`);
+            setJustificationSelections({});
+            setJustificationDeadline(null);
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi khi gửi yêu cầu giải trình.');
+        } finally {
+            setIsSendingJustification(false);
+        }
+    };
 
     const criteriaSet = criteriaSets.find((s) => s.id === criteriaSetId);
     const tableRows = buildCriteriaTableRows(criteriaSet);
@@ -234,6 +278,7 @@ const CriteriaOverviewPage = () => {
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
                                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
                                                     <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                                 </tr>
@@ -333,16 +378,8 @@ const CriteriaOverviewPage = () => {
                                                                 <label className="flex items-center justify-center cursor-pointer">
                                                                     <input
                                                                         type="checkbox"
-                                                                        checked={typeof gradedScores[row.id] === 'object' ? (gradedScores[row.id]?.requireJustification || false) : false}
-                                                                        onChange={(e) => {
-                                                                            setGradedScores((prev) => {
-                                                                                const current = prev[row.id];
-                                                                                if (current && typeof current === 'object') {
-                                                                                    return { ...prev, [row.id]: { ...current, requireJustification: e.target.checked } };
-                                                                                }
-                                                                                return { ...prev, [row.id]: { officialScore: '', feedback: '', requireJustification: e.target.checked, afterJustificationScore: '' } };
-                                                                            });
-                                                                        }}
+                                                                        checked={justificationSelections[item.assignment.unitId]?.has(row.id) || false}
+                                                                        onChange={() => toggleJustificationSelection(item.assignment.unitId, row.id)}
                                                                         className="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600"
                                                                     />
                                                                 </label>
@@ -353,6 +390,22 @@ const CriteriaOverviewPage = () => {
                                                                     {res.justificationText || <span className="text-gray-400 italic">Chưa giải trình</span>}
                                                                 </div>
                                                             </td>
+                                                            {/* Thời hạn GT */}
+                                                            {(() => {
+                                                                const gs = item.submission?.gradedScores?.[row.id];
+                                                                const dl = gs?.justificationDeadline;
+                                                                const isExpired = dl && new Date(dl) < new Date(new Date().toDateString());
+                                                                return (
+                                                                    <td className="px-2 py-4 text-center text-xs">
+                                                                        {dl ? (
+                                                                            <div className="flex flex-col items-center gap-1">
+                                                                                <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dl).toLocaleDateString('vi-VN')}</span>
+                                                                                {isExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Hết hạn</span>}
+                                                                            </div>
+                                                                        ) : <span className="text-gray-400">—</span>}
+                                                                    </td>
+                                                                );
+                                                            })()}
                                                             {/* Điểm sau GT - Editable */}
                                                             <td className="px-2 py-4">
                                                                 <input
@@ -421,6 +474,47 @@ const CriteriaOverviewPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Floating Justification Control Bar */}
+            {totalJustificationItems > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+                    <div className="flex items-center gap-4 bg-amber-600 dark:bg-amber-700 text-white rounded-2xl px-6 py-4 shadow-2xl shadow-amber-600/30 border border-amber-500">
+                        <div className="text-sm font-bold">
+                            <span className="text-amber-100">Đã chọn</span>{' '}
+                            <span className="text-white text-lg font-black">{totalJustificationItems}</span>{' '}
+                            <span className="text-amber-100">nội dung từ</span>{' '}
+                            <span className="text-white text-lg font-black">{totalJustificationUnits}</span>{' '}
+                            <span className="text-amber-100">đơn vị</span>
+                        </div>
+                        <div className="h-8 w-px bg-amber-400/50" />
+                        <div className="flex items-center gap-2">
+                            <MdAccessTime size={18} className="text-amber-200" />
+                            <DatePicker
+                                selected={justificationDeadline}
+                                onChange={setJustificationDeadline}
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Chọn hạn GT..."
+                                minDate={new Date()}
+                                className="bg-white/20 backdrop-blur text-white placeholder-amber-200 border border-amber-400/50 rounded-xl px-3 py-2 text-sm font-bold w-40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSendJustification}
+                            disabled={isSendingJustification}
+                            className="flex items-center gap-2 bg-white text-amber-700 font-black rounded-xl px-5 py-2.5 text-sm hover:bg-amber-50 transition-colors disabled:opacity-50"
+                        >
+                            <MdSend size={16} />
+                            {isSendingJustification ? 'Đang gửi...' : 'Gửi yêu cầu GT'}
+                        </button>
+                        <button
+                            onClick={() => { setJustificationSelections({}); setJustificationDeadline(null); }}
+                            className="text-amber-200 hover:text-white transition-colors"
+                        >
+                            <MdClose size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

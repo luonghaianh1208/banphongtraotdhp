@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useAuth } from '../../context/AuthContext';
-import { getCriteriaSubmission, gradeCriteriaSubmission } from '../../firebase/criteriaFirestore';
+import { getCriteriaSubmission, gradeCriteriaSubmission, sendJustificationRequest } from '../../firebase/criteriaFirestore';
 import EvidenceUpload from './EvidenceUpload';
-import { MdArrowBack, MdSave, MdTrendingUp, MdCheckCircle, MdGrade, MdList, MdChat } from 'react-icons/md';
+import { MdArrowBack, MdSave, MdTrendingUp, MdCheckCircle, MdGrade, MdList, MdChat, MdSend, MdAccessTime, MdClose } from 'react-icons/md';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 import TextareaAutosize from 'react-textarea-autosize';
 
@@ -22,7 +24,35 @@ const CriteriaDetailPage = () => {
     const [gradeData, setGradeData] = useState({});
     const [generalComment, setGeneralComment] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState('bTC'); // 'bTC' or 'giaiTrinh'
+    const [activeTab, setActiveTab] = useState('bTC');
+    const [jtSelections, setJtSelections] = useState(new Set());
+    const [jtDeadline, setJtDeadline] = useState(null);
+    const [isSendingJt, setIsSendingJt] = useState(false);
+
+    const toggleJt = (mucId) => {
+        setJtSelections(prev => {
+            const next = new Set(prev);
+            if (next.has(mucId)) next.delete(mucId); else next.add(mucId);
+            return next;
+        });
+    };
+
+    const handleSendJt = async () => {
+        if (jtSelections.size === 0) return toast.error('Chưa chọn nội dung nào.');
+        if (!jtDeadline) return toast.error('Vui lòng chọn thời hạn giải trình.');
+        setIsSendingJt(true);
+        try {
+            const unitId = submission.unitId;
+            const criteriaSetId = submission.criteriaSetId;
+            const deadlineStr = jtDeadline.toISOString().split('T')[0];
+            await sendJustificationRequest(criteriaSetId, { [unitId]: [...jtSelections] }, deadlineStr, 'admin');
+            toast.success('Đã gửi yêu cầu giải trình!');
+            setJtSelections(new Set()); setJtDeadline(null);
+            const refreshed = await getCriteriaSubmission(submission.id);
+            if (refreshed) { setSubmission(refreshed); setGradeData(refreshed.gradedScores || {}); }
+        } catch (err) { console.error(err); toast.error('Lỗi khi gửi.'); }
+        finally { setIsSendingJt(false); }
+    };
 
     useEffect(() => {
         const fetchSubmission = async () => {
@@ -229,6 +259,7 @@ const CriteriaDetailPage = () => {
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
                                     <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                 </tr>
@@ -240,7 +271,7 @@ const CriteriaDetailPage = () => {
                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
 
-                                    if (activeTab === 'giaiTrinh' && !graded.requireJustification) {
+                                    if (activeTab === 'giaiTrinh' && !graded.justificationDeadline) {
                                         return null;
                                     }
 
@@ -327,15 +358,14 @@ const CriteriaDetailPage = () => {
                                                 />
                                             </td>
 
-                                            {/* Y/C Giải trình - Editable Checkbox */}
+                                            {/* Y/C Giải trình - Checkbox */}
                                             <td className="px-2 py-4 text-center">
                                                 <label className="flex items-center justify-center cursor-pointer">
                                                     <input
                                                         type="checkbox"
-                                                        checked={graded.requireJustification || false}
-                                                        onChange={(e) => handleGradeChange(row.id, 'requireJustification', e.target.checked)}
-                                                        disabled={isRowLocked}
-                                                        className="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600 disabled:opacity-50"
+                                                        checked={jtSelections.has(row.id)}
+                                                        onChange={() => toggleJt(row.id)}
+                                                        className="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600"
                                                     />
                                                 </label>
                                             </td>
@@ -346,6 +376,22 @@ const CriteriaDetailPage = () => {
                                                     {res.justificationText || <span className="text-gray-400 italic">Chưa giải trình</span>}
                                                 </div>
                                             </td>
+
+                                            {/* Thời hạn GT */}
+                                            {(() => {
+                                                const dl = graded.justificationDeadline;
+                                                const isExpired = dl && new Date(dl) < new Date(new Date().toDateString());
+                                                return (
+                                                    <td className="px-2 py-4 text-center text-xs">
+                                                        {dl ? (
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dl).toLocaleDateString('vi-VN')}</span>
+                                                                {isExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Hết hạn</span>}
+                                                            </div>
+                                                        ) : <span className="text-gray-400">—</span>}
+                                                    </td>
+                                                );
+                                            })()}
 
                                             {/* Điểm sau GT - Editable */}
                                             <td className="px-2 py-4">
@@ -386,6 +432,42 @@ const CriteriaDetailPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Floating Justification Control Bar */}
+            {jtSelections.size > 0 && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+                    <div className="flex items-center gap-4 bg-amber-600 dark:bg-amber-700 text-white rounded-2xl px-6 py-3 shadow-2xl shadow-amber-600/30 border border-amber-500">
+                        <div className="text-sm font-bold">
+                            <span className="text-amber-100">Đã chọn</span>{' '}
+                            <span className="text-white text-lg font-black">{jtSelections.size}</span>{' '}
+                            <span className="text-amber-100">nội dung</span>
+                        </div>
+                        <div className="h-8 w-px bg-amber-400/50" />
+                        <div className="flex items-center gap-2">
+                            <MdAccessTime size={18} className="text-amber-200" />
+                            <DatePicker
+                                selected={jtDeadline}
+                                onChange={setJtDeadline}
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Chọn hạn GT..."
+                                minDate={new Date()}
+                                className="bg-white/20 backdrop-blur text-white placeholder-amber-200 border border-amber-400/50 rounded-xl px-3 py-2 text-sm font-bold w-40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSendJt}
+                            disabled={isSendingJt}
+                            className="flex items-center gap-2 bg-white text-amber-700 font-black rounded-xl px-5 py-2 text-sm hover:bg-amber-50 transition-colors disabled:opacity-50"
+                        >
+                            <MdSend size={16} />
+                            {isSendingJt ? 'Đang gửi...' : 'Gửi yêu cầu GT'}
+                        </button>
+                        <button onClick={() => { setJtSelections(new Set()); setJtDeadline(null); }} className="text-amber-200 hover:text-white">
+                            <MdClose size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
                 <div className="glass-card p-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl shadow-2xl border border-emerald-500/30 flex justify-between items-center gap-4">

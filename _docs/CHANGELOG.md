@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-05-06 PM5] - Dong bo Excel + Them Y/C Giai trinh
+
+### Da sua
+- exportExcel.js: Xoa cot STT khoi template/import/export, doi "Khung diem" -> "Diem toi da", giam tu 9 cot xuong 8 cot
+- CriteriaOverviewPage: Them cot checkbox Y/C Giai trinh (dong bo voi CriteriaDetailPage)
+- Import van tuong thich ca file cu (9 cot) va moi (8 cot) nho keyword matching
+
 ## [2026-05-06 PM4] - Dong bo bang cap tren voi cong co so
 
 ### Da sua

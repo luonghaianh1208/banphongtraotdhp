@@ -456,3 +456,60 @@ export const submitUnitJustification = async (criteriaSetId, unitId, responses) 
         justificationStatus: 'submitted'
     }, { merge: true });
 };
+
+// ======================================
+// 9. JUSTIFICATION REQUESTS (YÊU CẦU GIẢI TRÌNH)
+// ======================================
+
+/**
+ * Gửi yêu cầu giải trình cho nhiều đơn vị cùng lúc.
+ * @param {string} criteriaSetId
+ * @param {Object} selectionsByUnit - { unitId: [mucId1, mucId2, ...], ... }
+ * @param {string} deadline - ISO date string "YYYY-MM-DD"
+ * @param {string} sentBy - admin UID
+ */
+export const sendJustificationRequest = async (criteriaSetId, selectionsByUnit, deadline, sentBy) => {
+    const requestId = `jr_${Date.now()}`;
+    const batch = writeBatch(db);
+
+    for (const [unitId, mucIds] of Object.entries(selectionsByUnit)) {
+        const compId = `${criteriaSetId}_${unitId}`;
+        const ref = doc(db, 'criteriaSubmissions', compId);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) continue;
+
+        const existing = snap.data();
+        const existingRequests = existing.justificationRequests || [];
+        const existingGradedScores = existing.gradedScores || {};
+
+        // Update gradedScores: set requireJustification + justificationDeadline per mucId
+        const updatedGradedScores = { ...existingGradedScores };
+        mucIds.forEach(mucId => {
+            const current = updatedGradedScores[mucId] || { officialScore: '', feedback: '' };
+            updatedGradedScores[mucId] = {
+                ...current,
+                requireJustification: true,
+                justificationDeadline: deadline,
+            };
+        });
+
+        // Append new justification request
+        const newRequest = {
+            id: requestId,
+            items: mucIds,
+            deadline,
+            sentAt: new Date(),
+            sentBy,
+            status: 'active',
+        };
+
+        batch.update(ref, {
+            gradedScores: updatedGradedScores,
+            justificationRequests: [...existingRequests, newRequest],
+        });
+    }
+
+    await batch.commit();
+    return requestId;
+};

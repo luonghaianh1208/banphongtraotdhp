@@ -379,6 +379,7 @@ const UnitSubmitPage = () => {
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
                                     <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                 </tr>
@@ -390,12 +391,14 @@ const UnitSubmitPage = () => {
                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
 
-                                    if (activeTab === 'giaiTrinh' && !graded.requireJustification) {
+                                    if (activeTab === 'giaiTrinh' && !graded.justificationDeadline) {
                                         return null;
                                     }
 
                                     const isRowLocked = isReadOnly || activeTab === 'giaiTrinh';
-                                    const isJustificationUnlocked = !isPeriodLocked && activeTab === 'giaiTrinh';
+                                    const dlStr = graded.justificationDeadline;
+                                    const isDeadlineExpired = dlStr && new Date(dlStr) < new Date(new Date().toDateString());
+                                    const isJustificationUnlocked = !isPeriodLocked && activeTab === 'giaiTrinh' && !isDeadlineExpired;
 
                                     return (
                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
@@ -499,8 +502,18 @@ const UnitSubmitPage = () => {
                                                     onChange={(e) => handleResponseChange(row.id, 'justificationText', e.target.value)}
                                                     disabled={!isJustificationUnlocked}
                                                     className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${!isJustificationUnlocked ? 'bg-gray-50' : 'border-amber-300 focus:border-amber-500'}`}
-                                                    placeholder="Nhập nội dung giải trình..."
+                                                    placeholder={isDeadlineExpired ? 'Hết hạn giải trình' : 'Nhập nội dung giải trình...'}
                                                 />
+                                            </td>
+
+                                            {/* Thời hạn GT */}
+                                            <td className="px-2 py-4 text-center text-xs">
+                                                {dlStr ? (
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dlStr).toLocaleDateString('vi-VN')}</span>
+                                                        {isDeadlineExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">⏰ Hết hạn</span>}
+                                                    </div>
+                                                ) : <span className="text-gray-400">—</span>}
                                             </td>
 
                                             {/* Điểm sau GT */}
