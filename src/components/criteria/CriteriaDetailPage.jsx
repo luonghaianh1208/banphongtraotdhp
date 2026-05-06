@@ -139,7 +139,8 @@ const CriteriaDetailPage = () => {
     const isRowReadOnly = (row) => {
         if (userProfile?.role === 'admin') return false;
         const tc = criteriaSet?.tieuChi?.find(t => t.id === row.tcId) || criteriaSet?.groups?.find(t => t.id === row.tcId);
-        if (tc && tc.assignedTo && tc.assignedTo !== userProfile?.id) return true;
+        // Member/Manager must be explicitly assigned to edit; unassigned rows are read-only
+        if (!tc || !tc.assignedTo || tc.assignedTo !== userProfile?.id) return true;
         return false;
     };
 
@@ -358,14 +359,15 @@ const CriteriaDetailPage = () => {
                                                 />
                                             </td>
 
-                                            {/* Y/C Giải trình - Checkbox */}
+                                            {/* Y/C Giải trình - Checkbox (locked if not assigned) */}
                                             <td className="px-2 py-4 text-center">
-                                                <label className="flex items-center justify-center cursor-pointer">
+                                                <label className={`flex items-center justify-center ${isRowLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={jtSelections.has(row.id)}
                                                         onChange={() => toggleJt(row.id)}
-                                                        className="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600"
+                                                        disabled={isRowLocked}
+                                                        className={`w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600 ${isRowLocked ? 'opacity-50' : ''}`}
                                                     />
                                                 </label>
                                             </td>

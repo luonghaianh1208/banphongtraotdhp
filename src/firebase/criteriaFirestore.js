@@ -479,9 +479,7 @@ export const sendJustificationRequest = async (criteriaSetId, selectionsByUnit, 
         const ref = doc(db, 'criteriaSubmissions', compId);
         const snap = await getDoc(ref);
 
-        if (!snap.exists()) continue;
-
-        const existing = snap.data();
+        const existing = snap.exists() ? snap.data() : {};
         const existingRequests = existing.justificationRequests || [];
         const existingGradedScores = existing.gradedScores || {};
 
@@ -506,10 +504,21 @@ export const sendJustificationRequest = async (criteriaSetId, selectionsByUnit, 
             status: 'active',
         };
 
-        batch.update(ref, {
-            gradedScores: updatedGradedScores,
-            justificationRequests: [...existingRequests, newRequest],
-        });
+        if (snap.exists()) {
+            batch.update(ref, {
+                gradedScores: updatedGradedScores,
+                justificationRequests: [...existingRequests, newRequest],
+            });
+        } else {
+            // Doc chưa tồn tại → tạo mới với setDoc thay vì skip
+            batch.set(ref, {
+                criteriaSetId,
+                unitId,
+                gradedScores: updatedGradedScores,
+                justificationRequests: [newRequest],
+                status: 'pending',
+            });
+        }
     }
 
     await batch.commit();
