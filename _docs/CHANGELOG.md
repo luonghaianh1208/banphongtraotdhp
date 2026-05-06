@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026-05-06 PM15] - Fix Justification Request Permissions & Indexes
+
+### Da sua (Bug Fixes)
+- **firestore.rules**: Staff (admin/manager/member) gio duoc phep tao moi doc trong `criteriaSubmissions` khi gui yeu cau giai trinh cho don vi chua nop. Truoc do chi `isUnit()` duoc phep create → gay loi "Missing or insufficient permissions".
+- **firestore.indexes.json**: Them 2 composite indexes cho collection `criteriaAssignments`:
+  - `criteriaSetId` + `assignedAt DESC` (cho `subscribeToSetAssignments`)
+  - `unitId` + `status` (cho `subscribeToUnitAssignments`)
+
+### File bi anh huong
+- `firestore.rules`
+- `firestore.indexes.json`
+
+---
+
 ## [2026-05-06 PM14] - Remove Bulk Assignment for Criteria Sets
 
 ### Da xoa (Removed)

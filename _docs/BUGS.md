@@ -26,6 +26,15 @@ Trang thai:
 
 ## Da verify da fix
 
+## [BUG-022] Staff khong the gui yeu cau giai trinh cho don vi chua nop + query thieu composite index
+- Trang thai: `fixed`
+- Vi tri:
+  - `firestore.rules`
+  - `firestore.indexes.json`
+- Ghi chu:
+  - `criteriaSubmissions` create rule chi cho phep `isUnit()` — staff gui yeu cau giai trinh cho don vi chua co submission thi bi "Missing or insufficient permissions". Fix: them `isStaff()` vao create rule.
+  - `criteriaAssignments` query can composite index (`criteriaSetId` + `assignedAt`, `unitId` + `status`). Fix: them vao `firestore.indexes.json` va deploy.
+
 ## [BUG-021] isRowReadOnly cho phep member edit tieu chi chua gan + sendJustificationRequest skip doc chua ton tai
 - Trang thai: `fixed`
 - Vi tri:
@@ -153,7 +162,7 @@ Trang thai:
 | Muc | So luong |
 |---|---:|
 | Open (medium) | 1 |
-| Fixed (da verify) | 15 |
+| Fixed (da verify) | 16 |
 
 Ghi chu:
 - BUG-018 la bug duy nhat con open — can them logic xoa penalty khi restore task.
