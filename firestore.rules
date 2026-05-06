@@ -110,10 +110,12 @@ service cloud.firestore {
     match /criteriaSubmissions/{subId} {
       allow read: if isAuthenticated();
 
+      // Staff tạo mới (ví dụ: gửi yêu cầu giải trình cho đơn vị chưa nộp)
       // Đơn vị tạo mới: chỉ khi submission là draft
-      allow create: if isUnit()
-        && request.resource.data.unitId == request.auth.uid
-        && request.resource.data.status == 'draft';
+      allow create: if isStaff()
+        || (isUnit()
+          && request.resource.data.unitId == request.auth.uid
+          && request.resource.data.status == 'draft');
 
       // Đơn vị update: chặn khi period đã locked hoặc published
       // Staff (Admin/Manager/Member) update: cho phép
