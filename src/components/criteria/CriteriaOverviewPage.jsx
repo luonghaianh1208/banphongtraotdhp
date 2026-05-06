@@ -235,30 +235,39 @@ const CriteriaOverviewPage = () => {
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>
                                             {item.totalSelfScore > 0 && <span className="text-xs font-bold text-gray-400">Tự chấm: {item.totalSelfScore}đ</span>}
                                             {item.totalGradedScore !== null && <span className="text-xs font-bold text-emerald-600">Thẩm định: {item.totalGradedScore}đ</span>}
+                                            <span className="text-xs italic text-gray-400 dark:text-gray-500">
+                                                {(() => {
+                                                    const responses = item.submission?.responses || {};
+                                                    const submittedCount = tableRows.filter(r => {
+                                                        const res = responses[r.id];
+                                                        return res && (res.selfScore !== undefined && res.selfScore !== '' && res.selfScore !== null);
+                                                    }).length;
+                                                    if (submittedCount === 0) return '• Chưa nộp nội dung nào';
+                                                    return `• ${submittedCount}/${tableRows.length} nội dung đã nộp`;
+                                                })()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {item.submission && item.status !== 'not_submitted' && (
-                                    <button
-                                        onClick={() => {
-                                            if (isGrading) {
-                                                setGradingUnit(null);
-                                                return;
-                                            }
-                                            setGradingUnit(item.assignment.unitId);
-                                            setGradedScores(item.submission.gradedScores || {});
-                                            setGradedComment(item.submission.gradedComment || '');
-                                        }}
-                                        className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                                    >
-                                        <MdGrade size={14} />
-                                        {isGrading ? 'Đóng' : item.status === 'graded' ? 'Xem/Sửa điểm' : 'Thẩm định'}
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => {
+                                        if (isGrading) {
+                                            setGradingUnit(null);
+                                            return;
+                                        }
+                                        setGradingUnit(item.assignment.unitId);
+                                        setGradedScores(item.submission?.gradedScores || {});
+                                        setGradedComment(item.submission?.gradedComment || '');
+                                    }}
+                                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                >
+                                    <MdGrade size={14} />
+                                    {isGrading ? 'Đóng' : item.status === 'graded' ? 'Xem/Sửa điểm' : item.status === 'not_submitted' ? 'Xem / Y/C Giải trình' : 'Thẩm định'}
+                                </button>
                             </div>
 
-                            {isGrading && item.submission && (
+                            {isGrading && (
                                 <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 space-y-4 animate-fade-in-up">
                                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                                         <div>
@@ -296,7 +305,7 @@ const CriteriaOverviewPage = () => {
                                             </thead>
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
                                                 {tableRows.map((row, index) => {
-                                                    const res = item.submission.responses?.[row.id] || {};
+                                                    const res = item.submission?.responses?.[row.id] || {};
                                                     const evidenceFiles = res.evidenceFiles || [];
                                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
@@ -471,13 +480,15 @@ const CriteriaOverviewPage = () => {
                                         />
                                     </div>
 
-                                    <button
-                                        onClick={() => handleGrade(item.submission.id)}
-                                        disabled={isSavingGrade}
-                                        className="btn btn-primary text-xs !py-2 !px-6"
-                                    >
-                                        {isSavingGrade ? 'Đang lưu...' : 'Lưu thẩm định'}
-                                    </button>
+                                    {item.submission && (
+                                        <button
+                                            onClick={() => handleGrade(item.submission.id)}
+                                            disabled={isSavingGrade}
+                                            className="btn btn-primary text-xs !py-2 !px-6"
+                                        >
+                                            {isSavingGrade ? 'Đang lưu...' : 'Lưu thẩm định'}
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>

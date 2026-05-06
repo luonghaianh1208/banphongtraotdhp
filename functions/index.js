@@ -642,7 +642,7 @@ exports.deleteUser = onCall(async (request) => {
   return { success: true, message: "Đã xóa tài khoản thành viên" };
 });
 
-// === 15. XÓA TÀI KHOẢN ĐƠN VỊ (ADMIN) ===
+// === 15. XÓA TÀI KHOẢN ĐƠN VỊ (ADMIN) — CASCADE DELETE ===
 exports.deleteUnit = onCall(async (request) => {
   const { unitId } = request.data;
   const callerUid = request.auth?.uid;
@@ -652,8 +652,45 @@ exports.deleteUnit = onCall(async (request) => {
 
   if (!unitId) throw new HttpsError("invalid-argument", "Thiếu unitId");
 
+  console.log(`[deleteUnit] Bắt đầu cascade delete cho unitId: ${unitId}`);
+
+  // Helper: xóa tất cả docs trong 1 query, chia batch 500
+  async function deleteQueryResults(query, label) {
+    let totalDeleted = 0;
+    let snap = await query.get();
+    while (!snap.empty) {
+      const batch = db.batch();
+      snap.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      totalDeleted += snap.docs.length;
+      snap = await query.get(); // re-query for remaining
+    }
+    if (totalDeleted > 0) {
+      console.log(`[deleteUnit] Đã xóa ${totalDeleted} docs từ ${label}`);
+    }
+    return totalDeleted;
+  }
+
+  // 1. Xóa tất cả criteriaSubmissions có unitId
+  await deleteQueryResults(
+    db.collection("criteriaSubmissions").where("unitId", "==", unitId).limit(500),
+    "criteriaSubmissions"
+  );
+
+  // 2. Xóa tất cả criteriaAssignments có unitId
+  await deleteQueryResults(
+    db.collection("criteriaAssignments").where("unitId", "==", unitId).limit(500),
+    "criteriaAssignments"
+  );
+
+  // 3. Xóa tất cả plans có unitId (nếu có)
+  await deleteQueryResults(
+    db.collection("plans").where("unitId", "==", unitId).limit(500),
+    "plans"
+  );
+
+  // 4. Xóa Firebase Auth user
   try {
-    // Xóa Firebase Auth user
     await getAuth().deleteUser(unitId);
   } catch (error) {
     if (error.code !== "auth/user-not-found") {
@@ -661,10 +698,11 @@ exports.deleteUnit = onCall(async (request) => {
     }
   }
 
-  // Xóa Firestore document
+  // 5. Xóa Firestore document đơn vị
   await db.collection("units").doc(unitId).delete();
 
-  return { success: true, message: "Đã xóa tài khoản đơn vị" };
+  console.log(`[deleteUnit] Cascade delete hoàn tất cho unitId: ${unitId}`);
+  return { success: true, message: "Đã xóa tài khoản đơn vị và toàn bộ dữ liệu liên quan" };
 });
 
 // === 16. KHỞI TẠO ADMIN ĐẦU TIÊN ===
