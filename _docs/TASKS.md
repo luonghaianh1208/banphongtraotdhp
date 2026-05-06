@@ -5,7 +5,7 @@ Cap nhat lan cuoi: 2026-05-06
 ## Dang uu tien tiep theo
 
 - [ ] Deploy Cloud Functions len production: `firebase deploy --only functions` (cascade delete chua co hieu luc tren prod)
-- [ ] Sua BUG-018: restore task can xu ly penalty lien quan
+- [x] Sua BUG-018: restore task can xu ly penalty lien quan - 2026-05-07
 
 ## Cong viec can don dep ky thuat
 
