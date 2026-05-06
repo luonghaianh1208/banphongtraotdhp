@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
+import { useAuth } from '../../context/AuthContext';
 import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
@@ -13,6 +14,7 @@ import { getVietnameseError } from '../../utils/errorUtils';
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
     const { loading: unitsLoading } = useUnits();
+    const { currentUser, isAdmin, isManager } = useAuth();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -29,7 +31,13 @@ const PlansManagePage = () => {
 
     const loading = plansLoading || unitsLoading;
 
-    const filteredPlans = plans.filter(p => {
+    // Member chỉ thấy plans mình tạo, Admin/Manager thấy tất cả
+    const visiblePlans = useMemo(() => {
+        if (isAdmin || isManager) return plans;
+        return plans.filter(p => p.createdBy === currentUser?.uid);
+    }, [plans, isAdmin, isManager, currentUser]);
+
+    const filteredPlans = visiblePlans.filter(p => {
         const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
         return matchesSearch && matchesStatus;
@@ -77,6 +85,8 @@ const PlansManagePage = () => {
                 targetBlocks: formData.targetBlocks,
                 targetTypes: formData.targetTypes,
                 attachments: formData.attachments,
+                createdBy: currentUser?.uid || null,
+                createdByName: currentUser?.displayName || currentUser?.email || '',
                 status: 'draft',
             });
             toast.success('Tạo kế hoạch thành công!');
@@ -141,7 +151,7 @@ const PlansManagePage = () => {
                 <div>
                     <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Quản lý Kế hoạch & Hội thi</h2>
                     <p className="text-slate-500 dark:text-slate-400">
-                        Tổng cộng có <span className="font-semibold text-emerald-600 dark:text-emerald-400">{plans.length}</span> nội dung đánh giá
+                        Tổng cộng có <span className="font-semibold text-emerald-600 dark:text-emerald-400">{visiblePlans.length}</span> kế hoạch
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">

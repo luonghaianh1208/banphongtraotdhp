@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
 import { useContestEntries } from '../../hooks/useContestEntries';
 import { useUnits } from '../../hooks/useUnits';
+import { useAuth } from '../../context/AuthContext';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import {
@@ -17,6 +18,7 @@ const PlanDetailPage = () => {
     const { plans, loading: plansLoading } = usePlans();
     const { entries, loading: entriesLoading } = useContestEntries(planId);
     const { units, loading: unitsLoading } = useUnits();
+    const { currentUser, isAdmin, isManager } = useAuth();
 
     const [plan, setPlan] = useState(null);
 
@@ -79,6 +81,11 @@ const PlanDetailPage = () => {
                 </div>
             </div>
         );
+    }
+
+    // Member chỉ xem được plan mình tạo
+    if (!isAdmin && !isManager && plan.createdBy !== currentUser?.uid) {
+        return <Navigate to="/plans-manage" replace />;
     }
 
     const statusMap = {

@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Plan Access Control: Member chi thay plan minh tao, Admin thay tat ca. Guard redirect tren PlanDetailPage - 2026-05-06
 - [x] Refactor module Ke hoach: fix link dieu huong, them upload file vao form tao KH, bang Excel full-width theo doi nop ho so - 2026-05-06
 - [x] Implement multi-wave justification workflow: floating bar + DatePicker deadline + auto-lock expired + deadline column across all 3 pages - 2026-05-06
 - [x] Dong bo Excel template/import/export (xoa STT, doi Khung diem -> Diem toi da, 8 cot) + them checkbox Y/C Giai trinh vao CriteriaOverviewPage - 2026-05-06

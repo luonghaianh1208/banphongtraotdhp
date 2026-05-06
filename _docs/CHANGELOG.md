@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-05-06 PM9] - Plan Access Control: Role-Based Visibility
+
+### Da them
+- **PlansManagePage.jsx**: Import `useAuth`, them `useMemo` filter — Member chi thay plans minh tao (`createdBy === uid`), Admin/Manager thay tat ca. Luu `createdBy` + `createdByName` khi tao plan moi.
+- **PlanDetailPage.jsx**: Import `useAuth` + `Navigate`, them guard — Member truy cap plan cua nguoi khac se bi redirect ve `/plans-manage`.
+
+### File bi anh huong
+- `src/components/criteria/PlansManagePage.jsx`
+- `src/components/criteria/PlanDetailPage.jsx`
+
+---
+
 ## [2026-05-06 PM8] - Refactor module Ke hoach: workflow hoan chinh
 
 ### Da sua
