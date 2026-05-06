@@ -77,6 +77,26 @@ const FEATURES = [
       { name: 'Bảo mật Firestore', desc: 'Giới hạn quyền sửa field theo từng vai trò — bảo vệ dữ liệu', isNew: true },
     ],
   },
+  {
+    category: 'Bộ tiêu chí & Chấm điểm',
+    items: [
+      { name: 'Quản lý Bộ tiêu chí', desc: 'Tạo, sửa, xóa bộ tiêu chí đánh giá với cấu trúc nhiều mục con', isNew: true },
+      { name: 'Chấm điểm theo tiêu chí', desc: 'Thành viên được phân công tiêu chí nào thì chấm tiêu chí đó cho các đơn vị', isNew: true },
+      { name: 'Xem toàn bộ bộ tiêu chí', desc: 'Tất cả thành viên (Admin, Phụ trách, Nhân viên) đều xem được toàn bộ bộ tiêu chí', isNew: true },
+      { name: 'Giải trình & phản hồi', desc: 'Đơn vị cơ sở giải trình nội dung bị trừ điểm, cấp trên xem xét và chấm lại', isNew: true },
+      { name: 'Xuất / Nhập Excel', desc: 'Xuất kết quả chấm điểm ra Excel, nhập dữ liệu tiêu chí từ file Excel', isNew: true },
+    ],
+  },
+  {
+    category: 'Kế hoạch & Hồ sơ',
+    items: [
+      { name: 'Tạo kế hoạch', desc: 'Tạo kế hoạch mới với tên, đối tượng, hạn nộp, yêu cầu hồ sơ và tài liệu đính kèm', isNew: true },
+      { name: 'Đính kèm tài liệu', desc: 'Upload file (PDF, Word, Excel) hoặc dán link Google Drive vào kế hoạch', isNew: true },
+      { name: 'Gửi kế hoạch cho đơn vị', desc: 'Phát hành kế hoạch cho đơn vị cơ sở, đơn vị nhận và nộp hồ sơ theo yêu cầu', isNew: true },
+      { name: 'Theo dõi hồ sơ nộp', desc: 'Bảng Excel full-width theo dõi tình trạng nộp hồ sơ từng đơn vị (Chưa nộp / Đang nhập / Đã nộp)', isNew: true },
+      { name: 'Phân quyền kế hoạch', desc: 'Nhân viên chỉ xem kế hoạch mình tạo, Tổ trưởng xem toàn bộ kế hoạch', isNew: true },
+    ],
+  },
 ];
 
 // === TAB 2: Bảng quyền hạn ===
@@ -103,6 +123,15 @@ const PERMISSIONS = [
   { feature: 'Xem thùng rác & khôi phục', admin: true, manager: false, member: false },
   { feature: 'Đổi tên & ảnh đại diện', admin: true, manager: true, member: true },
   { feature: 'Xem thông tin hệ thống', admin: true, manager: true, member: true },
+  // --- Bộ tiêu chí ---
+  { feature: 'Xem toàn bộ Bộ tiêu chí', admin: true, manager: true, member: true },
+  { feature: 'Tạo / Sửa / Xóa Bộ tiêu chí', admin: true, manager: false, member: false },
+  { feature: 'Chấm điểm tiêu chí (theo phân công)', admin: true, manager: true, member: true },
+  // --- Kế hoạch ---
+  { feature: 'Tạo kế hoạch mới', admin: true, manager: true, member: true },
+  { feature: 'Xem toàn bộ kế hoạch', admin: true, manager: true, member: false },
+  { feature: 'Xem kế hoạch mình tạo', admin: true, manager: true, member: true },
+  { feature: 'Gửi kế hoạch cho đơn vị', admin: true, manager: true, member: true },
 ];
 
 const TABS = [
@@ -263,7 +292,7 @@ const AboutTab = () => (
       <div className="space-y-3 border-t border-gray-100 pt-4">
         <div className="flex items-center">
           <span className="w-36 text-sm text-gray-500">Phiên bản:</span>
-          <span className="text-sm font-medium text-gray-900">3.1.2</span>
+          <span className="text-sm font-medium text-gray-900">3.2.0</span>
           <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase">Stable</span>
         </div>
         <div className="flex items-center">
