@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-05-06 PM14] - Remove Bulk Assignment for Criteria Sets
+
+### Da xoa (Removed)
+- Xoa tinh nang phan cong hang loat (bulk assignment) tren giao dien `CriteriaSetsPage.jsx` vi xung dot voi logic phan quyen va gui yeu cau giai trinh.
+- Cap nhat `firestore.rules` de don gian hoa phan quyen theo role `isMember()` va isStaff().
+
+### File bi anh huong
+- `src/components/criteria/CriteriaSetsPage.jsx`
+- `firestore.rules`
+
+---
+
 ## [2026-05-06 PM13] - Criteria Permission Enforcement Fix
 
 ### Da sua (Bug Fixes)

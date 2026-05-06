@@ -192,21 +192,7 @@ const CriteriaSetsPage = () => {
         });
     };
 
-    const handleBulkAssign = async (userId) => {
-        if (!userId) return;
-        const staffName = staff.find(u => u.id === userId)?.displayName || '';
-        if (!confirm(`Phân công ${staffName} cho ${selected.length} bộ đã chọn?`)) return;
-        setIsSubmitting(true);
-        try {
-            for (const setId of selected) {
-                const set = criteriaSets.find(c => c.id === setId);
-                if (!set) continue;
-                const updatedTC = (set.tieuChi || []).map(tc => ({ ...tc, assignedTo: userId }));
-                await updateCriteriaSet(setId, { tieuChi: updatedTC });
-            }
-            toast.success(`Đã phân công ${staffName}`); setSelected([]);
-        } catch (err) { console.error(err); toast.error(getVietnameseError(err)); } finally { setIsSubmitting(false); }
-    };
+
 
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
@@ -296,14 +282,7 @@ const CriteriaSetsPage = () => {
                     {!isMember && selected.length > 0 && (
                         <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 animate-fade-in">
                             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">Đã chọn {selected.length}:</span>
-                            <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1 border border-blue-200 dark:border-blue-800">
-                                <MdPerson size={14} className="text-blue-500" />
-                                <select onChange={e => { if (e.target.value) handleBulkAssign(e.target.value); e.target.value = ''; }}
-                                    className="text-xs border-none outline-none bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer min-w-[120px]">
-                                    <option value="">Phân công cho...</option>
-                                    {staff.map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
-                                </select>
-                            </div>
+
                             <button onClick={handleBulkDelete} className="btn btn-danger text-xs !py-1.5 !px-3">
                                 <MdDelete size={16} /> Xóa
                             </button>

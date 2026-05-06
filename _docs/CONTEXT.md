@@ -4,10 +4,12 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Fix BUG-021: Enforce explicit assignedTo check trong isRowReadOnly + fix backend sendJustificationRequest khi doc chua ton tai.
+Loai bo tinh nang phan cong hang loat (bulk assignment) o giao dien quan ly Bo tieu chi do anh huong toi workflow gui yeu cau giai trinh cua member.
 
 ## Da lam trong session nay
 
+- Xoa logic va UI cua tinh nang bulk assignment (person icon va select dropdown) trong `CriteriaSetsPage.jsx`, chi giu lai nut xoa.
+- Cap nhat `firestore.rules` de tich hop role `isMember()` vao isStaff() check.
 - CriteriaOverviewPage + CriteriaDetailPage: fix `isRowReadOnly()` — member PHAI duoc gan ro rang (`assignedTo === userId`) moi edit duoc. Truoc day khi `assignedTo = null` thi member van edit duoc tat ca tieu chi.
 - CriteriaOverviewPage + CriteriaDetailPage: lock checkbox Y/C Giai trinh cho tieu chi khong duoc phan cong (dong bo voi input diem).
 - criteriaFirestore.js: `sendJustificationRequest` tao doc moi bang `batch.set()` khi `criteriaSubmissions` doc chua ton tai, thay vi `continue` skip im lang.

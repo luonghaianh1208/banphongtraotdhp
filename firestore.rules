@@ -8,8 +8,10 @@ service cloud.firestore {
     }
     function isAdmin() { return getUserRole() == 'admin'; }
     function isManager() { return getUserRole() == 'manager'; }
+    function isMember() { return getUserRole() == 'member'; }
     function isAuthenticated() { return request.auth != null; }
     function isAdminOrManager() { return isAdmin() || isManager(); }
+    function isStaff() { return isAdmin() || isManager() || isMember(); }
     
     function isUnit() {
       return exists(/databases/$(database)/documents/units/$(request.auth.uid));
@@ -82,7 +84,7 @@ service cloud.firestore {
     match /submissions/{subId} {
       allow read: if isAuthenticated();
       allow create: if isUnit() && request.resource.data.unitId == request.auth.uid;
-      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
+      allow update: if isStaff() || (isUnit() && resource.data.unitId == request.auth.uid);
       allow delete: if isAdminOrManager();
     }
 
@@ -96,7 +98,7 @@ service cloud.firestore {
     match /contestEntries/{entryId} {
       allow read: if isAuthenticated();
       allow create: if isUnit() && request.resource.data.unitId == request.auth.uid;
-      allow update: if isAdminOrManager() || (isUnit() && resource.data.unitId == request.auth.uid);
+      allow update: if isStaff() || (isUnit() && resource.data.unitId == request.auth.uid);
       allow delete: if isAdminOrManager();
     }
 
@@ -114,7 +116,8 @@ service cloud.firestore {
         && request.resource.data.status == 'draft';
 
       // Đơn vị update: chặn khi period đã locked hoặc published
-      allow update: if isAdminOrManager()
+      // Staff (Admin/Manager/Member) update: cho phép
+      allow update: if isStaff()
         || (
           isUnit()
           && resource.data.unitId == request.auth.uid
