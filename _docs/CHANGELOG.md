@@ -1,5 +1,21 @@
 # Changelog
 
+## [2026-05-07] - Cascade Delete + UI Progress Notes & Justification Enhancement
+
+### Da them (Features)
+- **Cloud Function `deleteUnit`**: Cascade delete — xoa don vi se tu dong xoa sach `criteriaSubmissions`, `criteriaAssignments`, va `plans` lien quan (batch 500 docs/lan).
+- **CriteriaOverviewPage UI**: Them note in nghiêng "*• x/y noi dung da nop*" hoac "*• Chua nop noi dung nao*" tren moi card don vi de cap tren theo doi tien do.
+- **Justification cho don vi chua nop**: Member gio co the mo bang tham dinh va gui yeu cau giai trinh cho bat ky don vi nao duoc phan cong, ke ca don vi chua nop ho so. Nut "Xem / Y/C Giai trinh" hien thi cho don vi chua nop.
+
+### Da don dep (Data Cleanup)
+- Xoa 2 orphaned `criteriaSubmissions` va 2 orphaned `criteriaAssignments` cua don vi "test" (unitId: `idyTlU248CS269QuN4OWHcm0ZZf2`).
+
+### File bi anh huong
+- `functions/index.js` - Cascade delete logic trong `deleteUnit`
+- `src/components/criteria/CriteriaOverviewPage.jsx` - Progress notes + justification cho not_submitted
+
+---
+
 ## [2026-05-06 PM15] - Fix Justification Request Permissions & Indexes
 
 ### Da sua (Bug Fixes)

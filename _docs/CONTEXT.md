@@ -1,34 +1,35 @@
 # Ngu canh Session Hien tai
 
-Cap nhat lan cuoi: 2026-05-06
+Cap nhat lan cuoi: 2026-05-07
 
 ## Muc tieu session
 
-Loai bo tinh nang phan cong hang loat (bulk assignment) o giao dien quan ly Bo tieu chi do anh huong toi workflow gui yeu cau giai trinh cua member.
+Cascade delete khi xoa don vi + cai thien UI CriteriaOverviewPage (progress notes + justification cho don vi chua nop).
 
 ## Da lam trong session nay
 
-- Xoa logic va UI cua tinh nang bulk assignment (person icon va select dropdown) trong `CriteriaSetsPage.jsx`, chi giu lai nut xoa.
-- Cap nhat `firestore.rules` de tich hop role `isMember()` vao isStaff() check.
-- CriteriaOverviewPage + CriteriaDetailPage: fix `isRowReadOnly()` — member PHAI duoc gan ro rang (`assignedTo === userId`) moi edit duoc. Truoc day khi `assignedTo = null` thi member van edit duoc tat ca tieu chi.
-- CriteriaOverviewPage + CriteriaDetailPage: lock checkbox Y/C Giai trinh cho tieu chi khong duoc phan cong (dong bo voi input diem).
-- criteriaFirestore.js: `sendJustificationRequest` tao doc moi bang `batch.set()` khi `criteriaSubmissions` doc chua ton tai, thay vi `continue` skip im lang.
-- Build thanh cong, da push code.
+- Cloud Function `deleteUnit`: them cascade delete xoa sach `criteriaSubmissions`, `criteriaAssignments`, va `plans` khi xoa don vi.
+- Don dep du lieu mo coi cua don vi "test" (unitId: `idyTlU248CS269QuN4OWHcm0ZZf2`): xoa 2 submissions + 2 assignments.
+- CriteriaOverviewPage: them note in nghieng hien thi tien do nop (x/y noi dung da nop) tren moi card don vi.
+- CriteriaOverviewPage: mo khoa bang tham dinh cho don vi chua nop de member co the gui yeu cau giai trinh.
+- Them optional chaining an toan khi submission = null.
+- An nut "Luu tham dinh" khi don vi chua nop (vi chua co submission ID).
+- Da push code thanh cong.
 
 ## Ket qua quan trong
 
-- Member chi edit duoc tieu chi DUOC GAN RO RANG — khong con edit duoc tieu chi chua gan.
-- Checkbox Y/C Giai trinh bi disabled khi row bi locked — tranh member gui giai trinh cho tieu chi khong phai cua minh.
-- Backend tao doc moi khi gui yeu cau giai trinh cho don vi chua co submission — khong con skip im lang.
+- Xoa don vi gio se tu dong don sach du lieu lien quan — khong con du lieu mo coi.
+- Cap tren thay duoc tien do nop cua tung don vi ngay tren card (khong can mo bang tham dinh).
+- Member gui duoc yeu cau giai trinh cho don vi chua nop, backend tu tao doc moi.
 
 ## Quyet dinh ky thuat da chot
 
-- `isRowReadOnly()`: logic moi la `if (!tc || !tc.assignedTo || tc.assignedTo !== userProfile?.id) return true` — nghia la member PHAI duoc assignedTo ro rang. Admin luon bypass.
-- Backend dung `batch.set()` thay vi `batch.update()` khi doc chua ton tai, dam bao giao dich batch khong bi loi.
+- Cascade delete dung batch 500 docs/lan de dam bao an toan Firestore.
+- Progress note dem so muc co `selfScore` (khong null, khong rong) so voi tong `tableRows.length`.
+- Khi don vi chua nop: hien nut "Xem / Y/C Giai trinh", an nut "Luu tham dinh", tat ca input diem/nhan xet van hoat dong binh thuong.
 
 ## Nhung diem can nho neu tiep tuc session sau
 
 - BUG-018 la bug duy nhat con open: restore task khong xoa penalty lien quan.
 - Plans cu chua co field `createdBy` — neu can, co the chay script migration.
-- Can test voi member thuc te co `assignedTo` tren tieu chi de verify scoring restriction hoat dong dung o moi flow.
-- Nen xem xet them Firestore Security Rules de enforce permission o server-side (hien tai chi check o client).
+- Nen deploy Cloud Functions len Firebase (`firebase deploy --only functions`) de cascade delete co hieu luc tren production.
