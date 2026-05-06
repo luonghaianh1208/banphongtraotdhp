@@ -4,34 +4,29 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Fix Criteria Scoring Authorization + Cleanup dead code + Fix open bugs.
+Fix BUG-021: Enforce explicit assignedTo check trong isRowReadOnly + fix backend sendJustificationRequest khi doc chua ton tai.
 
 ## Da lam trong session nay
 
-- CriteriaOverviewPage: import `useAuth`, them `isRowReadOnly()` — member chi cham tieu chi duoc phan cong (`assignedTo === userId`), admin cham het. Input diem/nhan xet bi disabled cho tieu chi khong thuoc member.
-- CriteriaOverviewPage + CriteriaDetailPage: thay hardcode `'admin'` trong `sendJustificationRequest` va `gradeCriteriaSubmission` bang `userProfile.id` dong.
-- firestore.js: `addNotification()` rethrow error (BUG-019).
-- AuthContext: expose `logout` (BUG-014).
-- auth.js: Google login tao user `status: 'pending'`, `isActive: false` (BUG-002).
-- UnitDashboard + UnitSubmissionsList: cleanup fallback `unitId` (BUG-005).
-- Xoa `useSubmissions.js` (BUG-015) va `PeriodsManagePage.jsx` (BUG-016) — dead code.
-- Build thanh cong, khong loi.
+- CriteriaOverviewPage + CriteriaDetailPage: fix `isRowReadOnly()` — member PHAI duoc gan ro rang (`assignedTo === userId`) moi edit duoc. Truoc day khi `assignedTo = null` thi member van edit duoc tat ca tieu chi.
+- CriteriaOverviewPage + CriteriaDetailPage: lock checkbox Y/C Giai trinh cho tieu chi khong duoc phan cong (dong bo voi input diem).
+- criteriaFirestore.js: `sendJustificationRequest` tao doc moi bang `batch.set()` khi `criteriaSubmissions` doc chua ton tai, thay vi `continue` skip im lang.
+- Build thanh cong, da push code.
 
 ## Ket qua quan trong
 
-- Member duoc phan cong tieu chi gio co the cham diem va gui giai trinh tu CriteriaOverviewPage va CriteriaDetailPage.
-- Admin van cham tat ca tieu chi nhu truoc.
-- Unit portal logout hoat dong binh thuong.
-- User moi login qua Google bat buoc phai cho admin duyet.
+- Member chi edit duoc tieu chi DUOC GAN RO RANG — khong con edit duoc tieu chi chua gan.
+- Checkbox Y/C Giai trinh bi disabled khi row bi locked — tranh member gui giai trinh cho tieu chi khong phai cua minh.
+- Backend tao doc moi khi gui yeu cau giai trinh cho don vi chua co submission — khong con skip im lang.
 
 ## Quyet dinh ky thuat da chot
 
-- `isRowReadOnly()` check `assignedTo` tren tieu chi — neu `assignedTo !== userId` thi row bi locked (truong hop member). Admin luon bypass.
-- IIFE pattern bi loai bo — thay bang `const locked = isRowReadOnly(row)` tai dau map callback de giu JSX sach.
-- `addNotification` gio rethrow error de caller co the xu ly — nhung hien chua co caller nao catch, chi them an toan tuong lai.
+- `isRowReadOnly()`: logic moi la `if (!tc || !tc.assignedTo || tc.assignedTo !== userProfile?.id) return true` — nghia la member PHAI duoc assignedTo ro rang. Admin luon bypass.
+- Backend dung `batch.set()` thay vi `batch.update()` khi doc chua ton tai, dam bao giao dich batch khong bi loi.
 
 ## Nhung diem can nho neu tiep tuc session sau
 
 - BUG-018 la bug duy nhat con open: restore task khong xoa penalty lien quan.
 - Plans cu chua co field `createdBy` — neu can, co the chay script migration.
-- Nen test voi member thuc te co `assignedTo` tren tieu chi de verify scoring restriction hoat dong dung.
+- Can test voi member thuc te co `assignedTo` tren tieu chi de verify scoring restriction hoat dong dung o moi flow.
+- Nen xem xet them Firestore Security Rules de enforce permission o server-side (hien tai chi check o client).

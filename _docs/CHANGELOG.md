@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026-05-06 PM13] - Criteria Permission Enforcement Fix
+
+### Da sua (Bug Fixes)
+- **BUG-021**: `isRowReadOnly` truoc day cho phep member edit tieu chi chua gan (`assignedTo = null`). Fix: member PHAI duoc gan ro rang moi edit duoc.
+- **BUG-021**: Checkbox Y/C Giai trinh gio bi disabled cho tieu chi khong duoc phan cong (dong bo voi input diem).
+- **BUG-021**: Backend `sendJustificationRequest` skip im lang khi doc `criteriaSubmissions` chua ton tai → tao doc moi bang `batch.set()` thay vi skip.
+
+### File bi anh huong
+- `src/components/criteria/CriteriaOverviewPage.jsx` - isRowReadOnly strict check + lock justification checkbox
+- `src/components/criteria/CriteriaDetailPage.jsx` - isRowReadOnly strict check + lock justification checkbox
+- `src/firebase/criteriaFirestore.js` - sendJustificationRequest tao doc khi chua ton tai
+
+---
+
 ## [2026-05-06 PM12] - Criteria Scoring & Authorization Fixes
 
 ### Da sua (Bug Fixes)

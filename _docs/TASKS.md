@@ -1,19 +1,13 @@
 # Task Board
 
-Cap nhat lan cuoi: 2026-05-05
+Cap nhat lan cuoi: 2026-05-06
 
 ## Dang uu tien tiep theo
 
-- [ ] Sua BUG-002: Google login khong duoc tu approve user noi bo moi
-- [ ] Sua BUG-005 + BUG-014: dong bo shape profile unit va fix logout trong Unit portal
-- [x] Sua BUG-017: thong nhat field cua plan detail (`type` / `attachments` / `contestEntries`) - 2026-05-06
 - [ ] Sua BUG-018: restore task can xu ly penalty lien quan
-- [ ] Sua BUG-019: thong bao can co co che bao loi ro hon thay vi fire-and-forget
 
 ## Cong viec can don dep ky thuat
 
-- [ ] Xoa hoac noi lai `src/components/criteria/PeriodsManagePage.jsx`
-- [ ] Xoa hoac sua `src/hooks/useSubmissions.js` de khong con import API khong ton tai
 - [ ] Rasoat lai module unit de thay het `userProfile.unitId` bang shape profile thuc te
 
 ## Da hoan thanh

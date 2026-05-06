@@ -26,6 +26,17 @@ Trang thai:
 
 ## Da verify da fix
 
+## [BUG-021] isRowReadOnly cho phep member edit tieu chi chua gan + sendJustificationRequest skip doc chua ton tai
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/criteria/CriteriaOverviewPage.jsx`
+  - `src/components/criteria/CriteriaDetailPage.jsx`
+  - `src/firebase/criteriaFirestore.js`
+- Ghi chu:
+  - `isRowReadOnly` cu: khi `assignedTo = null` thi member van edit duoc (SAI). Fix: member PHAI duoc gan ro rang (`assignedTo === userId`) moi edit duoc.
+  - Checkbox Y/C Giai trinh chua bi disabled boi isRowReadOnly — da fix, gio bi locked cung voi input diem.
+  - Backend `sendJustificationRequest`: khi doc `criteriaSubmissions` chua ton tai thi skip im lang → member bao loi. Fix: tao doc moi bang `batch.set()` thay vi skip.
+
 ## [BUG-020] Member khong the cham diem / gui giai trinh tren CriteriaOverviewPage
 - Trang thai: `fixed`
 - Vi tri:
@@ -35,6 +46,7 @@ Trang thai:
   - `sendJustificationRequest` va `gradeCriteriaSubmission` hardcode `'admin'` lam nguoi thuc hien.
   - Them `useAuth` de lay `userProfile`, truyen `userProfile.id` thay vi `'admin'`.
   - Them `isRowReadOnly()` vao OverviewPage de member chi cham tieu chi duoc phan cong (`assignedTo === userId`), admin cham het.
+  - Xem them BUG-021 cho fix bo sung logic isRowReadOnly va backend.
 
 ## [BUG-019] Notification van la fire-and-forget
 - Trang thai: `fixed`
@@ -141,8 +153,8 @@ Trang thai:
 | Muc | So luong |
 |---|---:|
 | Open (medium) | 1 |
-| Fixed (da verify) | 14 |
+| Fixed (da verify) | 15 |
 
 Ghi chu:
 - BUG-018 la bug duy nhat con open — can them logic xoa penalty khi restore task.
-- BUG-020 (NEW) da fix — member gio co the cham diem va gui giai trinh cho tieu chi duoc phan cong.
+- BUG-021 (NEW) da fix — isRowReadOnly enforce explicit assignedTo, backend tao doc khi chua ton tai.
