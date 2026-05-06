@@ -13,6 +13,8 @@ Implement multi-wave justification workflow: floating control bar, DatePicker de
 - CriteriaDetailPage: Justification checkbox (selection-based), DatePicker floating bar, deadline column voi badge "Het han".
 - UnitSubmitPage: "Thoi han GT" column, auto-lock textarea khi qua deadline, placeholder doi thanh "Het han giai trinh".
 - Filter tab Giai trinh: Chi hien muc co `justificationDeadline` (admin da gui yeu cau), khong con dung `requireJustification`.
+- Fix UnitSubmissionsList: Tab-aware — Giai trinh tab chi hien criteria sets co yeu cau GT, khac bieu tuong/mau sac, link truyen ?tab=giaiTrinh sang detail page.
+- Fix UnitSubmitPage: Nut back giu nguyen tab context, badge count dung justificationDeadline.
 - Install `react-datepicker` dependency.
 - Build thanh cong, push code len main.
 

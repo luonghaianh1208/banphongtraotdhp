@@ -70,7 +70,7 @@ const UnitPlanDetail = () => {
             await createOrUpdateContestEntry(
                 planId,
                 userProfile.id,
-                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
+                { unitName: userProfile.unitName || userProfile.displayName || 'Chưa cập nhật', unitCode: userProfile.unitCode || '' },
                 docsData
             );
             toast.success('Đã lưu bản nháp thành công!');
@@ -99,7 +99,7 @@ const UnitPlanDetail = () => {
             await createOrUpdateContestEntry(
                 planId,
                 userProfile.id,
-                { unitName: userProfile.unitName, unitCode: userProfile.unitCode },
+                { unitName: userProfile.unitName || userProfile.displayName || 'Chưa cập nhật', unitCode: userProfile.unitCode || '' },
                 docsData
             );
 
