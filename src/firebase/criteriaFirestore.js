@@ -255,10 +255,11 @@ export const createOrUpdateContestEntry = async (planId, unitId, unitData, docsD
 
     if (!snap.empty) {
         const docRef = snap.docs[0].ref;
-        return updateDoc(docRef, {
+        await updateDoc(docRef, {
             docs: docsData,
             lastEditedAt: serverTimestamp()
         });
+        return docRef.id;
     } else {
         // Tạo mới
         const data = {
@@ -273,7 +274,8 @@ export const createOrUpdateContestEntry = async (planId, unitId, unitData, docsD
             lastEditedAt: serverTimestamp(),
             createdAt: serverTimestamp()
         };
-        return addDoc(collection(db, 'contestEntries'), data);
+        const docRef = await addDoc(collection(db, 'contestEntries'), data);
+        return docRef.id;
     }
 };
 

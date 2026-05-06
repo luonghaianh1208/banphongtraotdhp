@@ -96,16 +96,16 @@ const UnitPlanDetail = () => {
         setSaving(true);
         try {
             // 1. Save một lần nữa để chắc chắn
-            await createOrUpdateContestEntry(
+            const currentEntryId = await createOrUpdateContestEntry(
                 planId,
                 userProfile.id,
                 { unitName: userProfile.unitName || userProfile.displayName || 'Chưa cập nhật', unitCode: userProfile.unitCode || '' },
                 docsData
             );
 
-            // 2. Submit (phải có entryId. Nếu chưa có là do hook chưa kịp cập nhật, ta cần đợi hoặc fallback)
-            if (entry?.id) {
-                await submitContestEntry(entry.id);
+            // 2. Submit (sử dụng currentEntryId được trả về)
+            if (currentEntryId) {
+                await submitContestEntry(currentEntryId);
                 toast.success('Đã nộp hồ sơ chính thức thành công!');
                 navigate('/unit/plans');
             } else {

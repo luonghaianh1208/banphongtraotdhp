@@ -1,230 +1,265 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
 import { useContestEntries } from '../../hooks/useContestEntries';
-import { updatePlan } from '../../firebase/criteriaFirestore';
+import { useUnits } from '../../hooks/useUnits';
+import { UNIT_BLOCKS } from '../../utils/constants';
+import EvidenceUpload from './EvidenceUpload';
 import {
-    MdArrowBack, MdInfo, MdAttachFile, MdPeople,
-    MdRateReview, MdCheckCircle, MdCancel, MdPending
+    MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
+    MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
+    MdAttachFile, MdFilterList
 } from 'react-icons/md';
 
 const PlanDetailPage = () => {
     const { planId } = useParams();
-    const navigate = useNavigate();
 
     const { plans, loading: plansLoading } = usePlans();
     const { entries, loading: entriesLoading } = useContestEntries(planId);
+    const { units, loading: unitsLoading } = useUnits();
 
     const [plan, setPlan] = useState(null);
-    const [reviewNote, setReviewNote] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (!plansLoading && plans.length > 0) {
             const p = plans.find(x => x.id === planId);
             setPlan(p);
-            if (p && p.reviewNote) setReviewNote(p.reviewNote);
         }
     }, [plans, planId, plansLoading]);
 
-    const handleUpdateStatus = async (newStatus) => {
-        if (!plan) return;
-        setIsSaving(true);
-        try {
-            await updatePlan(plan.id, {
-                status: newStatus,
-                reviewNote: reviewNote,
-                reviewedAt: new Date().toISOString()
-            });
-            toast.success(`Đã cập nhật trạng thái: ${newStatus === 'reviewed' ? 'Đã duyệt' : 'Cần sửa'}`);
-            navigate('/plans-manage');
-        } catch (err) {
-            console.error(err);
-            toast.error('Lỗi cập nhật');
-        } finally {
-            setIsSaving(false);
-        }
+    const combinedUnitEntries = useMemo(() => {
+        if (!units || !entries) return [];
+        return units.map(unit => {
+            const existingEntry = entries.find(e => e.unitId === unit.id);
+            if (existingEntry) {
+                return {
+                    ...existingEntry,
+                    unitName: existingEntry.unitName || unit.unitName || unit.name || 'Không rõ'
+                };
+            }
+            return {
+                id: `not_started_${unit.id}`,
+                unitId: unit.id,
+                unitName: unit.unitName || unit.name || 'Không rõ',
+                status: 'not_started',
+                docs: [],
+                createdAt: null,
+                submittedAt: null,
+                lastEditedAt: null
+            };
+        });
+    }, [units, entries]);
+
+    const stats = useMemo(() => {
+        const submitted = combinedUnitEntries.filter(e => e.status === 'submitted').length;
+        const draft = combinedUnitEntries.filter(e => e.status === 'draft').length;
+        const notStarted = combinedUnitEntries.filter(e => e.status === 'not_started').length;
+        return { submitted, draft, notStarted, total: combinedUnitEntries.length };
+    }, [combinedUnitEntries]);
+
+    const getBlockLabel = (p) => {
+        if (!p?.targetBlocks?.length) return 'Tất cả đơn vị';
+        const names = p.targetBlocks.map(bId => UNIT_BLOCKS.find(b => b.id === bId)?.name || bId);
+        return names.join(', ');
     };
 
-    if (plansLoading || entriesLoading || !plan) {
+    const formatTimestamp = (ts) => {
+        if (!ts) return '—';
+        if (ts.seconds) return new Date(ts.seconds * 1000).toLocaleString('vi-VN');
+        if (ts instanceof Date) return ts.toLocaleString('vi-VN');
+        return String(ts);
+    };
+
+    if (plansLoading || entriesLoading || unitsLoading || !plan) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+                <div className="relative w-12 h-12">
+                    <div className="absolute inset-0 border-4 border-emerald-200 dark:border-emerald-900/30 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
             </div>
         );
     }
 
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'reviewed': return <MdCheckCircle className="mr-1" />;
-            case 'rejected': return <MdCancel className="mr-1" />;
-            case 'submitted': return <MdPending className="mr-1" />;
-            default: return <MdInfo className="mr-1" />;
-        }
+    const statusMap = {
+        draft: { label: 'Bản nháp', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+        published: { label: 'Đã gửi cho đơn vị', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
+        active: { label: 'Đang mở', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
+        closed: { label: 'Đã đóng', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
     };
 
+    const planStatus = statusMap[plan.status] || statusMap.draft;
+
     return (
-        <div className="max-w-5xl mx-auto pb-12 px-4">
-            <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div className="space-y-6 pb-12">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div className="space-y-2">
-                    <Link to="/plans-manage" className="flex items-center text-emerald-600 dark:text-emerald-400 font-bold hover:underline mb-2 transition-all">
+                    <Link to="/plans-manage" className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold hover:underline transition-all text-sm">
                         <MdArrowBack className="mr-1" /> Quay lại danh sách
                     </Link>
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight uppercase leading-tight">
-                        {plan.title}
-                    </h2>
-                    <div className="flex items-center gap-3">
-                        <span className="badge badge-emerald">
-                            {plan.category}
-                        </span>
-                        <span className={`flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-sm ${plan.status === 'reviewed' ? 'bg-emerald-500 text-white' :
-                                plan.status === 'rejected' ? 'bg-red-500 text-white' :
-                                    plan.status === 'submitted' ? 'bg-blue-500 text-white' :
-                                        'bg-gray-500 text-white'
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{plan.title}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className={`badge ${plan.type === 'contest'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                            : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
                             }`}>
-                            {getStatusIcon(plan.status)}
-                            {plan.status === 'reviewed' ? 'Đã duyệt' :
-                                plan.status === 'rejected' ? 'Cần sửa' :
-                                    plan.status === 'submitted' ? 'Chờ duyệt' : 'Nháp'}
+                            {plan.type === 'contest' ? 'Hội thi' : 'Kế hoạch'}
                         </span>
+                        <span className={`badge ${planStatus.color}`}>{planStatus.label}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content Column */}
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="card glass-morphism overflow-hidden">
-                        <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center">
-                                <MdInfo className="mr-2" size={20} /> Nội dung kế hoạch
-                            </h3>
-                        </div>
-                        <div className="p-6">
-                            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed font-medium">
-                                {plan.description || <span className="italic text-gray-400">Không có mô tả chi tiết.</span>}
-                            </div>
+            {/* Info Cards Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="card p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                        <MdPeople size={22} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đối tượng</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white truncate max-w-[140px]" title={getBlockLabel(plan)}>{getBlockLabel(plan)}</p>
+                    </div>
+                </div>
+                <div className="card p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <MdCalendarToday size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hạn nộp</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                            {plan.submissionDeadline ? new Date(plan.submissionDeadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+                        </p>
+                    </div>
+                </div>
+                <div className="card p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <MdCheckCircle size={22} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đã nộp</p>
+                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{stats.submitted} / {stats.total}</p>
+                    </div>
+                </div>
+                <div className="card p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                        <MdHourglassEmpty size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Chưa nộp</p>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{stats.notStarted + stats.draft}</p>
+                    </div>
+                </div>
+            </div>
 
-                            {plan.files && plan.files.length > 0 && (
-                                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
-                                        <MdAttachFile className="mr-1" size={16} /> Tài liệu đính kèm
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {plan.files.map((file, idx) => (
-                                            <a
-                                                key={idx}
-                                                href={file.url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-gray-100 dark:border-gray-800 rounded-xl transition-all group"
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mr-3 group-hover:scale-110 transition-transform">
-                                                    <MdAttachFile size={18} />
-                                                </div>
-                                                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 truncate">
-                                                    {file.name}
-                                                </span>
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+            {/* Plan Content */}
+            <div className="card overflow-hidden">
+                <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center gap-2">
+                    <MdInfo size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Nội dung kế hoạch & Yêu cầu hồ sơ</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                        {plan.description || <span className="italic text-slate-400">Không có mô tả chi tiết.</span>}
                     </div>
 
-                    {plan.category === 'Hội thi' && (
-                        <div className="card glass-morphism overflow-hidden">
-                            <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center justify-between">
-                                <h3 className="text-lg font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center">
-                                    <MdPeople className="mr-2" size={20} /> Danh sách thí sinh ({entries.length})
-                                </h3>
-                            </div>
-
-                            <div className="p-0 overflow-x-auto">
-                                {entries.length > 0 ? (
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-gray-50/50 dark:bg-gray-800/30">
-                                                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Họ và tên</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Chi đội / Lớp</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Ngày sinh</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Ghi chú</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                            {entries.map(entry => (
-                                                <tr key={entry.id} className="hover:bg-emerald-50/5 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900 dark:text-gray-100">{entry.fullName}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{entry.classOrBranch}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{entry.dob}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 italic">{entry.note || '-'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                ) : (
-                                    <div className="py-12 text-center">
-                                        <MdPeople size={48} className="mx-auto text-gray-200 dark:text-gray-700 mb-3" />
-                                        <p className="text-gray-400 font-medium font-italic">Chưa có danh sách đăng ký dự thi</p>
-                                    </div>
-                                )}
+                    {/* Tài liệu đính kèm từ cấp trên */}
+                    {plan.attachments && plan.attachments.length > 0 && (
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                <MdAttachFile size={14} /> Tài liệu đính kèm ({plan.attachments.length})
+                            </h4>
+                            <div className="bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3">
+                                <EvidenceUpload files={plan.attachments} onChange={() => {}} readOnly />
                             </div>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Sidebar Column: Review Form */}
-                <div className="lg:col-span-1">
-                    <div className="card glass-morphism sticky top-24 overflow-hidden border-emerald-500/20 shadow-2xl shadow-emerald-500/10">
-                        <div className="bg-emerald-600 px-6 py-4 text-white">
-                            <h3 className="text-lg font-black uppercase tracking-wider flex items-center">
-                                <MdRateReview className="mr-2" size={20} /> Phê duyệt & Đánh giá
-                            </h3>
-                        </div>
+            {/* Unit Submissions Table — Excel style */}
+            <div className="card overflow-hidden">
+                <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center justify-between">
+                    <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+                        <MdFilterList size={20} /> Danh sách đơn vị nộp hồ sơ
+                    </h3>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {stats.submitted}/{stats.total} đã nộp
+                    </span>
+                </div>
 
-                        <div className="p-6 space-y-6">
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3 ml-1">
-                                    Nhận xét / Yêu cầu sửa đổi
-                                </label>
-                                <textarea
-                                    rows="6"
-                                    value={reviewNote}
-                                    onChange={e => setReviewNote(e.target.value)}
-                                    className="input w-full p-4 text-sm font-medium leading-relaxed resize-none"
-                                    placeholder="Ghi chú phản hồi cho cơ sở nếu cần sửa đổi nội dung..."
-                                ></textarea>
-                            </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse" style={{ minWidth: '700px' }}>
+                        <thead>
+                            <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12 text-center">STT</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đơn vị</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center w-32">Trạng thái</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-44">Ngày nộp</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ minWidth: '220px' }}>Hồ sơ đính kèm</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {combinedUnitEntries.map((entry, idx) => {
+                                const timeToUse = entry.submittedAt || entry.lastEditedAt || entry.createdAt;
+                                const timeString = formatTimestamp(timeToUse);
 
-                            <div className="space-y-3 pt-2">
-                                <button
-                                    onClick={() => handleUpdateStatus('reviewed')}
-                                    disabled={isSaving}
-                                    className="btn btn-primary w-full py-4 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                                >
-                                    <MdCheckCircle size={22} />
-                                    {isSaving ? 'Đang xử lý...' : 'Duyệt & Chấp nhận'}
-                                </button>
-
-                                <button
-                                    onClick={() => handleUpdateStatus('rejected')}
-                                    disabled={isSaving}
-                                    className="w-full py-4 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] border border-red-100 dark:border-red-900/20"
-                                >
-                                    <MdCancel size={20} />
-                                    Từ chối / Yêu cầu sửa
-                                </button>
-                            </div>
-
-                            <div className="pt-2">
-                                <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-tighter">
-                                    Thao tác này sẽ cập nhật trạng thái ngay lập tức
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                                return (
+                                    <tr key={entry.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center font-medium">{idx + 1}</td>
+                                        <td className="px-4 py-3">
+                                            <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{entry.unitName}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {entry.status === 'submitted' ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                    <MdCheckCircle size={14} /> Đã nộp
+                                                </span>
+                                            ) : entry.status === 'draft' ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                    <MdDraft size={14} /> Đang nháp
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                    <MdHourglassEmpty size={14} /> Chưa nộp
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{timeString}</td>
+                                        <td className="px-4 py-3">
+                                            {entry.docs && entry.docs.length > 0 ? (
+                                                <div className="flex flex-col gap-1">
+                                                    {entry.docs.map((doc, i) => (
+                                                        <a
+                                                            key={i}
+                                                            href={doc.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline transition-colors"
+                                                        >
+                                                            <MdAttachFile size={14} className="flex-shrink-0" />
+                                                            <span className="truncate max-w-[200px]">{doc.name || `Tệp ${i + 1}`}</span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 italic">Chưa có hồ sơ</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {combinedUnitEntries.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center">
+                                        <MdPeople size={48} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
+                                        <p className="text-slate-400 font-medium">Chưa có đơn vị nào trong hệ thống</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

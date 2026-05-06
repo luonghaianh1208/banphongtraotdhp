@@ -6,7 +6,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 - [ ] Sua BUG-002: Google login khong duoc tu approve user noi bo moi
 - [ ] Sua BUG-005 + BUG-014: dong bo shape profile unit va fix logout trong Unit portal
-- [ ] Sua BUG-017: thong nhat field cua plan detail (`type` / `attachments` / `contestEntries`)
+- [x] Sua BUG-017: thong nhat field cua plan detail (`type` / `attachments` / `contestEntries`) - 2026-05-06
 - [ ] Sua BUG-018: restore task can xu ly penalty lien quan
 - [ ] Sua BUG-019: thong bao can co co che bao loi ro hon thay vi fire-and-forget
 
@@ -18,6 +18,7 @@ Cap nhat lan cuoi: 2026-05-05
 
 ## Da hoan thanh
 
+- [x] Refactor module Ke hoach: fix link dieu huong, them upload file vao form tao KH, bang Excel full-width theo doi nop ho so - 2026-05-06
 - [x] Implement multi-wave justification workflow: floating bar + DatePicker deadline + auto-lock expired + deadline column across all 3 pages - 2026-05-06
 - [x] Dong bo Excel template/import/export (xoa STT, doi Khung diem -> Diem toi da, 8 cot) + them checkbox Y/C Giai trinh vao CriteriaOverviewPage - 2026-05-06
 - [x] Dong bo CriteriaOverviewPage + CriteriaDetailPage du 14 cot giong UnitSubmitPage (xoa STT, doi ten Max/YC/Diem, them cot Danh gia/Giai trinh/Diem sau GT) - 2026-05-06

@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026-05-06 PM8] - Refactor module Ke hoach: workflow hoan chinh
+
+### Da sua
+- **PlansManagePage.jsx**: Fix link sai `/admin/plans/${id}` thanh `/plans/${id}` (BUG-017 link regression). Them `EvidenceUpload` vao modal tao ke hoach de cap tren upload tai lieu dinh kem + dan link Drive. Doi label "Mo ta ngan gon" thanh "Yeu cau cu the ve ho so".
+- **PlanDetailPage.jsx**: Rewrite toan bo — bo sidebar review, chuyen sang layout full-width. Phan tren: noi dung ke hoach + tai lieu dinh kem (EvidenceUpload readOnly). Phan duoi: bang Excel danh sach don vi nop ho so (STT, Don vi, Trang thai, Ngay nop, Ho so dinh kem click-to-download).
+
+### File bi anh huong
+- `src/components/criteria/PlansManagePage.jsx`
+- `src/components/criteria/PlanDetailPage.jsx`
+
+## [2026-05-06 PM7] - Fix BUG-017 Admin Plan Detail
+
+### Da sua
+- **criteriaFirestore.js**: Ham `createOrUpdateContestEntry` tra ve `entryId` truc tiep thay vi promise ngam de giup UI capture id tuc thi.
+- **UnitPlanDetail.jsx**: Cap nhat luong submit de dung ID truc tiep, tranh tinh trang click luu sau do click nop thi bao loi document thieu ID.
+- **PlanDetailPage.jsx**: Dung `useUnits` va `useMemo` de cross-check danh sach entries voi tong danh sach tat ca don vi, hien thi duoc tat ca don vi kem trang thai "Chua nop", "Dang nhap" hoac "Da nop". Dong thoi doc dung array `docs` thay vi dung logic participants cu de tranh bang rong.
+
+### File bi anh huong
+- `src/firebase/criteriaFirestore.js`
+- `src/components/unit/UnitPlanDetail.jsx`
+- `src/components/criteria/PlanDetailPage.jsx`
+
 ## [2026-05-06 PM6] - Multi-wave Justification Workflow
 
 ### Them moi

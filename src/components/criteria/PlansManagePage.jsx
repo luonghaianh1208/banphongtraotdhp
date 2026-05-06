@@ -6,6 +6,7 @@ import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
 import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
+import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
 import { getVietnameseError } from '../../utils/errorUtils';
 
@@ -23,7 +24,7 @@ const PlansManagePage = () => {
 
     const [formData, setFormData] = useState({
         title: '', type: 'plan', description: '', submissionDeadline: '',
-        targetBlocks: [], targetTypes: [],
+        targetBlocks: [], targetTypes: [], attachments: [],
     });
 
     const loading = plansLoading || unitsLoading;
@@ -75,11 +76,12 @@ const PlansManagePage = () => {
                 submissionDeadline: formData.submissionDeadline || null,
                 targetBlocks: formData.targetBlocks,
                 targetTypes: formData.targetTypes,
+                attachments: formData.attachments,
                 status: 'draft',
             });
             toast.success('Tạo kế hoạch thành công!');
             setShowAddModal(false);
-            setFormData({ title: '', type: 'plan', description: '', submissionDeadline: '', targetBlocks: [], targetTypes: [] });
+            setFormData({ title: '', type: 'plan', description: '', submissionDeadline: '', targetBlocks: [], targetTypes: [], attachments: [] });
         } catch (err) {
             toast.error('Lỗi: ' + err.message);
         } finally {
@@ -296,9 +298,9 @@ const PlansManagePage = () => {
                                                     <MdEdit size={20} />
                                                 </button>
                                                 <Link
-                                                    to={`/admin/plans/${plan.id}`}
+                                                    to={`/plans/${plan.id}`}
                                                     className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg"
-                                                    title="Chủ sở hữu & Chỉ tiêu"
+                                                    title="Xem chi tiết & theo dõi nộp"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -388,14 +390,27 @@ const PlansManagePage = () => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Mô tả ngắn gọn</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Yêu cầu cụ thể về hồ sơ</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
                                     className="input w-full min-h-[100px] py-3"
-                                    placeholder="Điền một vài thông tin mô tả về kế hoạch..."
+                                    placeholder="Mô tả yêu cầu chi tiết về hồ sơ mà đơn vị cần nộp..."
                                     rows={3}
                                 />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Tài liệu đính kèm</label>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-2 px-1">
+                                    Upload file hoặc dán link Drive liên quan đến kế hoạch
+                                </p>
+                                <div className="glass border border-slate-200/50 dark:border-slate-800 rounded-2xl p-4">
+                                    <EvidenceUpload
+                                        files={formData.attachments}
+                                        onChange={(newFiles) => setFormData(p => ({ ...p, attachments: newFiles }))}
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">

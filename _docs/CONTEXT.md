@@ -4,42 +4,33 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Muc tieu session
 
-Implement multi-wave justification workflow: floating control bar, DatePicker deadline, auto-lock on expiry, deadline column across Admin + Unit portals.
+Refactor module Ke hoach: fix bug dieu huong, nang cap form tao KH voi upload file, chuyen trang chi tiet sang bang Excel full-width.
 
 ## Da lam trong session nay
 
-- Them `sendJustificationRequest()` vao criteriaFirestore.js — batch write justification requests across multiple units.
-- CriteriaOverviewPage: Floating justification bar voi DatePicker, cross-unit selection tracking, "Thoi han GT" column.
-- CriteriaDetailPage: Justification checkbox (selection-based), DatePicker floating bar, deadline column voi badge "Het han".
-- UnitSubmitPage: "Thoi han GT" column, auto-lock textarea khi qua deadline, placeholder doi thanh "Het han giai trinh".
-- Filter tab Giai trinh: Chi hien muc co `justificationDeadline` (admin da gui yeu cau), khong con dung `requireJustification`.
-- Fix UnitSubmissionsList: Tab-aware — Giai trinh tab chi hien criteria sets co yeu cau GT, khac bieu tuong/mau sac, link truyen ?tab=giaiTrinh sang detail page.
-- Fix UnitSubmitPage: Nut back giu nguyen tab context, badge count dung justificationDeadline.
-- Install `react-datepicker` dependency.
-- Build thanh cong, push code len main.
+- Fix link sai `/admin/plans/${id}` thanh `/plans/${id}` trong PlansManagePage — click nut xem chi tiet gio vao dung PlanDetailPage.
+- Them EvidenceUpload vao modal tao ke hoach: cap tren co the upload file + dan link Drive khi tao ke hoach.
+- Doi label "Mo ta ngan gon" thanh "Yeu cau cu the ve ho so" cho ro rang.
+- Rewrite PlanDetailPage: bo sidebar review, thay bang layout 2 phan — noi dung ke hoach + bang danh sach don vi nop (kieu Excel).
+- Bang Excel gom: STT, Don vi, Trang thai (Da nop/Dang nhap/Chua nop), Ngay nop, Ho so dinh kem (click xem/tai).
+- Build thanh cong, khong loi.
 
 ## Ket qua quan trong
 
-- Admin co the batch-send justification requests voi deadline cho nhieu don vi cung luc.
-- Co so chi thay muc giai trinh khi admin da gui yeu cau (co deadline).
-- Textarea tu dong khoa khi qua han, van xem duoc noi dung cu nhung khong sua duoc.
-- Moi dot giai trinh co deadline rieng — ho tro multi-wave.
+- Workflow Ke hoach day du 2 chieu: Cap tren tao & gui → Co so nhan & nop → Cap tren theo doi.
+- EvidenceUpload duoc tai su dung (khong tao component moi).
+- Firestore function `createPlan` khong can sua (da spread data → field `attachments` tu dong duoc luu).
 
 ## Quyet dinh ky thuat da chot
 
-- Justification dung `justificationDeadline` (date string) thay vi boolean `requireJustification`.
-- Batch operation dung Firestore `writeBatch` de dam bao atomic across nhieu units.
-- Deadline comparison dung `new Date().toDateString()` de so sanh theo ngay, khong tinh gio.
-- Floating bar xuat hien khi co selection, bien mat khi clear — khong can toggle.
-- react-datepicker thay vi native date input de UX dep hon.
+- Field tai lieu dinh kem dung ten `attachments` (array of objects) — dong bo voi UnitPlanDetail da doc san.
+- PlanDetailPage khong con co sidebar review vì ke hoach khong can phe duyet tung bai.
+- Bang don vi full-width co overflow-x-auto de responsive tren mobile.
 
 ## Nhung diem can nho neu tiep tuc session sau
 
-- Test toan bo luong: Admin tick chon → chon deadline → gui → Co so nhan tab Giai trinh → nhap giai trinh → gui → Admin xem.
-- Can test edge case: qua deadline roi thi co so khong nhap duoc nua.
-- Can test multi-wave: Admin gui dot 1 cho noi dung A, roi gui dot 2 cho noi dung B voi deadline khac.
+- Test toan bo luong: Cap tren tao KH voi file → Gui → Co so xem → Upload ho so → Nop → Cap tren thay trong bang.
 - Nen uu tien fix cac bug van con mo:
   1. BUG-002: pending approval bypass
   2. BUG-005 + BUG-014: unit portal shape profile va logout
-  3. BUG-017: plan detail field mismatch
-  4. BUG-018 / BUG-019: data integrity va notification reliability
+  3. BUG-018 / BUG-019: data integrity va notification reliability

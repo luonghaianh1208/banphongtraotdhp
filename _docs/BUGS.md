@@ -67,19 +67,6 @@ Trang thai:
   - App khong import, khong khai bao route, khong co menu dan vao.
   - `_docs` truoc day co ghi nhan module nay nhu dang hoat dong, nhung hien tai no la orphan screen.
 
-## [BUG-017] Admin plan detail doc sai field va co the hien thi rong
-- Trang thai: `open`
-- Muc do: `medium`
-- Vi tri:
-  - `src/components/criteria/PlanDetailPage.jsx`
-  - `src/components/unit/UnitPlanDetail.jsx`
-  - `src/firebase/criteriaFirestore.js`
-- Mo ta:
-  - `PlanDetailPage` doc `plan.category` va `plan.files`.
-  - Flow tao/sua plan hien tai dung `type`, va unit detail lai doc `plan.attachments`.
-  - Contest entry hien duoc luu thanh `docs` trong `contestEntries`, khong phai cac field participant ma `PlanDetailPage` dang render.
-  - He qua: man hinh admin detail co the hien sai badge, sai tep dinh kem, hoac bang du lieu rong.
-
 ## [BUG-018] Restore task khong xu ly penalty lien quan
 - Trang thai: `open`
 - Muc do: `medium`
@@ -103,6 +90,16 @@ Trang thai:
 ---
 
 ## Da verify da fix
+
+## [BUG-017] Admin plan detail doc sai field va co the hien thi rong
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/criteria/PlanDetailPage.jsx`
+  - `src/components/unit/UnitPlanDetail.jsx`
+  - `src/firebase/criteriaFirestore.js`
+- Ghi chu:
+  - Dong bo field du lieu (type, attachments), them `useUnits` vao PlanDetailPage de hien thi toan bo don vi (Da nop, Chua nop).
+  - Tra truc tiep `entryId` khi submit de tranh sync state tre tren UI co so.
 
 ## [BUG-001] Race condition tao admin dau tien
 - Trang thai: `fixed`
@@ -154,8 +151,8 @@ Trang thai:
 
 | Muc | So luong |
 |---|---:|
-| Open | 8 |
-| Fixed (da verify) | 6 |
+| Open | 7 |
+| Fixed (da verify) | 7 |
 
 Ghi chu:
 - Tai lieu cu danh dau "13/13 bugs fixed" khong con phu hop voi code hien tai.
