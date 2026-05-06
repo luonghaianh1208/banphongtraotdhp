@@ -5,13 +5,14 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import WhatsNewModal from '../common/WhatsNewModal';
 import { useAutoOverduePenalties } from '../../hooks/useAutoOverduePenalties';
+import usePresence from '../../hooks/usePresence';
 
 // Map route → tên trang hiển thị
 const PAGE_TITLES = {
   '/': 'Việc hôm nay',
   '/tasks': 'Tất cả công việc',
   '/dashboard': 'Dashboard tổng quan',
-  '/members': 'Quản lý thành viên',
+  '/members': 'Thành viên',
   '/settings': 'Cài đặt',
   '/system-info': 'Thông tin hệ thống',
   '/criteria-sets': 'Quản lý Bộ tiêu chí',
@@ -26,6 +27,9 @@ const MainLayout = () => {
 
   // Tự động kiểm tra task quá hạn và tạo phiếu phạt (chỉ chạy khi admin đăng nhập)
   useAutoOverduePenalties();
+
+  // Track trạng thái online của user (cập nhật lastActiveAt mỗi phút)
+  usePresence();
 
   const location = useLocation();
 

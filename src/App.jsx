@@ -106,7 +106,7 @@ const AppRoutes = () => {
           <ProtectedRoute roles={['admin', 'manager']}><DashboardPage /></ProtectedRoute>
         } />
         <Route path="members" element={
-          <ProtectedRoute roles={['admin']}><MembersPage /></ProtectedRoute>
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><MembersPage /></ProtectedRoute>
         } />
         <Route path="trash" element={
           <ProtectedRoute roles={['admin']}><TrashPage /></ProtectedRoute>
