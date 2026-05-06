@@ -85,13 +85,7 @@ const WeeklyCalendar = ({
   const totalWeekTasks = Object.values(tByDay).reduce((s, a) => s + a.length, 0);
   const totalPersonal = Object.values(personalByDay).reduce((s, a) => s + a.length, 0);
 
-  if (totalWeekTasks === 0 && totalPersonal === 0) {
-    return (
-      <div className="py-12 glass-card">
-        <EmptyState icon={MdDateRange} title="Tuần này rảnh rang!" message="Không có công việc nào. Click vào ô ngày để thêm việc cá nhân." />
-      </div>
-    );
-  }
+  // Always render grid so user can add personal tasks
 
   return (
     <div>
