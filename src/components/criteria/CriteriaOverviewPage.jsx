@@ -7,12 +7,14 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useSetAssignments } from '../../hooks/useAssignments';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
+import { useAuth } from '../../context/AuthContext';
 import { subscribeToAllCriteriaSubmissions, gradeCriteriaSubmission, sendJustificationRequest } from '../../firebase/criteriaFirestore';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 
 const CriteriaOverviewPage = () => {
     const { criteriaSetId } = useParams();
     const navigate = useNavigate();
+    const { userProfile } = useAuth();
     const { criteriaSets } = useCriteriaSets();
     const { assignments } = useSetAssignments(criteriaSetId);
     const [submissions, setSubmissions] = useState([]);
@@ -52,7 +54,7 @@ const CriteriaOverviewPage = () => {
                 selectionsByUnit[unitId] = [...mucSet];
             }
             const deadlineStr = justificationDeadline.toISOString().split('T')[0];
-            await sendJustificationRequest(criteriaSetId, selectionsByUnit, deadlineStr, 'admin');
+            await sendJustificationRequest(criteriaSetId, selectionsByUnit, deadlineStr, userProfile?.id || 'admin');
             toast.success(`Đã gửi yêu cầu giải trình cho ${totalJustificationUnits} đơn vị!`);
             setJustificationSelections({});
             setJustificationDeadline(null);
@@ -66,6 +68,14 @@ const CriteriaOverviewPage = () => {
 
     const criteriaSet = criteriaSets.find((s) => s.id === criteriaSetId);
     const tableRows = buildCriteriaTableRows(criteriaSet);
+
+    // Row-level permission: members can only score criteria assigned to them
+    const isRowReadOnly = (row) => {
+        if (userProfile?.role === 'admin') return false;
+        const tc = criteriaSet?.tieuChi?.find(t => t.id === row.tcId) || criteriaSet?.groups?.find(t => t.id === row.tcId);
+        if (tc && tc.assignedTo && tc.assignedTo !== userProfile?.id) return true;
+        return false;
+    };
 
     useEffect(() => {
         if (!criteriaSetId) return;
@@ -138,7 +148,7 @@ const CriteriaOverviewPage = () => {
     const handleGrade = async (submissionId) => {
         setIsSavingGrade(true);
         try {
-            await gradeCriteriaSubmission(submissionId, gradedScores, gradedComment, 'admin');
+            await gradeCriteriaSubmission(submissionId, gradedScores, gradedComment, userProfile?.id || 'admin');
             toast.success('Đã lưu thẩm định!');
             setGradingUnit(null);
             setGradedScores({});
@@ -289,6 +299,7 @@ const CriteriaOverviewPage = () => {
                                                     const evidenceFiles = res.evidenceFiles || [];
                                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
+                                                    const locked = isRowReadOnly(row);
 
                                                     return (
                                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
@@ -369,7 +380,8 @@ const CriteriaOverviewPage = () => {
                                                                     step="0.5"
                                                                     value={getOfficialScoreValue(gradedScores[row.id])}
                                                                     onChange={(e) => handleGradedScoreChange(row.id, e.target.value)}
-                                                                    className="input w-16 text-center font-black text-emerald-600 dark:text-emerald-400 mx-auto block"
+                                                                    disabled={locked}
+                                                                    className={`input w-16 text-center font-black text-emerald-600 dark:text-emerald-400 mx-auto block ${locked ? 'opacity-70 bg-gray-100' : ''}`}
                                                                     placeholder="0"
                                                                 />
                                                             </td>
@@ -423,7 +435,8 @@ const CriteriaOverviewPage = () => {
                                                                             return { ...prev, [row.id]: { officialScore: '', feedback: '', afterJustificationScore: e.target.value } };
                                                                         });
                                                                     }}
-                                                                    className="input w-16 text-center font-black text-blue-600 dark:text-blue-400 mx-auto block"
+                                                                    disabled={locked}
+                                                                    className={`input w-16 text-center font-black text-blue-600 dark:text-blue-400 mx-auto block ${locked ? 'opacity-70 bg-gray-100' : ''}`}
                                                                     placeholder="0"
                                                                 />
                                                             </td>
@@ -432,8 +445,9 @@ const CriteriaOverviewPage = () => {
                                                                 <textarea
                                                                     value={getFeedbackValue(gradedScores[row.id])}
                                                                     onChange={(e) => handleFeedbackChange(row.id, e.target.value)}
+                                                                    disabled={locked}
                                                                     rows={2}
-                                                                    className="input min-w-[140px] w-full text-xs resize-none"
+                                                                    className={`input min-w-[140px] w-full text-xs resize-none ${locked ? 'opacity-70 bg-gray-100' : ''}`}
                                                                     placeholder="Nhận xét..."
                                                                 />
                                                             </td>

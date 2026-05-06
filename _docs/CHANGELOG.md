@@ -1,5 +1,49 @@
 # Changelog
 
+## [2026-05-06 PM12] - Criteria Scoring & Authorization Fixes
+
+### Da sua (Bug Fixes)
+- **BUG-020 (NEW)**: Member duoc phan cong tieu chi gio co the cham diem va gui yeu cau giai trinh. Truoc do `sendJustificationRequest` va `gradeCriteriaSubmission` hardcode `'admin'` → thay bang `userProfile.id` dong.
+- **BUG-020 (OverviewPage)**: Them `isRowReadOnly()` — member chi cham tieu chi co `assignedTo === userId`, admin cham het. Input diem va nhan xet bi disabled cho tieu chi khong duoc phan cong.
+- **BUG-019**: `addNotification()` rethrow error thay vi nuot im. Caller gio biet khi notification that bai.
+- **BUG-014**: Nut dang xuat Unit portal da hoat dong (logout expose trong AuthContext).
+- **BUG-002**: Google login tao user `status: 'pending'`, `isActive: false`.
+- **BUG-005**: Cleanup fallback `unitId` khong ton tai.
+
+### Da xoa (Dead Code)
+- **BUG-015**: Xoa `src/hooks/useSubmissions.js` (hook import API khong ton tai).
+- **BUG-016**: Xoa `src/components/criteria/PeriodsManagePage.jsx` (orphan screen).
+
+### File bi anh huong
+- `src/components/criteria/CriteriaOverviewPage.jsx` - Them useAuth, isRowReadOnly, dynamic userId
+- `src/components/criteria/CriteriaDetailPage.jsx` - Dynamic userId cho justification va grading
+- `src/firebase/firestore.js` - addNotification rethrow error
+- `src/context/AuthContext.jsx` - Expose logout
+- `src/firebase/auth.js` - User creation: pending + inactive
+
+---
+
+## [2026-05-06 PM11] - Personal Tasks + Month View on Calendar
+
+### Da them
+- **Personal Tasks**: Member tu them viec ca nhan vao thoi khoa bieu (click vao o ngay → popup nhap tieu de, gio, ghi chu). Viec ca nhan chi member tu thay, khong anh huong den admin/member khac. Phan biet truc quan: viec duoc giao (emerald) vs viec ca nhan (sky blue).
+- **Month View**: Toggle xem theo tuan hoac thang. Thang hien calendar grid kieu Notion.
+- **Auto Cleanup**: Personal tasks qua 30 ngay tu dong bi xoa.
+
+### File moi
+- `src/components/calendar/WeeklyCalendar.jsx` - Calendar component (week + month)
+- `src/components/calendar/MiniTaskCard.jsx` - The cong viec nho
+- `src/components/calendar/PersonalTaskItem.jsx` - The viec ca nhan
+- `src/components/calendar/PersonalTaskPopup.jsx` - Popup them viec ca nhan
+- `src/hooks/usePersonalTasks.js` - Hook CRUD personal tasks
+
+### File bi anh huong
+- `src/pages/TodayPage.jsx` - Rewrite: tich hop personal tasks + month view
+- `src/firebase/firestore.js` - Them CRUD cho `users/{uid}/personalTasks`
+- `firestore.rules` - Them subcollection rules
+
+---
+
 ## [2026-05-06 PM10] - TodayPage: Weekly Timetable View
 
 ### Da thay doi

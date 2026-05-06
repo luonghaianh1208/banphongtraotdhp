@@ -9,7 +9,7 @@ import { db } from '../../firebase/config';
 
 const UnitSubmissionsList = () => {
     const { userProfile } = useAuth();
-    const unitId = userProfile?.id || userProfile?.unitId;
+    const unitId = userProfile?.id;
     const { assignments, loading } = useUnitAssignments(unitId);
     const { criteriaSets } = useCriteriaSets();
     const [searchParams] = useSearchParams();

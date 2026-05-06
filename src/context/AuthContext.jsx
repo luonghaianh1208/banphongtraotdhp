@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDocs, collection, query, where, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured } from '../firebase/config';
-import { getUserProfile } from '../firebase/auth';
+import { getUserProfile, logout } from '../firebase/auth';
 import { initFirstAdmin } from '../firebase/functions';
 
 const AuthContext = createContext(null);
@@ -151,6 +151,7 @@ export const AuthProvider = ({ children }) => {
     canManageUsers,
     setUserProfile,
     firebaseConfigured,
+    logout,
   };
 
   return (

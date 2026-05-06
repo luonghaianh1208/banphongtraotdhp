@@ -430,6 +430,7 @@ export const addNotification = async (userId, title, message, type = 'info', rel
     });
   } catch (error) {
     console.error('Lỗi tạo thông báo:', error);
+    throw error;
   }
 };
 

@@ -45,7 +45,7 @@ const CriteriaDetailPage = () => {
             const unitId = submission.unitId;
             const criteriaSetId = submission.criteriaSetId;
             const deadlineStr = jtDeadline.toISOString().split('T')[0];
-            await sendJustificationRequest(criteriaSetId, { [unitId]: [...jtSelections] }, deadlineStr, 'admin');
+            await sendJustificationRequest(criteriaSetId, { [unitId]: [...jtSelections] }, deadlineStr, userProfile?.id || 'admin');
             toast.success('Đã gửi yêu cầu giải trình!');
             setJtSelections(new Set()); setJtDeadline(null);
             const refreshed = await getCriteriaSubmission(submission.id);
@@ -114,7 +114,7 @@ const CriteriaDetailPage = () => {
                 submission.id,
                 gradeData,
                 generalComment,
-                userProfile?.id || 'admin_uid'
+                userProfile?.id || 'admin'
             );
             toast.success('Đã lưu điểm thẩm định thành công!');
             navigate(`/criteria-overview/${periodId}`);

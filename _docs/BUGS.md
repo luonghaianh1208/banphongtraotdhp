@@ -1,6 +1,6 @@
 # Bug Tracker - HubConnect
 
-Cap nhat lan cuoi: 2026-05-05
+Cap nhat lan cuoi: 2026-05-06
 
 Trang thai:
 - `open`: dang ton tai trong code hien tai
@@ -11,85 +11,74 @@ Trang thai:
 
 ## Dang mo
 
-## [BUG-002] Google login co the bypass pending approval
-- Trang thai: `open`
-- Muc do: `critical`
-- Vi tri:
-  - `src/firebase/auth.js`
-  - `src/context/AuthContext.jsx`
-- Mo ta:
-  - `loginWithGoogle()` tao document `users/{uid}` voi `isActive: true` va khong set `status`.
-  - `AuthContext` suy dien profile khong co `status` thanh `approved` neu `isActive !== false`.
-  - Ket qua: user noi bo dang nhap bang Google lan dau co the vao app ngay thay vi dung o `/pending`.
-
-## [BUG-005] `userProfile.unitId` van sai o mot phan module unit
-- Trang thai: `open`
-- Muc do: `high`
-- Vi tri:
-  - `src/components/unit/UnitDashboard.jsx`
-  - `src/components/unit/UnitSubmissionsList.jsx`
-  - mot phan dependency array trong `src/components/unit/UnitSubmitPage.jsx`
-- Mo ta:
-  - Profile unit duoc nap voi `id` la Firestore/Auth uid.
-  - Nhieu component van doc `userProfile.unitId`, nen `useUnitAssignments()` nhan `undefined`.
-  - Hieu ung: dashboard va danh sach submissions cua unit co nguy co khong load assignment duoc.
-
-## [BUG-014] Nut dang xuat trong Unit portal se loi runtime
-- Trang thai: `open`
-- Muc do: `high`
-- Vi tri:
-  - `src/components/unit/UnitLayout.jsx`
-  - `src/context/AuthContext.jsx`
-- Mo ta:
-  - `UnitLayout` destructure `logout` tu `useAuth()`.
-  - `AuthContext` hien khong expose `logout`.
-  - Khi bam dang xuat o portal unit, handler goi mot gia tri `undefined`.
-
-## [BUG-015] `useSubmissions` la hook vo hieu
-- Trang thai: `open`
-- Muc do: `medium`
-- Vi tri:
-  - `src/hooks/useSubmissions.js`
-  - `src/firebase/criteriaFirestore.js`
-- Mo ta:
-  - Hook import `subscribeToAllSubmissions` va `subscribeToUnitSubmission`.
-  - Hai API nay khong ton tai trong `criteriaFirestore`.
-  - Hook hien chua duoc dung o route chinh, nhung neu noi vao UI se loi ngay.
-
-## [BUG-016] `PeriodsManagePage` ton tai nhung khong route toi dau
-- Trang thai: `open`
-- Muc do: `medium`
-- Vi tri:
-  - `src/components/criteria/PeriodsManagePage.jsx`
-  - `src/App.jsx`
-- Mo ta:
-  - Page quan ly `submissionPeriods` van nam trong source.
-  - App khong import, khong khai bao route, khong co menu dan vao.
-  - `_docs` truoc day co ghi nhan module nay nhu dang hoat dong, nhung hien tai no la orphan screen.
-
 ## [BUG-018] Restore task khong xu ly penalty lien quan
 - Trang thai: `open`
 - Muc do: `medium`
 - Vi tri:
-  - `src/firebase/firestore.js`
+  - `src/firebase/firestore.js` (line 237-253)
+  - `src/pages/TrashPage.jsx` (line 59-61)
 - Mo ta:
   - `restoreTask()` va `restoreTasks()` chi flip `isDeleted` / `deletedAt`.
   - Penalty da tao cho task khong duoc xoa hay danh dau lai.
   - Nguy co user restore task nhung van con penalty cu.
 
-## [BUG-019] Notification van la fire-and-forget
-- Trang thai: `open`
-- Muc do: `low`
-- Vi tri:
-  - `src/firebase/firestore.js`
-- Mo ta:
-  - `addNotification()` bat loi va chi `console.error`, khong rethrow.
-  - Cac caller khong biet notification that bai.
-  - Mat notification hien tai khong rollback luong nghiep vu nao.
-
 ---
 
 ## Da verify da fix
+
+## [BUG-020] Member khong the cham diem / gui giai trinh tren CriteriaOverviewPage
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/criteria/CriteriaOverviewPage.jsx`
+  - `src/components/criteria/CriteriaDetailPage.jsx`
+- Ghi chu:
+  - `sendJustificationRequest` va `gradeCriteriaSubmission` hardcode `'admin'` lam nguoi thuc hien.
+  - Them `useAuth` de lay `userProfile`, truyen `userProfile.id` thay vi `'admin'`.
+  - Them `isRowReadOnly()` vao OverviewPage de member chi cham tieu chi duoc phan cong (`assignedTo === userId`), admin cham het.
+
+## [BUG-019] Notification van la fire-and-forget
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/firebase/firestore.js` (line 420-433)
+- Ghi chu:
+  - `addNotification()` da rethrow error sau `console.error` de caller co the xu ly.
+
+## [BUG-016] `PeriodsManagePage` ton tai nhung khong route toi dau
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/criteria/PeriodsManagePage.jsx` (DA XOA)
+- Ghi chu:
+  - Orphan screen da duoc xoa khoi source.
+
+## [BUG-015] `useSubmissions` la hook vo hieu
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/hooks/useSubmissions.js` (DA XOA)
+- Ghi chu:
+  - Hook import API khong ton tai, da xoa.
+
+## [BUG-014] Nut dang xuat trong Unit portal goi `logout` khong ton tai trong context
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/unit/UnitLayout.jsx`
+  - `src/context/AuthContext.jsx`
+- Ghi chu:
+  - Them `logout` (import tu `auth.js`) vao `value` object trong AuthContext.
+
+## [BUG-005] `userProfile.unitId` van sai o mot phan module unit
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/components/unit/UnitDashboard.jsx`
+  - `src/components/unit/UnitSubmissionsList.jsx`
+- Ghi chu:
+  - Da cleanup bo fallback `|| userProfile?.unitId` de tranh nham lan.
+
+## [BUG-002] Google login co the bypass pending approval
+- Trang thai: `fixed`
+- Vi tri:
+  - `src/firebase/auth.js`
+- Ghi chu:
+  - `loginWithGoogle()` tao user voi `isActive: false` va `status: 'pending'` thay vi `isActive: true` va khong co `status`.
 
 ## [BUG-017] Admin plan detail doc sai field va co the hien thi rong
 - Trang thai: `fixed`
@@ -98,8 +87,8 @@ Trang thai:
   - `src/components/unit/UnitPlanDetail.jsx`
   - `src/firebase/criteriaFirestore.js`
 - Ghi chu:
-  - Dong bo field du lieu (type, attachments), them `useUnits` vao PlanDetailPage de hien thi toan bo don vi (Da nop, Chua nop).
-  - Tra truc tiep `entryId` khi submit de tranh sync state tre tren UI co so.
+  - Dong bo field du lieu (type, attachments), them `useUnits` vao PlanDetailPage.
+  - Tra truc tiep `entryId` khi submit de tranh sync state tre.
 
 ## [BUG-001] Race condition tao admin dau tien
 - Trang thai: `fixed`
@@ -151,9 +140,9 @@ Trang thai:
 
 | Muc | So luong |
 |---|---:|
-| Open | 7 |
-| Fixed (da verify) | 7 |
+| Open (medium) | 1 |
+| Fixed (da verify) | 14 |
 
 Ghi chu:
-- Tai lieu cu danh dau "13/13 bugs fixed" khong con phu hop voi code hien tai.
-- BUG-002 va BUG-005 duoc mo lai sau khi doi chieu truc tiep voi source ngay 2026-05-05.
+- BUG-018 la bug duy nhat con open — can them logic xoa penalty khi restore task.
+- BUG-020 (NEW) da fix — member gio co the cham diem va gui giai trinh cho tieu chi duoc phan cong.
