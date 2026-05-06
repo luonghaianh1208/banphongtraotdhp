@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-05-06 PM10] - TodayPage: Weekly Timetable View
+
+### Da thay doi
+- **TodayPage.jsx**: Gop subtab "Hom nay" + "Tuan nay" thanh 1 subtab "Tuan nay (dd/MM – dd/MM/yyyy)". Thay danh sach task bang **bang thoi khoa bieu tuan** (T2 → CN). Ngay hien tai duoc highlight (emerald). Moi o ngay chua cac the cong viec nho (MiniTaskCard). Click vao the → mo chi tiet task. Desktop: grid 7 cot. Mobile: xep doc tung ngay. Tab "Tat ca" giu nguyen.
+
+### File bi anh huong
+- `src/pages/TodayPage.jsx`
+
+---
+
 ## [2026-05-06 PM9] - Plan Access Control: Role-Based Visibility
 
 ### Da them
