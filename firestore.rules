@@ -27,6 +27,11 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow delete: if false;
+
+      // Personal tasks: chỉ user tự quản lý
+      match /personalTasks/{taskId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
     }
 
     match /tasks/{taskId} {

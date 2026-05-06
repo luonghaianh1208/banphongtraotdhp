@@ -472,3 +472,59 @@ export const markAllNotificationsRead = async (notifications) => {
   });
   return batch.commit();
 };
+
+// === PERSONAL TASKS (Subcollection: users/{uid}/personalTasks) ===
+
+export const subscribeToPersonalTasks = (userId, callback, onError) => {
+  const q = query(
+    collection(db, 'users', userId, 'personalTasks'),
+    orderBy('date', 'asc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(items);
+  }, (error) => {
+    console.error('Lỗi lắng nghe personalTasks:', error);
+    if (onError) onError(error);
+    callback([]);
+  });
+};
+
+export const createPersonalTask = async (userId, data) => {
+  return addDoc(collection(db, 'users', userId, 'personalTasks'), {
+    ...data,
+    createdAt: serverTimestamp(),
+    done: false,
+  });
+};
+
+export const updatePersonalTask = async (userId, taskId, updates) => {
+  return updateDoc(doc(db, 'users', userId, 'personalTasks', taskId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const deletePersonalTask = async (userId, taskId) => {
+  return deleteDoc(doc(db, 'users', userId, 'personalTasks', taskId));
+};
+
+// Xóa tự động các personal tasks quá 30 ngày
+export const cleanupOldPersonalTasks = async (userId) => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().split('T')[0]; // yyyy-mm-dd
+
+  const q = query(
+    collection(db, 'users', userId, 'personalTasks'),
+    where('date', '<', cutoffStr)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return 0;
+
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  return snap.size;
+};
+
