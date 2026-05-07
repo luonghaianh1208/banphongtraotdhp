@@ -1,11 +1,10 @@
 # Task Board
 
-Cap nhat lan cuoi: 2026-05-06
+Cap nhat lan cuoi: 2026-05-07
 
 ## Dang uu tien tiep theo
 
 - [ ] Deploy Cloud Functions len production: `firebase deploy --only functions` (cascade delete chua co hieu luc tren prod)
-- [x] Sua BUG-018: restore task can xu ly penalty lien quan - 2026-05-07
 
 ## Cong viec can don dep ky thuat
 
@@ -13,6 +12,9 @@ Cap nhat lan cuoi: 2026-05-06
 
 ## Da hoan thanh
 
+- [x] Fix BUG-023: navigation freeze do usePresence click handler race condition voi AuthContext onSnapshot - 2026-05-07
+- [x] Toi uu heartbeat presence tu 60s len 1 gio, giam 98% Firestore writes - 2026-05-07
+- [x] Sua BUG-018: restore task can xu ly penalty lien quan - 2026-05-07
 - [x] Cascade delete khi xoa don vi + progress notes UI + justification cho don vi chua nop - 2026-05-07
 - [x] Plan Access Control: Member chi thay plan minh tao, Admin thay tat ca. Guard redirect tren PlanDetailPage - 2026-05-06
 - [x] Refactor module Ke hoach: fix link dieu huong, them upload file vao form tao KH, bang Excel full-width theo doi nop ho so - 2026-05-06

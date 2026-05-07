@@ -4,14 +4,19 @@
 
 ### Da sua (Bugfix)
 - **Navigation freeze**: Click chuyen tab trong sidebar, URL doi nhung FE khong cap nhat. Nguyen nhan: `usePresence` bat `window click` goi `updateDoc(lastActiveAt)` moi click → AuthContext `onSnapshot` fire → `setUserProfile(newObj)` re-render toan bo tree → React Router route change bi nuot.
-- **Fix usePresence**: Bo `click`/`keydown` listener, chi giu heartbeat 60s + `visibilitychange`. Online status van hoat dong binh thuong.
+- **Fix usePresence**: Bo `click`/`keydown` listener, chi giu heartbeat 1 gio + `visibilitychange`. Online status van hoat dong binh thuong.
 - **Fix AuthContext**: `onSnapshot` callback so sanh shallow cac field quan trong (role, status, displayName...), skip re-render khi chi `lastActiveAt` thay doi.
 - **Fix MainLayout**: Them `<Suspense>` boc `<Outlet>` de lazy-loaded pages co fallback dung khi chuyen route.
 
+### Toi uu (Performance)
+- **Heartbeat 60s → 1 gio**: Giam 98% Firestore writes (~2,400 vs ~144,000 writes/thang voi 10 user).
+- **Online threshold 2 phut → 65 phut**: Khop voi heartbeat 1 gio.
+
 ### File bi anh huong
-- `src/hooks/usePresence.js` — Bo click/keydown, chi dung heartbeat + visibilitychange
+- `src/hooks/usePresence.js` — Heartbeat 1 gio + visibilitychange
 - `src/context/AuthContext.jsx` — Shallow compare trong onSnapshot
 - `src/components/layout/MainLayout.jsx` — Them Suspense boc Outlet
+- `src/pages/MembersPage.jsx` — Online threshold 65 phut
 
 ---
 
