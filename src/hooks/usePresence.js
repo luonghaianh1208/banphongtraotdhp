@@ -6,7 +6,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 
-const HEARTBEAT_INTERVAL = 60_000; // 1 phút
+const HEARTBEAT_INTERVAL = 3_600_000; // 1 tiếng
 
 const usePresence = () => {
   const { currentUser, userProfile } = useAuth();

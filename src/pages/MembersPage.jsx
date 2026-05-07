@@ -30,8 +30,7 @@ const getPresenceInfo = (user, currentUserId) => {
   const diffHour = Math.floor(diffMs / 3_600_000);
   const diffDay = Math.floor(diffMs / 86_400_000);
 
-  if (diffMin < 2) return { isOnline: true, label: 'Đang hoạt động' };
-  if (diffMin < 60) return { isOnline: false, label: `${diffMin} phút trước` };
+  if (diffMin < 65) return { isOnline: true, label: 'Đang hoạt động' };
   if (diffHour < 24) return { isOnline: false, label: `${diffHour} giờ trước` };
   if (diffDay < 7) return { isOnline: false, label: `${diffDay} ngày trước` };
   return { isOnline: false, label: 'Lâu rồi không online' };
