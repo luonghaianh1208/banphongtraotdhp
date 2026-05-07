@@ -4,38 +4,29 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Muc tieu session
 
-Bo sung tab Thanh vien cho tat ca roles (admin/manager/member) voi chuc nang xem danh sach, trang thai online, va thong tin chuc vu.
+Fix navigation freeze (BUG-023): click chuyen tab sidebar, URL doi nhung FE dung yen.
 
 ## Da lam trong session nay
 
-- Tao hook `usePresence`: track online bằng `lastActiveAt` trong Firestore, heartbeat moi 1 phut + khi user tuong tac.
-- Tich hop `usePresence` vao `MainLayout` de tat ca user deu duoc track.
-- Mo route `/members` tu admin-only thanh all roles (admin/manager/member).
-- Doi ten nav item tu "Quan ly thanh vien" thanh "Thanh vien".
-- Rewrite `MembersPage` thanh card layout voi:
-  - Online indicator kieu Messenger (cham xanh animate-pulse khi online).
-  - Hien thi "X phut truoc" / "X gio truoc" / "Dang hoat dong".
-  - Tim kiem thanh vien.
-  - Admin giu full control (duyet/doi quyen/xoa), member/manager chi xem.
-  - Ho tro dark mode day du.
-- Push code thanh cong.
+- Xac dinh root cause: `usePresence` hook bat `window click` → ghi `lastActiveAt` vao Firestore → AuthContext `onSnapshot` fire → `setUserProfile(newObj)` tao object reference moi → re-render toan bo component tree → React Router route change bi nuot.
+- Fix `usePresence`: bo `click`/`keydown` listener, chi giu heartbeat 60s + `visibilitychange`. Van dam bao online status cap nhat dung.
+- Fix `AuthContext`: them shallow compare trong `onSnapshot` callback — chi `setUserProfile` khi cac field quan trong (role, status, displayName, email, avatar, department) thay doi. Skip khi chi `lastActiveAt` thay doi.
+- Fix `MainLayout`: them `<Suspense fallback={<LoadingSpinner />}>` boc `<Outlet />` de lazy-loaded pages co fallback dung khi chuyen route.
 
 ## Ket qua quan trong
 
-- Member/Manager gio thay duoc danh sach thanh vien phong ban, chuc vu, va trang thai online.
-- Admin van giu full quyen quan ly (duyet/sua/xoa).
-- Online status tu dong cap nhat moi phut — mat data duoi 2 phut = "Dang hoat dong".
+- Navigation chuyen tab gio hoat dong muot, khong can F5.
+- Online presence van duoc track qua heartbeat 60s va visibility change (du chinh xac).
+- AuthContext khong con re-render toan bo tree moi phut (giam ~60 re-render/gio).
 
 ## Quyet dinh ky thuat da chot
 
-- Online threshold: duoi 2 phut = online (cham xanh), tren 2 phut = offline (cham xam) + text "X phut/gio truoc".
-- Heartbeat interval: 60 giay, throttle event listener cung 60 giay de tranh ghi Firestore qua nhieu.
-- Component re-render moi 30 giay de cap nhat label thoi gian.
+- usePresence KHONG nen bat click/keydown tren window. Heartbeat + visibilitychange la du de xac dinh online status.
+- AuthContext `onSnapshot` PHAI so sanh shallow truoc khi `setUserProfile` de tranh cascade re-render vo nghia.
+- `<Outlet />` trong layout route PHAI duoc boc boi `<Suspense>` rieng de lazy pages render dung.
 
 ## Cau truc file da thay doi
 
-- `src/hooks/usePresence.js` — MOI
-- `src/pages/MembersPage.jsx` — Rewrite hoan toan
-- `src/App.jsx` — Mo route /members cho tat ca role
-- `src/utils/constants.js` — NAV_ITEMS cap nhat
-- `src/components/layout/MainLayout.jsx` — Tich hop usePresence
+- `src/hooks/usePresence.js` — Rewrite: bo click/keydown, chi heartbeat + visibilitychange
+- `src/context/AuthContext.jsx` — Them shallow compare trong onSnapshot
+- `src/components/layout/MainLayout.jsx` — Them Suspense boc Outlet

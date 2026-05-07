@@ -17,6 +17,24 @@ Trang thai:
 
 ## Da verify da fix
 
+## [BUG-023] Navigation freeze — click tab khac URL doi nhung FE dung yen
+- Trang thai: `fixed`
+- Muc do: `critical`
+- Vi tri:
+  - `src/hooks/usePresence.js`
+  - `src/context/AuthContext.jsx`
+  - `src/components/layout/MainLayout.jsx`
+- Nguyen nhan goc:
+  - `usePresence` bat `window.addEventListener('click')` de goi `updateDoc(lastActiveAt)` moi khi user click.
+  - Khi click NavLink: (1) React Router navigate, (2) usePresence ghi Firestore, (3) AuthContext `onSnapshot` fire va `setUserProfile(newData)` tao object moi, (4) AuthProvider re-render toan bo tree, (5) React Router route change bi nuot.
+- Fix:
+  - `usePresence`: bo click/keydown listener, chi giu heartbeat 60s + `visibilitychange`.
+  - `AuthContext`: `onSnapshot` callback so sanh shallow cac field quan trong, skip re-render khi chi `lastActiveAt` thay doi.
+  - `MainLayout`: Them `<Suspense>` boc `<Outlet>` de lazy-loaded pages render dung khi chuyen tab.
+
+---
+
+
 ## [BUG-018] Restore task khong xu ly penalty lien quan
 - Trang thai: `fixed`
 - Muc do: `medium`
@@ -163,8 +181,8 @@ Trang thai:
 | Muc | So luong |
 |---|---:|
 | Open | 0 |
-| Fixed (da verify) | 17 |
+| Fixed (da verify) | 18 |
 
 Ghi chu:
 - Tat ca bugs da duoc fix. Khong con bug nao open.
-- BUG-018 fix: `restoreTask`/`restoreTasks` tu dong don penalty auto-generated lien quan.
+- BUG-023 fix: navigation freeze do usePresence click handler race condition voi AuthContext onSnapshot.

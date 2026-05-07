@@ -1,5 +1,20 @@
 # Changelog
 
+## [2026-05-07c] - Navigation Freeze Fix (BUG-023)
+
+### Da sua (Bugfix)
+- **Navigation freeze**: Click chuyen tab trong sidebar, URL doi nhung FE khong cap nhat. Nguyen nhan: `usePresence` bat `window click` goi `updateDoc(lastActiveAt)` moi click → AuthContext `onSnapshot` fire → `setUserProfile(newObj)` re-render toan bo tree → React Router route change bi nuot.
+- **Fix usePresence**: Bo `click`/`keydown` listener, chi giu heartbeat 60s + `visibilitychange`. Online status van hoat dong binh thuong.
+- **Fix AuthContext**: `onSnapshot` callback so sanh shallow cac field quan trong (role, status, displayName...), skip re-render khi chi `lastActiveAt` thay doi.
+- **Fix MainLayout**: Them `<Suspense>` boc `<Outlet>` de lazy-loaded pages co fallback dung khi chuyen route.
+
+### File bi anh huong
+- `src/hooks/usePresence.js` — Bo click/keydown, chi dung heartbeat + visibilitychange
+- `src/context/AuthContext.jsx` — Shallow compare trong onSnapshot
+- `src/components/layout/MainLayout.jsx` — Them Suspense boc Outlet
+
+---
+
 ## [2026-05-07b] - Members Tab for All Roles + Online Presence
 
 ### Da them (Features)
