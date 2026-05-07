@@ -1,6 +1,7 @@
 // MainLayout — bố cục chính: Sidebar + Header + Content
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import LoadingSpinner from '../common/LoadingSpinner';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import WhatsNewModal from '../common/WhatsNewModal';
@@ -71,7 +72,9 @@ const MainLayout = () => {
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 scrollbar-thin scrollbar-thumb-emerald-500/20 hover:scrollbar-thumb-emerald-500/40">
           <div className="w-full max-w-[1920px] mx-auto animate-fade-in-up">
-            <Outlet />
+            <Suspense fallback={<LoadingSpinner />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>
