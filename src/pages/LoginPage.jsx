@@ -41,6 +41,7 @@ const LoginPage = () => {
       await loginWithCustomToken(token);
       toast.success('Đăng nhập thành công!');
     } catch (error) {
+      console.error('Chi tiết lỗi đăng nhập Unit:', error);
       const msg = error?.message || error?.code || 'Lỗi không xác định';
       if (msg.includes('Username không tồn tại')) {
         toast.error('Username không tồn tại.');

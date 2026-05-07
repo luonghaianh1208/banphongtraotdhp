@@ -32,7 +32,7 @@ Chuyen doi xac thuc cho don vi co so tu Google OAuth sang Username/Password + Cu
 
 - Khong tao truc tiep tai khoan Firebase Auth bang Email/Password cho don vi vi can quan ly password dang clear-text hoac admin-resetable tren Firestore. Thay vao do, dang nhap bang Custom Token giup don vi van co day du quyen han tren Firebase ecosystem.
 - `mustChangePassword` flag luu truc tiep tren profile don vi o Firestore de AuthContext co the bat realtime va khoa ung dung.
-- Default password la `abc@123.` cho viec onboarding hang loat don vi. Admin van co the nhap password tu chon khi add thu cong.
+- Default password la `abc@123` (da sua tu abc@123. de tranh loi 403 khi login) cho viec onboarding hang loat don vi. Admin van co the nhap password tu chon khi add thu cong.
 
 ## Cau truc file da thay doi
 

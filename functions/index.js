@@ -621,7 +621,7 @@ function generateUsername(unitName) {
   return username ? `${username}.tdhp` : "";
 }
 
-const DEFAULT_UNIT_PASSWORD = "abc@123.";
+const DEFAULT_UNIT_PASSWORD = "abc@123";
 
 // === 13. TẠO TÀI KHOẢN ĐƠN VỊ CƠ SỞ (UNIT) ===
 exports.createUnit = onCall(async (request) => {
@@ -674,7 +674,9 @@ exports.createUnit = onCall(async (request) => {
 });
 
 // === 13b. ĐĂNG NHẬP ĐƠN VỊ (USERNAME/PASSWORD → CUSTOM TOKEN) ===
-exports.loginUnit = onCall(async (request) => {
+exports.loginUnit = onCall({
+  serviceAccount: "ban-pt-tdhp@appspot.gserviceaccount.com"
+}, async (request) => {
   const { username, password } = request.data;
 
   if (!username || !password) {

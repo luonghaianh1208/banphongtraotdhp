@@ -12,6 +12,7 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Da hoan thanh
 
+- [x] Sửa lỗi 403 (Forbidden) khi Đơn vị đăng nhập: Cập nhật mật khẩu mặc định từ abc@123. thành abc@123, xoá dữ liệu cũ và deploy lại Cloud Functions - 2026-05-07
 - [x] Chuyen doi xac thuc don vi tu Google sang Username/Password + Custom Token - 2026-05-07
   - Backend: createUnit (username/password), loginUnit (Custom Token), changeUnitPassword, resetUnitPassword
   - Frontend: LoginPage dual-tab (Don vi | Noi bo), ChangePasswordModal, UnitsPage (username/password columns + reset)

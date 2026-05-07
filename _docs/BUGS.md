@@ -11,7 +11,14 @@ Trang thai:
 
 ## Dang mo
 
-(Khong co bug nao dang open)
+## [BUG-024] 166 Linting Problems (Technical Debt)
+- Trang thai: `open`
+- Muc do: `low`
+- Vi tri:
+  - Toan bo source code (`src/` va `functions/`)
+- Ghi chu:
+  - Chay `npm run lint` tra ve 166 loi, trong do hau het la `no-unused-vars` (khai bao bien nhung khong su dung) hoac cac loi warning React hook deps nho.
+  - Can don dep lai code de giu codebase sach va phong tranh loi tim an trong tuong lai.
 
 ---
 
@@ -180,9 +187,9 @@ Trang thai:
 
 | Muc | So luong |
 |---|---:|
-| Open | 0 |
+| Open | 1 |
 | Fixed (da verify) | 18 |
 
 Ghi chu:
-- Tat ca bugs da duoc fix. Khong con bug nao open.
+- Con 1 bug open (BUG-024) ve technical debt (linting).
 - BUG-023 fix: navigation freeze do usePresence click handler race condition voi AuthContext onSnapshot.
