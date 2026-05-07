@@ -32,6 +32,7 @@ const UnitLayout = () => {
         { path: '/unit/submissions', label: 'Bộ tiêu chí' },
         { path: '/unit/submissions?tab=giaiTrinh', label: 'Giải trình' },
         { path: '/unit/plans', label: 'Kế hoạch & Hội thi' },
+        { path: '/unit/attendance', label: 'Điểm danh' },
     ];
 
     return (

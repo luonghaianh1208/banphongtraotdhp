@@ -134,5 +134,22 @@ service cloud.firestore {
         );
       allow delete: if isAdminOrManager();
     }
+
+    // === ĐIỂM DANH ===
+    match /attendancePrograms/{programId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
+    match /attendanceRecords/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if isUnit()
+        && request.resource.data.unitId == request.auth.uid;
+      allow update: if isUnit()
+        && resource.data.unitId == request.auth.uid;
+      allow delete: if isAdminOrManager();
+    }
   }
 }

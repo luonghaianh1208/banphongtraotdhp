@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   '/plans-manage': 'Quản lý Kế hoạch',
   '/units': 'Danh sách Đơn vị',
   '/penalties': 'Quản lý Phiếu phạt',
+  '/attendance': 'Điểm danh',
   '/trash': 'Thùng rác',
 };
 

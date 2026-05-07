@@ -39,6 +39,8 @@ const CriteriaSetDetailPage = lazy(() => import('./components/criteria/CriteriaS
 const PlansManagePage = lazy(() => import('./components/criteria/PlansManagePage'));
 const PlanDetailPage = lazy(() => import('./components/criteria/PlanDetailPage'));
 const UnitsPage = lazy(() => import('./components/criteria/UnitsPage'));
+const AttendanceManagePage = lazy(() => import('./components/attendance/AttendanceManagePage'));
+const UnitAttendancePage = lazy(() => import('./components/unit/UnitAttendancePage'));
 
 // Route bảo vệ — yêu cầu đăng nhập
 const ProtectedRoute = ({ children, roles }) => {
@@ -148,6 +150,9 @@ const AppRoutes = () => {
         <Route path="units" element={
           <ProtectedRoute roles={['admin', 'manager']}><UnitsPage /></ProtectedRoute>
         } />
+        <Route path="attendance" element={
+          <ProtectedRoute roles={['admin', 'manager', 'member']}><AttendanceManagePage /></ProtectedRoute>
+        } />
       </Route>
 
       {/* ====== ROUTES CHO CƠ SỞ (UNIT) ====== */}
@@ -157,6 +162,7 @@ const AppRoutes = () => {
         <Route path="submit/:criteriaSetId" element={<UnitSubmitPage />} />
         <Route path="plans" element={<UnitPlansList />} />
         <Route path="plans/:planId" element={<UnitPlanDetail />} />
+        <Route path="attendance" element={<UnitAttendancePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

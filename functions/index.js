@@ -925,3 +925,36 @@ exports.createPenaltyIdempotent = onCall(async (request) => {
 
   return { message: 'OK' };
 });
+
+// === 19. TỰ ĐỘNG XOÁ CHƯƠNG TRÌNH ĐIỂM DANH HẾT HẠN 30 NGÀY ===
+exports.autoDeleteExpiredAttendance = onSchedule("every 24 hours", async () => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+
+  const expiredSnap = await db.collection("attendancePrograms")
+    .where("endTime", "<", cutoff)
+    .get();
+
+  if (expiredSnap.empty) return;
+
+  const batch = db.batch();
+  const programIds = [];
+
+  for (const doc of expiredSnap.docs) {
+    batch.delete(doc.ref);
+    programIds.push(doc.id);
+  }
+
+  // Xoá tất cả records liên quan
+  for (const programId of programIds) {
+    const recordsSnap = await db.collection("attendanceRecords")
+      .where("programId", "==", programId)
+      .get();
+    for (const doc of recordsSnap.docs) {
+      batch.delete(doc.ref);
+    }
+  }
+
+  await batch.commit();
+  console.log(`Auto-deleted ${expiredSnap.size} expired attendance programs.`);
+});

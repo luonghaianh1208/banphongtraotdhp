@@ -73,6 +73,7 @@ export const NAV_ITEMS = [
   { path: '/units', icon: 'MdCorporateFare', label: 'Quản lý Đơn vị', roles: ['admin'] },
   { path: '/criteria-sets', icon: 'MdFactCheck', label: 'Bộ tiêu chí', roles: ['admin', 'manager', 'member'] },
   { path: '/plans-manage', icon: 'MdArticle', label: 'Kế hoạch', roles: ['admin', 'manager', 'member'] },
+  { path: '/attendance', icon: 'MdDateRange', label: 'Điểm danh', roles: ['admin', 'manager', 'member'] },
   { path: '/task-config', icon: 'MdTune', label: 'Cấu hình công việc', roles: ['admin'] },
   { path: '/trash', icon: 'MdDeleteSweep', label: 'Thùng rác', roles: ['admin'] },
   { path: '/settings', icon: 'MdPerson', label: 'Hồ sơ', roles: ['admin', 'manager', 'member'] },
