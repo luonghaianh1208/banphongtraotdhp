@@ -4,7 +4,7 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Dang uu tien tiep theo
 
-- [ ] Deploy Cloud Functions len production: `firebase deploy --only functions` (cascade delete chua co hieu luc tren prod)
+(Khong co task uu tien)
 
 ## Cong viec can don dep ky thuat
 
@@ -12,6 +12,7 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Da hoan thanh
 
+- [x] Cloud Functions da deploy day du 16/16 functions tren production (da verify) - 2026-05-07
 - [x] Fix BUG-023: navigation freeze do usePresence click handler race condition voi AuthContext onSnapshot - 2026-05-07
 - [x] Toi uu heartbeat presence tu 60s len 1 gio, giam 98% Firestore writes - 2026-05-07
 - [x] Sua BUG-018: restore task can xu ly penalty lien quan - 2026-05-07
