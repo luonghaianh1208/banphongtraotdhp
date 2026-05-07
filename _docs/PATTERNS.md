@@ -57,6 +57,15 @@ const MyModal = ({ onClose }) => {
 
 - `src/components/attendance/AttendanceManagePage.jsx` — 3 modals (extend, program detail, record detail)
 - `src/components/unit/UnitAttendancePage.jsx` — 1 modal (form diem danh)
+- `src/components/calendar/PersonalTaskPopup.jsx` — 1 modal (them/sua viec ca nhan)
+- `src/components/calendar/PersonalTaskDetailPopup.jsx` — 1 modal (xem chi tiet viec ca nhan)
+- `src/components/common/FilePreviewModal.jsx` — 1 modal (xem truoc file dinh kem)
+- `src/components/ChangePasswordModal.jsx` — 1 modal (doi mat khau lan dau)
+- `src/components/common/Modal.jsx` — reusable modal (da co san portal)
+- `src/components/common/ConfirmDialog.jsx` — confirm dialog (da co san portal)
+- `src/components/criteria/CriteriaSetsPage.jsx` — 2 modals (da co san portal)
+- `src/components/criteria/PlansManagePage.jsx` — 1 modal (da co san portal)
+- `src/components/criteria/UnitsPage.jsx` — 1 modal (da co san portal)
 
 ---
 
