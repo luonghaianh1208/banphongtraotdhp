@@ -1,0 +1,182 @@
+{"users": [
+{
+  "localId": "6bq9OLprpdVK1SjsCPuO7QthMNd2",
+  "email": "luonghaianh1208@gmail.com",
+  "emailVerified": true,
+  "displayName": "Lương Hải Anh GV CNT",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKdeB9TWn30dQ6UkPCXUjl6RkwALiJN8JBIwqUJBO1U7UAbT_Hn=s96-c",
+  "lastSignedInAt": "1778123853312",
+  "createdAt": "1776125033487",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "109567443356533235816",
+      "email": "luonghaianh1208@gmail.com",
+      "displayName": "Lương Hải Anh GV CNT",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKdeB9TWn30dQ6UkPCXUjl6RkwALiJN8JBIwqUJBO1U7UAbT_Hn=s96-c"
+    }
+  ]
+},
+{
+  "localId": "DZ5EY7oPPbTtXpl4QRVmhTZHB4Z2",
+  "email": "manhtino.1999@gmail.com",
+  "emailVerified": true,
+  "displayName": "Manh Phạm",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJ8msX3yb05jocepcZoHc9zdQTICh4FBycjBDUW3rKFAuBc-w=s96-c",
+  "lastSignedInAt": "1778033154596",
+  "createdAt": "1776182695745",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "117337035148720125176",
+      "email": "manhtino.1999@gmail.com",
+      "displayName": "Manh Phạm",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJ8msX3yb05jocepcZoHc9zdQTICh4FBycjBDUW3rKFAuBc-w=s96-c"
+    }
+  ]
+},
+{
+  "localId": "DyhNBpK2VvTggCZkpGy2zL6RvXr1",
+  "email": "minhhvcsndt32@gmail.com",
+  "emailVerified": true,
+  "displayName": "Lê Bảo Minh",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIxFqoHnC87A60VnZ4uA8Ryy7-CaEmtmP8oCR2BP41H_BJlIMaRFg=s96-c",
+  "lastSignedInAt": "1776605244684",
+  "createdAt": "1776214755770",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "101489146254703312087",
+      "email": "minhhvcsndt32@gmail.com",
+      "displayName": "Lê Bảo Minh",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIxFqoHnC87A60VnZ4uA8Ryy7-CaEmtmP8oCR2BP41H_BJlIMaRFg=s96-c"
+    }
+  ]
+},
+{
+  "localId": "KD5Om1xtG3hA3nh4XusDzIHjuuF2",
+  "email": "vunguyenduchd@gmail.com",
+  "emailVerified": true,
+  "displayName": "DUC VU NGUYEN",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocLueF2KO1xMYBGjkiT_xsSOS6AvrBuyqUvs-6A92neWkC4ITQj9=s96-c",
+  "lastSignedInAt": "1776186496306",
+  "createdAt": "1776169682733",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "106571758270328981860",
+      "email": "vunguyenduchd@gmail.com",
+      "displayName": "DUC VU NGUYEN",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocLueF2KO1xMYBGjkiT_xsSOS6AvrBuyqUvs-6A92neWkC4ITQj9=s96-c"
+    }
+  ]
+},
+{
+  "localId": "KEqpQDDvRoPVCm63uigUmZmN57r2",
+  "email": "banphongtrao.tdhp@gmail.com",
+  "emailVerified": true,
+  "displayName": "Phong Trào Ban",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocL58AvENAcb8xq1D8YzKpCoQ6yj_X29n5ZqDsa4Gqhxs0Xwr7NA=s96-c",
+  "lastSignedInAt": "1777993188655",
+  "createdAt": "1777993058890",
+  "disabled": false,
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "115110434329228286860",
+      "email": "banphongtrao.tdhp@gmail.com",
+      "displayName": "Phong Trào Ban",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocL58AvENAcb8xq1D8YzKpCoQ6yj_X29n5ZqDsa4Gqhxs0Xwr7NA=s96-c"
+    }
+  ]
+},
+{
+  "localId": "UKy6GPUkkeeTnGI0dBv999nE0483",
+  "email": "nguyenhieuuu101@gmail.com",
+  "emailVerified": true,
+  "displayName": "Hiếu Nguyễn",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJcALjnWKiRXkve5Uti-fLPShFAr0AJ5TUWSUg_g6CCns1HVQ=s96-c",
+  "lastSignedInAt": "1777463779206",
+  "createdAt": "1777463779205",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "101258050434612345641",
+      "email": "nguyenhieuuu101@gmail.com",
+      "displayName": "Hiếu Nguyễn",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJcALjnWKiRXkve5Uti-fLPShFAr0AJ5TUWSUg_g6CCns1HVQ=s96-c"
+    }
+  ]
+},
+{
+  "localId": "WLa1h2UZAAfLStUBfNzXkStbKQB2",
+  "email": "sooleo18051208@gmail.com",
+  "emailVerified": true,
+  "displayName": "EVERYTHING OFFICAL",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKtUC-n4df55pwT8OafHrgbu7Qs1lbRwX3bULQdsIEGCsDJGnZ4=s96-c",
+  "lastSignedInAt": "1778086520191",
+  "createdAt": "1778086520191",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "106039663595789613108",
+      "email": "sooleo18051208@gmail.com",
+      "displayName": "EVERYTHING OFFICAL",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKtUC-n4df55pwT8OafHrgbu7Qs1lbRwX3bULQdsIEGCsDJGnZ4=s96-c"
+    }
+  ]
+},
+{
+  "localId": "afHE6j0vazTMJ7QfcjuJWqIbeyk1",
+  "email": "phamhoangson162@gmail.com",
+  "emailVerified": true,
+  "displayName": "Sơn Phạm Hoàng",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKJfU2fygDquhDI4L29smxNiJD6Xbx_DrIRJswOQr9Kh-w-XQ=s96-c",
+  "lastSignedInAt": "1776241429443",
+  "createdAt": "1776183915911",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "109617485647444277427",
+      "email": "phamhoangson162@gmail.com",
+      "displayName": "Sơn Phạm Hoàng",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKJfU2fygDquhDI4L29smxNiJD6Xbx_DrIRJswOQr9Kh-w-XQ=s96-c"
+    }
+  ]
+},
+{
+  "localId": "fwoBM9XcPMfMfvbG7sQAEpVppGf1",
+  "email": "tramytran2209@gmail.com",
+  "emailVerified": true,
+  "displayName": "Tra My Tran",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocK902d5GC_RQaXj__oenA4m_B_n-kEAIsOYTNvR_uKliDFz0Q=s96-c",
+  "lastSignedInAt": "1776215362431",
+  "createdAt": "1776215362431",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "102273222982349080494",
+      "email": "tramytran2209@gmail.com",
+      "displayName": "Tra My Tran",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocK902d5GC_RQaXj__oenA4m_B_n-kEAIsOYTNvR_uKliDFz0Q=s96-c"
+    }
+  ]
+},
+{
+  "localId": "lwXcNf2midQPWr5YNpZi88qqBWC3",
+  "email": "phamtruong02051999@gmail.com",
+  "emailVerified": true,
+  "displayName": "Trường Phạm",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJMZLLzWz_ee00kzrn998MYL8PQTcjPjhV1IPjC8YjugAJrAA=s96-c",
+  "lastSignedInAt": "1776604684800",
+  "createdAt": "1776214959662",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "109032905748159627151",
+      "email": "phamtruong02051999@gmail.com",
+      "displayName": "Trường Phạm",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJMZLLzWz_ee00kzrn998MYL8PQTcjPjhV1IPjC8YjugAJrAA=s96-c"
+    }
+  ]
+}]}

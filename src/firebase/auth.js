@@ -1,29 +1,17 @@
 // Auth helper functions
-import { signInWithEmailAndPassword, signOut, updatePassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, collection, where, query, getDocs } from 'firebase/firestore';
+import { signInWithCustomToken, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './config';
 
 const googleProvider = new GoogleAuthProvider();
 
-// Đăng nhập bằng Google
+// Đăng nhập bằng Google (chỉ dành cho nội bộ: admin/manager/member)
 export const loginWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
 
-  // Kiểm tra xem email có trong bảng units không → gán role đúng
   try {
-    const unitsSnap = await getDocs(
-      query(collection(db, 'units'), where('email', '==', user.email))
-    );
-    const isUnitEmail = !unitsSnap.empty;
-
-    if (isUnitEmail) {
-      // Email khớp với đơn vị → không tạo trong bảng users
-      // AuthContext sẽ dùng getUserProfile để lấy profile từ bảng units
-      return result;
-    }
-
-    // Không phải unit → tạo profile trong bảng users (member)
+    // Tạo profile member nếu chưa có
     const docRef = doc(db, 'users', user.uid);
     const docSnap = await getDoc(docRef);
 
@@ -46,18 +34,13 @@ export const loginWithGoogle = async () => {
   return result;
 };
 
-// Đăng nhập bằng email/password
-export const loginWithEmail = (email, password) => {
-  return signInWithEmailAndPassword(auth, email, password);
+// Đăng nhập đơn vị bằng Custom Token (nhận từ Cloud Function loginUnit)
+export const loginWithCustomToken = async (token) => {
+  return signInWithCustomToken(auth, token);
 };
 
 // Đăng xuất
 export const logout = () => signOut(auth);
-
-// Đổi mật khẩu
-export const changePassword = (newPassword) => {
-  return updatePassword(auth.currentUser, newPassword);
-};
 
 // Lấy thông tin user profile từ Firestore
 export const getUserProfile = async (uid) => {

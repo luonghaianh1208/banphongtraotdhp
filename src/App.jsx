@@ -11,6 +11,7 @@ import PendingPage from './pages/PendingPage';
 import TodayPage from './pages/TodayPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 // Lazy-load các trang ít dùng hơn → giảm bundle size khởi tạo
 const AllTasksPage = lazy(() => import('./pages/AllTasksPage'));
@@ -80,11 +81,16 @@ const PendingRoute = () => {
 
 // Route bảo vệ dành riêng cho Unit
 const UnitRoute = ({ children }) => {
-  const { currentUser, isUnit, loading } = useAuth();
+  const { currentUser, isUnit, loading, mustChangePassword } = useAuth();
 
   if (loading) return <LoadingSpinner fullScreen />;
   if (!currentUser) return <Navigate to="/login" replace />;
   if (!isUnit) return <Navigate to="/" replace />;
+
+  // Chặn sử dụng app nếu chưa đổi mật khẩu mặc định
+  if (mustChangePassword) {
+    return <ChangePasswordModal />;
+  }
 
   return children;
 };

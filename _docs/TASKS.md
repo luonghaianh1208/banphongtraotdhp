@@ -12,6 +12,11 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Da hoan thanh
 
+- [x] Chuyen doi xac thuc don vi tu Google sang Username/Password + Custom Token - 2026-05-07
+  - Backend: createUnit (username/password), loginUnit (Custom Token), changeUnitPassword, resetUnitPassword
+  - Frontend: LoginPage dual-tab (Don vi | Noi bo), ChangePasswordModal, UnitsPage (username/password columns + reset)
+  - Excel: Template va import doi Email thanh Username/Password
+  - Deploy: Cloud Functions 19/19 + Netlify production
 - [x] Cloud Functions da deploy day du 16/16 functions tren production (da verify) - 2026-05-07
 - [x] Fix BUG-023: navigation freeze do usePresence click handler race condition voi AuthContext onSnapshot - 2026-05-07
 - [x] Toi uu heartbeat presence tu 60s len 1 gio, giam 98% Firestore writes - 2026-05-07

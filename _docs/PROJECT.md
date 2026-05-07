@@ -37,8 +37,8 @@ Cap nhat lan cuoi: 2026-05-05
   - `jspdf` + `jspdf-autotable`
   - `date-fns`
 - Deploy:
-  - Netlify cho frontend
-  - Firebase cho Firestore / Storage / Functions
+  - Frontend: Netlify (Live: https://banphongtraotdhp.netlify.app/)
+  - Backend: Firebase (Firestore / Storage / Functions)
 
 ## Scripts
 

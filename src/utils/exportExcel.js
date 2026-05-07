@@ -331,13 +331,14 @@ export const exportUnitTemplate = () => {
   rows.push({
     'STT': 'Hướng dẫn',
     'Tên đơn vị': '(Nhập tên cơ sở)',
-    'Email': '(Email Google để đăng nhập)',
+    'Username': '(Bỏ trống = tự sinh từ tên)',
+    'Password': '(Bỏ trống = abc@123.)',
     'Khối': '(Chọn khối)',
     'Loại': '(Chọn theo Khối)',
     'Ghi chú': '',
   });
 
-  rows.push({ 'STT': '', 'Tên đơn vị': '', 'Email': '', 'Khối': '', 'Loại': '', 'Ghi chú': '' });
+  rows.push({ 'STT': '', 'Tên đơn vị': '', 'Username': '', 'Password': '', 'Khối': '', 'Loại': '', 'Ghi chú': '' });
 
   const sampleData = [
     { name: 'Đoàn TN xã An Hưng', block: 'Khối Xã, Phường, Đặc khu', type: 'Xã' },
@@ -348,11 +349,11 @@ export const exportUnitTemplate = () => {
   ];
 
   sampleData.forEach(item => {
-    rows.push({ 'STT': stt++, 'Tên đơn vị': item.name, 'Email': '', 'Khối': item.block, 'Loại': item.type, 'Ghi chú': '' });
+    rows.push({ 'STT': stt++, 'Tên đơn vị': item.name, 'Username': '', 'Password': '', 'Khối': item.block, 'Loại': item.type, 'Ghi chú': '' });
   });
 
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{ wch: 6 }, { wch: 38 }, { wch: 30 }, { wch: 35 }, { wch: 25 }, { wch: 20 }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 38 }, { wch: 25 }, { wch: 20 }, { wch: 35 }, { wch: 25 }, { wch: 20 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Danh sách Đơn vị');

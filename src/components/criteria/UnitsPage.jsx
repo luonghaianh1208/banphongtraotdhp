@@ -1,20 +1,20 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd } from 'react-icons/md';
+import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd, MdRefresh } from 'react-icons/md';
+import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import { useUnits } from '../../hooks/useUnits';
 import { updateUnit } from '../../firebase/criteriaFirestore';
-import { deleteUnitAccount } from '../../firebase/functions';
+import { deleteUnitAccount, createUnitAccount, resetUnitPassword } from '../../firebase/functions';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import { exportUnitTemplate } from '../../utils/exportExcel';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase/config';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
 const UnitsPage = () => {
     const { units, loading, error } = useUnits();
     const [showAddModal, setShowAddModal] = useState(false);
-    const [formData, setFormData] = useState({ email: '', unitName: '', blockId: '', blockName: '', typeId: '', typeName: '' });
+    const [formData, setFormData] = useState({ unitName: '', username: '', password: '', blockId: '', blockName: '', typeId: '', typeName: '' });
+    const [showPasswords, setShowPasswords] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selected, setSelected] = useState([]);
     const [editingId, setEditingId] = useState(null);
@@ -44,20 +44,21 @@ const UnitsPage = () => {
     // Thêm thủ công
     const handleCreateUnit = async (e) => {
         e.preventDefault();
-        if (!formData.email || !formData.unitName) { toast.error("Nhập đầy đủ Tên + Email"); return; }
+        if (!formData.unitName) { toast.error("Nhập tên đơn vị"); return; }
         if (!formData.blockId || !formData.typeId) { toast.error("Chọn Khối và Loại"); return; }
         setIsSubmitting(true);
         try {
-            const createUnitFn = httpsCallable(functions, 'createUnit');
-            const result = await createUnitFn({
-                email: formData.email, unitName: formData.unitName,
+            const result = await createUnitAccount({
+                unitName: formData.unitName,
+                username: formData.username || '',
+                password: formData.password || '',
                 blockId: formData.blockId, blockName: formData.blockName,
                 typeId: formData.typeId, typeName: formData.typeName,
             });
             if (result.data?.success) {
-                toast.success('Tạo đơn vị thành công!');
+                toast.success(`Tạo đơn vị thành công! Username: ${result.data.username}`);
                 setShowAddModal(false);
-                setFormData({ email: '', unitName: '', blockId: '', blockName: '', typeId: '', typeName: '' });
+                setFormData({ unitName: '', username: '', password: '', blockId: '', blockName: '', typeId: '', typeName: '' });
             } else {
                 toast.error(result.data?.message || 'Lỗi tạo đơn vị');
             }
@@ -79,11 +80,9 @@ const UnitsPage = () => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet);
-                const validRows = rows.filter(r => r['Tên đơn vị'] && r['Email'] && r['Khối'] && r['Loại']);
+                const validRows = rows.filter(r => r['Tên đơn vị'] && r['Khối'] && r['Loại']);
 
                 if (validRows.length === 0) { toast.error('Không tìm thấy dòng hợp lệ nào.'); return; }
-
-                const createUnitFn = httpsCallable(functions, 'createUnit');
 
                 setImportProgress({ total: validRows.length, done: 0, errors: [] });
                 let done = 0;
@@ -93,8 +92,10 @@ const UnitsPage = () => {
                     const block = UNIT_BLOCKS.find(b => b.name === row['Khối']);
                     const type = block?.types.find(t => t.name === row['Loại']);
                     try {
-                        await createUnitFn({
-                            email: row['Email'], unitName: row['Tên đơn vị'],
+                        await createUnitAccount({
+                            unitName: row['Tên đơn vị'],
+                            username: row['Username'] || '',
+                            password: row['Password'] || '',
                             blockId: block?.id || '', blockName: block?.name || row['Khối'],
                             typeId: type?.id || '', typeName: type?.name || row['Loại'],
                         });
@@ -126,6 +127,21 @@ const UnitsPage = () => {
             toast.success('Cập nhật thành công');
             setEditingId(null);
         } catch (err) { toast.error('Lỗi cập nhật: ' + err.message); }
+    };
+
+    // Xóa đơn lẻ
+    // Reset mật khẩu về mặc định
+    const handleResetPassword = async (unitId, name) => {
+        if (!confirm(`Reset mật khẩu "${name}" về mặc định (abc@123.)?`)) return;
+        try {
+            await resetUnitPassword({ unitId });
+            toast.success('Đã reset mật khẩu');
+        } catch (err) { toast.error('Lỗi reset: ' + (err.message || 'Không thể reset')); }
+    };
+
+    // Toggle xem mật khẩu
+    const togglePasswordVisibility = (unitId) => {
+        setShowPasswords(prev => ({ ...prev, [unitId]: !prev[unitId] }));
     };
 
     // Xóa đơn lẻ
@@ -255,8 +271,9 @@ const UnitsPage = () => {
                                     </div>
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Tên Cơ sở</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Email Liên kết</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Phân loại Khối</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Username</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Mật khẩu</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Phân loại</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Trạng thái</th>
                                 <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Hành động</th>
                             </tr>
@@ -293,11 +310,22 @@ const UnitsPage = () => {
                                         )}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                            <div className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-500 border border-gray-200 dark:border-gray-700">
-                                                {unit.email.charAt(0).toUpperCase()}
-                                            </div>
-                                            <span className="text-sm font-medium">{unit.email}</span>
+                                        <span className="text-sm font-mono font-semibold text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded-lg">
+                                            {unit.username || '—'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
+                                                {showPasswords[unit.id] ? (unit.password || '—') : '••••••'}
+                                            </span>
+                                            <button
+                                                onClick={() => togglePasswordVisibility(unit.id)}
+                                                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                title={showPasswords[unit.id] ? 'Ẩn' : 'Hiện'}
+                                            >
+                                                {showPasswords[unit.id] ? <HiOutlineEyeOff size={16} /> : <HiOutlineEye size={16} />}
+                                            </button>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -351,12 +379,15 @@ const UnitsPage = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <button onClick={() => startEdit(unit)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl transition-all shadow-sm" title="Chỉnh sửa">
-                                                    <MdEdit size={20} />
+                                                    <MdEdit size={18} />
+                                                </button>
+                                                <button onClick={() => handleResetPassword(unit.id, unit.unitName)} className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 rounded-xl transition-all shadow-sm" title="Reset mật khẩu">
+                                                    <MdRefresh size={18} />
                                                 </button>
                                                 <button onClick={() => handleDelete(unit.id, unit.unitName)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 rounded-xl transition-all shadow-sm" title="Xóa bỏ">
-                                                    <MdDelete size={20} />
+                                                    <MdDelete size={18} />
                                                 </button>
                                             </div>
                                         )}
@@ -365,7 +396,7 @@ const UnitsPage = () => {
                             ))}
                             {filteredUnits.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-20 text-center">
+                                    <td colSpan="7" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center justify-center grayscale opacity-40">
                                             <MdCorporateFare size={64} className="text-gray-300 mb-4" />
                                             <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Không tìm thấy đơn vị nào phù hợp</p>
@@ -432,20 +463,27 @@ const UnitsPage = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Google (Liên kết Auth)</label>
-                                <div className="relative">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Username <span className="text-gray-400 font-normal">(tùy chọn)</span></label>
                                     <input
-                                        required
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                                        value={formData.username}
+                                        onChange={e => setFormData(p => ({ ...p, username: e.target.value }))}
                                         className="input"
-                                        placeholder="doanthanhnien@gmail.com"
+                                        placeholder="Tự sinh nếu bỏ trống"
                                     />
                                 </div>
-                                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 italic">* Đơn vị sẽ bắt buộc đăng nhập qua Google bằng email này để xác thực.</p>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Password <span className="text-gray-400 font-normal">(tùy chọn)</span></label>
+                                    <input
+                                        value={formData.password}
+                                        onChange={e => setFormData(p => ({ ...p, password: e.target.value }))}
+                                        className="input"
+                                        placeholder="Mặc định: abc@123."
+                                    />
+                                </div>
                             </div>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 -mt-3 italic">* Nếu bỏ trống, Username sẽ tự sinh từ tên đơn vị và Password mặc định là abc@123.</p>
 
                             <div className="flex gap-3 pt-6">
                                 <button

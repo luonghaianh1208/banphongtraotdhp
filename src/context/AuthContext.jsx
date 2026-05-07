@@ -1,7 +1,7 @@
 // AuthContext — quản lý trạng thái đăng nhập & user profile
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDocs, collection, query, where, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured } from '../firebase/config';
 import { getUserProfile, logout } from '../firebase/auth';
 import { initFirstAdmin } from '../firebase/functions';
@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   useEffect(() => {
     // Nếu Firebase chưa cấu hình, hiện login ngay
@@ -40,48 +41,45 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserProfile(user.uid);
 
-          // Nếu chưa có profile → kiểm tra xem email có trong bảng units không
           if (!profile) {
-            // Check xem email có thuộc đơn vị nào không
-            const unitsSnap = await getDocs(query(collection(db, 'units'), where('email', '==', user.email)));
-            if (!unitsSnap.empty) {
-              // Email thuộc đơn vị → dùng profile từ units (không tạo member rác)
-              const unitDoc = unitsSnap.docs[0];
-              profile = { id: unitDoc.id, ...unitDoc.data() };
-            } else {
-              // BUG-001 FIX: dùng Cloud Function atomic thay vì client-side check
-              // Tạo profile member trước (mặc định pending)
-              const newProfile = {
-                email: user.email,
-                displayName: user.displayName || user.email.split('@')[0],
-                role: 'member',
-                isActive: false,
-                status: 'pending',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                avatar: user.photoURL || null,
-              };
-              await setDoc(doc(db, 'users', user.uid), newProfile);
+            // User mới đăng nhập Google → tạo profile member
+            const newProfile = {
+              email: user.email,
+              displayName: user.displayName || user.email.split('@')[0],
+              role: 'member',
+              isActive: false,
+              status: 'pending',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              avatar: user.photoURL || null,
+            };
+            await setDoc(doc(db, 'users', user.uid), newProfile);
 
-              // Thử gán admin qua Cloud Function (atomic transaction)
-              try {
-                const result = await initFirstAdmin();
-                if (result.data?.success) {
-                  newProfile.role = 'admin';
-                  newProfile.isActive = true;
-                  newProfile.status = 'approved';
-                }
-              } catch (cfErr) {
-                console.warn('initFirstAdmin CF call failed (có thể admin đã tồn tại):', cfErr.message);
+            // Thử gán admin qua Cloud Function (atomic transaction)
+            try {
+              const result = await initFirstAdmin();
+              if (result.data?.success) {
+                newProfile.role = 'admin';
+                newProfile.isActive = true;
+                newProfile.status = 'approved';
               }
-
-              profile = { id: user.uid, ...newProfile };
+            } catch (cfErr) {
+              console.warn('initFirstAdmin CF call failed (có thể admin đã tồn tại):', cfErr.message);
             }
+
+            profile = { id: user.uid, ...newProfile };
           }
 
           // Nếu user cũ chưa có field status → coi như approved
           if (!profile.status) {
             profile.status = profile.isActive !== false ? 'approved' : 'pending';
+          }
+
+          // Check mustChangePassword (chỉ unit mới có)
+          if (profile.role === 'unit' && profile.mustChangePassword) {
+            setMustChangePassword(true);
+          } else {
+            setMustChangePassword(false);
           }
 
           setUserProfile(profile);
@@ -94,11 +92,13 @@ export const AuthProvider = ({ children }) => {
               if (!data.status) {
                 data.status = data.isActive !== false ? 'approved' : 'pending';
               }
-              // So sánh các field quan trọng — bỏ qua lastActiveAt để tránh
-              // re-render toàn bộ tree khi presence heartbeat fire
+              // Check mustChangePassword realtime
+              if (data.role === 'unit') {
+                setMustChangePassword(data.mustChangePassword === true);
+              }
               setUserProfile(prev => {
                 if (!prev) return data;
-                const importantFields = ['role', 'isActive', 'status', 'displayName', 'email', 'avatar', 'department'];
+                const importantFields = ['role', 'isActive', 'status', 'displayName', 'email', 'avatar', 'department', 'username', 'password', 'mustChangePassword'];
                 const changed = importantFields.some(f => prev[f] !== data[f]);
                 return changed ? data : prev;
               });
@@ -119,6 +119,7 @@ export const AuthProvider = ({ children }) => {
         }
       } else {
         setUserProfile(null);
+        setMustChangePassword(false);
       }
 
       setLoading(false);
@@ -153,6 +154,7 @@ export const AuthProvider = ({ children }) => {
     isManager,
     isMember,
     isUnit,
+    mustChangePassword,
     canManageTasks,
     canApprove,
     canManageUsers,

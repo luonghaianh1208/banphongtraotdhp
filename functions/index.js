@@ -564,42 +564,98 @@ exports.publishPeriodResults = onCall(async (request) => {
   return { message: "Đã công bố và tính điểm đợt báo cáo" };
 });
 
+// === HELPER: Bỏ dấu tiếng Việt ===
+function removeVietnameseTones(str) {
+  if (!str) return "";
+  let s = str;
+  s = s.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+  s = s.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+  s = s.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+  s = s.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+  s = s.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+  s = s.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+  s = s.replace(/đ/g, "d");
+  s = s.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "a");
+  s = s.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "e");
+  s = s.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "i");
+  s = s.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "o");
+  s = s.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "u");
+  s = s.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "y");
+  s = s.replace(/Đ/g, "d");
+  s = s.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, "");
+  s = s.replace(/\u02C6|\u0306|\u031B/g, "");
+  return s.toLowerCase().trim();
+}
+
+// === HELPER: Sinh username từ tên đơn vị ===
+const UNIT_PREFIXES = [
+  "doan tncs ho chi minh", "doan thanh nien cong san ho chi minh",
+  "doan thanh nien", "doan tn", "doan",
+  "hoi lien hiep thanh nien", "hoi lhtn", "hoi sinh vien", "hoi",
+  "chi doan", "lien chi doan", "ban chap hanh doan",
+];
+const LOCATION_PREFIXES = [
+  "thi tran", "thanh pho", "tp", "phuong", "xa", "quan", "huyen",
+  "cac co quan", "co quan", "truong", "dai hoc", "cao dang",
+  "bo chi huy", "luc luong",
+];
+
+function generateUsername(unitName) {
+  if (!unitName) return "";
+  let cleaned = removeVietnameseTones(unitName);
+  const sortedPrefixes = [...UNIT_PREFIXES].sort((a, b) => b.length - a.length);
+  for (const prefix of sortedPrefixes) {
+    if (cleaned.startsWith(prefix + " ")) {
+      cleaned = cleaned.slice(prefix.length).trim();
+      break;
+    }
+  }
+  const sortedLoc = [...LOCATION_PREFIXES].sort((a, b) => b.length - a.length);
+  for (const loc of sortedLoc) {
+    if (cleaned.startsWith(loc + " ")) {
+      cleaned = cleaned.slice(loc.length).trim();
+      break;
+    }
+  }
+  const username = cleaned.replace(/[^a-z0-9]/g, "");
+  return username ? `${username}.tdhp` : "";
+}
+
+const DEFAULT_UNIT_PASSWORD = "abc@123.";
+
 // === 13. TẠO TÀI KHOẢN ĐƠN VỊ CƠ SỞ (UNIT) ===
 exports.createUnit = onCall(async (request) => {
-  const { email, unitName, blockId, blockName, typeId, typeName } = request.data;
+  const { unitName, username: inputUsername, password: inputPassword, blockId, blockName, typeId, typeName } = request.data;
   const callerUid = request.auth?.uid;
   if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
 
   await requireAdmin(callerUid);
 
-  if (!email || !unitName) {
-    throw new HttpsError("invalid-argument", "Thiếu thông tin bắt buộc (email, unitName)");
+  if (!unitName) {
+    throw new HttpsError("invalid-argument", "Thiếu thông tin bắt buộc (unitName)");
   }
 
-  // Tự sinh mật khẩu ngẫu nhiên (đơn vị chỉ đăng nhập bằng Google)
-  const randomPassword = require("crypto").randomBytes(16).toString("hex");
+  // Sinh username nếu không truyền
+  const username = (inputUsername || "").trim() || generateUsername(unitName);
+  const password = (inputPassword || "").trim() || DEFAULT_UNIT_PASSWORD;
 
-  let userRecord;
-  try {
-    // Tạo Firebase Auth user cho đơn vị
-    userRecord = await getAuth().createUser({
-      email,
-      password: randomPassword,
-      displayName: unitName,
-    });
-  } catch (error) {
-    if (error.code === "auth/email-already-exists") {
-      throw new HttpsError("already-exists", `Email "${email}" đã được sử dụng cho tài khoản khác.`);
-    }
-    if (error.code === "auth/invalid-email") {
-      throw new HttpsError("invalid-argument", `Email "${email}" không hợp lệ.`);
-    }
-    throw new HttpsError("internal", `Lỗi tạo tài khoản: ${error.message}`);
+  if (!username) {
+    throw new HttpsError("invalid-argument", "Không thể sinh username từ tên đơn vị. Vui lòng nhập thủ công.");
   }
 
-  // Tạo document trong collection `units` với uid làm doc ID
-  await db.collection("units").doc(userRecord.uid).set({
-    email,
+  // Kiểm tra username trùng
+  const existingSnap = await db.collection("units").where("username", "==", username).get();
+  if (!existingSnap.empty) {
+    throw new HttpsError("already-exists", `Username "${username}" đã được sử dụng.`);
+  }
+
+  // Tạo Firestore document trước (dùng auto-generated ID)
+  const unitRef = db.collection("units").doc();
+  const unitId = unitRef.id;
+
+  await unitRef.set({
+    username,
+    password,
     unitName,
     displayName: unitName,
     role: "unit",
@@ -609,11 +665,103 @@ exports.createUnit = onCall(async (request) => {
     typeName: typeName || "",
     isActive: true,
     status: "approved",
+    mustChangePassword: true,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  return { success: true, uid: userRecord.uid, message: `Đã tạo đơn vị: ${unitName}` };
+  return { success: true, uid: unitId, username, message: `Đã tạo đơn vị: ${unitName} (username: ${username})` };
+});
+
+// === 13b. ĐĂNG NHẬP ĐƠN VỊ (USERNAME/PASSWORD → CUSTOM TOKEN) ===
+exports.loginUnit = onCall(async (request) => {
+  const { username, password } = request.data;
+
+  if (!username || !password) {
+    throw new HttpsError("invalid-argument", "Vui lòng nhập username và mật khẩu.");
+  }
+
+  // Tìm đơn vị theo username
+  const unitsSnap = await db.collection("units").where("username", "==", username.trim()).get();
+
+  if (unitsSnap.empty) {
+    throw new HttpsError("not-found", "Username không tồn tại.");
+  }
+
+  const unitDoc = unitsSnap.docs[0];
+  const unitData = unitDoc.data();
+
+  // Kiểm tra mật khẩu (plaintext compare)
+  if (unitData.password !== password) {
+    throw new HttpsError("permission-denied", "Mật khẩu không đúng.");
+  }
+
+  // Kiểm tra trạng thái tài khoản
+  if (unitData.isActive === false) {
+    throw new HttpsError("permission-denied", "Tài khoản đã bị khóa. Liên hệ quản trị viên.");
+  }
+
+  // Tạo Custom Token từ Firebase Auth
+  const customToken = await getAuth().createCustomToken(unitDoc.id, {
+    role: "unit",
+    unitId: unitDoc.id,
+  });
+
+  return {
+    success: true,
+    token: customToken,
+    mustChangePassword: unitData.mustChangePassword === true,
+    unitId: unitDoc.id,
+  };
+});
+
+// === 13c. ĐỔI MẬT KHẨU ĐƠN VỊ (UNIT TỰ ĐỔI) ===
+exports.changeUnitPassword = onCall(async (request) => {
+  const { newPassword } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new HttpsError("invalid-argument", "Mật khẩu mới phải có ít nhất 6 ký tự.");
+  }
+
+  // Kiểm tra caller là unit
+  const unitDoc = await db.collection("units").doc(callerUid).get();
+  if (!unitDoc.exists) {
+    throw new HttpsError("permission-denied", "Chỉ tài khoản đơn vị mới có thể đổi mật khẩu.");
+  }
+
+  await db.collection("units").doc(callerUid).update({
+    password: newPassword,
+    mustChangePassword: false,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, message: "Đổi mật khẩu thành công." };
+});
+
+// === 13d. RESET MẬT KHẨU ĐƠN VỊ (ADMIN) ===
+exports.resetUnitPassword = onCall(async (request) => {
+  const { unitId } = request.data;
+  const callerUid = request.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Chưa đăng nhập");
+
+  await requireAdmin(callerUid);
+
+  if (!unitId) throw new HttpsError("invalid-argument", "Thiếu unitId");
+
+  const unitDoc = await db.collection("units").doc(unitId).get();
+  if (!unitDoc.exists) {
+    throw new HttpsError("not-found", "Không tìm thấy đơn vị.");
+  }
+
+  await db.collection("units").doc(unitId).update({
+    password: DEFAULT_UNIT_PASSWORD,
+    mustChangePassword: true,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, message: `Đã reset mật khẩu về mặc định (${DEFAULT_UNIT_PASSWORD}).` };
 });
 
 // === 14. XÓA TÀI KHOẢN THÀNH VIÊN (ADMIN) ===
@@ -689,16 +837,7 @@ exports.deleteUnit = onCall(async (request) => {
     "plans"
   );
 
-  // 4. Xóa Firebase Auth user
-  try {
-    await getAuth().deleteUser(unitId);
-  } catch (error) {
-    if (error.code !== "auth/user-not-found") {
-      throw new HttpsError("internal", `Lỗi xóa Auth: ${error.message}`);
-    }
-  }
-
-  // 5. Xóa Firestore document đơn vị
+  // 4. Xóa Firestore document đơn vị
   await db.collection("units").doc(unitId).delete();
 
   console.log(`[deleteUnit] Cascade delete hoàn tất cho unitId: ${unitId}`);

@@ -1,5 +1,34 @@
 # Changelog
 
+## [2026-05-07d] - Unit Authentication Migration (Username/Password)
+
+### Da thay doi (Features)
+- **Unit Authentication Migration**: Chuyen doi phuong thuc dang nhap cua Đơn vị cơ sở tu Google OAuth sang Custom Token dua tren Username va Password. Staff/Admin van tiep tuc su dung Google OAuth binh thuong.
+- **Dual-tab Login UI**: Nâng cấp trang `/login` thành 2 tab tách biệt rõ ràng cho Đơn vị và Nội bộ.
+- **First-time Password Change**: Yêu cầu các đơn vị phải đổi mật khẩu ở lần đăng nhập đầu tiên (hoặc khi admin reset mật khẩu). Sử dụng `ChangePasswordModal` chặn hoàn toàn ứng dụng nếu chưa đổi.
+- **Admin Unit Management**: Đổi giao diện quản lý đơn vị tại `UnitsPage`, loại bỏ Email, hiển thị Username và Password (có toggle ẩn hiện). Bổ sung nút Reset Password cho quản trị viên.
+
+### Da don dep (Data Cleanup)
+- **Excel Template**: Thay đổi logic xuất và nhập file Excel, xóa bỏ cột Email và thêm vào 2 cột Username và Password cho việc import hàng loạt.
+- Tự động hóa logic sinh username và password mặc định khi import Excel mà bỏ trống (Username = `ten.khong.dau.tdhp`, Password = `abc@123.`).
+
+### Backend (Cloud Functions)
+- **`loginUnit`**: Hàm đăng nhập xác thực thông tin từ database và trả về Custom Token để client tự động đăng nhập Firebase Auth.
+- **`createUnit`**: Tạo hoặc cập nhật thông tin credentials (username, password thô) trên Firestore thay vì tạo tài khoản Firebase Auth.
+- **`changeUnitPassword`**: Cho phép đơn vị thay đổi mật khẩu và cập nhật `mustChangePassword = false`.
+- **`resetUnitPassword`**: Dành cho quản trị viên khôi phục mật khẩu tài khoản đơn vị về mặc định.
+
+### File bi anh huong
+- `functions/index.js` — Thêm 3 hàm mới, cập nhật hàm tạo đơn vị
+- `src/firebase/auth.js` — Cập nhật logic lấy Token cho Unit
+- `src/context/AuthContext.jsx` — Listener theo dõi cờ báo đổi mật khẩu realtime
+- `src/pages/LoginPage.jsx` — UI Đăng nhập tab
+- `src/App.jsx` — Thêm route chặn Modal đổi mật khẩu
+- `src/components/criteria/UnitsPage.jsx` — Admin Dashboard mới
+- `src/utils/exportExcel.js` — Template Excel mới
+
+---
+
 ## [2026-05-07c] - Navigation Freeze Fix (BUG-023)
 
 ### Da sua (Bugfix)
@@ -162,7 +191,7 @@
 ## [2026-05-06 PM8] - Refactor module Ke hoach: workflow hoan chinh
 
 ### Da sua
-- **PlansManagePage.jsx**: Fix link sai `/admin/plans/${id}` thanh `/plans/${id}` (BUG-017 link regression). Them `EvidenceUpload` vao modal tao ke hoach de cap tren upload tai lieu dinh kem + dan link Drive. Doi label "Mo ta ngan gon" thanh "Yeu cau cu the ve ho so".
+- **PlansManagePage.jsx**: Fix link sai `/admin/plans/${id}` thanh `/plans/${id}` (BUG-017 link regression). Them `EvidenceUpload` vao modal tao ke hoach de cap tren upload tai lieu dinh kem + dan link Drive. Doi label "Mo ta ngan gon" thanh "Yeu cau cu extreme ve ho so".
 - **PlanDetailPage.jsx**: Rewrite toan bo — bo sidebar review, chuyen sang layout full-width. Phan tren: noi dung ke hoach + tai lieu dinh kem (EvidenceUpload readOnly). Phan duoi: bang Excel danh sach don vi nop ho so (STT, Don vi, Trang thai, Ngay nop, Ho so dinh kem click-to-download).
 
 ### File bi anh huong
