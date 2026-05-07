@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { loginWithGoogle, loginWithCustomToken } from '../firebase/auth';
+import { loginWithGoogle, loginUnitWithEmail } from '../firebase/auth';
 import { loginUnitFn } from '../firebase/functions';
 import { FcGoogle } from 'react-icons/fc';
 import { HiOutlineOfficeBuilding, HiOutlineUserGroup, HiOutlineLockClosed, HiOutlineUser } from 'react-icons/hi';
@@ -37,8 +37,8 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const result = await loginUnitFn({ username: username.trim(), password });
-      const { token } = result.data;
-      await loginWithCustomToken(token);
+      const { fakeEmail } = result.data;
+      await loginUnitWithEmail(fakeEmail, password);
       toast.success('Đăng nhập thành công!');
     } catch (error) {
       console.error('Chi tiết lỗi đăng nhập Unit:', error);

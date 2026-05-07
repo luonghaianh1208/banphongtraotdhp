@@ -34,9 +34,11 @@ export const loginWithGoogle = async () => {
   return result;
 };
 
-// Đăng nhập đơn vị bằng Custom Token (nhận từ Cloud Function loginUnit)
-export const loginWithCustomToken = async (token) => {
-  return signInWithCustomToken(auth, token);
+// Đăng nhập đơn vị bằng Email/Password (đồng bộ từ Backend)
+import { signInWithEmailAndPassword } from 'firebase/auth';
+
+export const loginUnitWithEmail = async (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
 };
 
 // Đăng xuất

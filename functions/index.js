@@ -673,10 +673,8 @@ exports.createUnit = onCall(async (request) => {
   return { success: true, uid: unitId, username, message: `Đã tạo đơn vị: ${unitName} (username: ${username})` };
 });
 
-// === 13b. ĐĂNG NHẬP ĐƠN VỊ (USERNAME/PASSWORD → CUSTOM TOKEN) ===
-exports.loginUnit = onCall({
-  serviceAccount: "ban-pt-tdhp@appspot.gserviceaccount.com"
-}, async (request) => {
+// === 13b. ĐĂNG NHẬP ĐƠN VỊ (USERNAME/PASSWORD → FIREBASE AUTH SYNC) ===
+exports.loginUnit = onCall(async (request) => {
   const { username, password } = request.data;
 
   if (!username || !password) {
@@ -703,15 +701,30 @@ exports.loginUnit = onCall({
     throw new HttpsError("permission-denied", "Tài khoản đã bị khóa. Liên hệ quản trị viên.");
   }
 
-  // Tạo Custom Token từ Firebase Auth
-  const customToken = await getAuth().createCustomToken(unitDoc.id, {
-    role: "unit",
-    unitId: unitDoc.id,
-  });
+  // Đồng bộ Firebase Auth
+  const fakeEmail = `${username.trim()}@unit.tdhp`;
+  const uid = unitDoc.id;
+
+  try {
+    await getAuth().getUser(uid);
+    await getAuth().updateUser(uid, { password: password, email: fakeEmail });
+  } catch (error) {
+    if (error.code === 'auth/user-not-found') {
+      await getAuth().createUser({
+        uid: uid,
+        email: fakeEmail,
+        password: password,
+        displayName: unitData.name || username
+      });
+      await getAuth().setCustomUserClaims(uid, { role: "unit", unitId: uid });
+    } else {
+      throw new HttpsError("internal", "Lỗi đồng bộ hệ thống: " + error.message);
+    }
+  }
 
   return {
     success: true,
-    token: customToken,
+    fakeEmail: fakeEmail,
     mustChangePassword: unitData.mustChangePassword === true,
     unitId: unitDoc.id,
   };
