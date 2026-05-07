@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MdClose, MdAccessTime, MdStickyNote2 } from 'react-icons/md';
+import TimePicker from '../common/TimePicker';
 
 const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose, editingTask }) => {
   const [title, setTitle] = useState(editingTask?.title || '');
@@ -19,8 +21,8 @@ const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose, editingTask }) =>
     } catch { setSaving(false); }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700 animate-fade-in-up" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <div>
@@ -39,10 +41,10 @@ const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose, editingTask }) =>
           />
           <div className="flex items-center gap-2">
             <MdAccessTime size={16} className="text-slate-400" />
-            <input
-              type="time"
+            <TimePicker
               value={time}
-              onChange={e => setTime(e.target.value)}
+              onChange={setTime}
+              placeholder="Chọn giờ"
               className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
             />
           </div>
@@ -65,7 +67,8 @@ const PersonalTaskPopup = ({ date, dateLabel, onSave, onClose, editingTask }) =>
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

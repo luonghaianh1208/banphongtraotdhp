@@ -1,5 +1,6 @@
 // FilePreviewModal — xem trước file đính kèm (PDF/ảnh/Word/Excel/PPT) bên trong app
 import { useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { MdClose, MdDownload, MdOpenInNew } from 'react-icons/md';
 
 const FilePreviewModal = ({ file, onClose }) => {
@@ -59,7 +60,7 @@ const FilePreviewModal = ({ file, onClose }) => {
 
   const typeBadge = getTypeBadge();
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -143,7 +144,8 @@ const FilePreviewModal = ({ file, onClose }) => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

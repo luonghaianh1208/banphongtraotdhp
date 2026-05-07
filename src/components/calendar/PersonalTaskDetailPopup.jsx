@@ -1,10 +1,11 @@
+import { createPortal } from 'react-dom';
 import { MdClose, MdAccessTime, MdStickyNote2, MdEdit, MdDelete, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 
 const PersonalTaskDetailPopup = ({ task, onClose, onEdit, onDelete, onToggle }) => {
   if (!task) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700 animate-fade-in-up" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
@@ -69,7 +70,8 @@ const PersonalTaskDetailPopup = ({ task, onClose, onEdit, onDelete, onToggle }) 
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { changeUnitPassword } from '../firebase/functions';
 import { HiOutlineLockClosed, HiOutlineShieldCheck } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -53,7 +54,7 @@ const ChangePasswordModal = ({ onSuccess }) => {
 
   const strength = passwordStrength(newPassword);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md mx-4 animate-fade-in-up">
         <div className="glass-card p-8 space-y-6 border-white/40 dark:border-white/5">
@@ -158,7 +159,8 @@ const ChangePasswordModal = ({ onSuccess }) => {
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
