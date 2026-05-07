@@ -13,7 +13,13 @@ import { ROLES } from '../utils/constants';
 import toast from 'react-hot-toast';
 
 // Tính trạng thái online từ lastActiveAt
-const getPresenceInfo = (user) => {
+// currentUserId: nếu truyền vào, user.id trùng → luôn hiện online (vì presence hook đang chạy)
+const getPresenceInfo = (user, currentUserId) => {
+  // Chính mình luôn online khi đang mở app (usePresence đang heartbeat)
+  if (currentUserId && user.id === currentUserId) {
+    return { isOnline: true, label: 'Đang hoạt động' };
+  }
+
   const lastActive = user.lastActiveAt;
   if (!lastActive) return { isOnline: false, label: 'Chưa hoạt động' };
 
@@ -33,7 +39,7 @@ const getPresenceInfo = (user) => {
 
 const MembersPage = () => {
   const { users, loading } = useUsers();
-  const { canManageUsers } = useAuth();
+  const { canManageUsers, currentUser } = useAuth();
   const [editingUser, setEditingUser] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -125,7 +131,7 @@ const MembersPage = () => {
   if (loading) return <LoadingSpinner />;
 
   // Đếm online
-  const onlineCount = activeUsers.filter(u => getPresenceInfo(u).isOnline).length;
+  const onlineCount = activeUsers.filter(u => getPresenceInfo(u, currentUser?.uid).isOnline).length;
 
   return (
     <div className="max-w-4xl mx-auto fade-in space-y-6">
@@ -214,7 +220,7 @@ const MembersPage = () => {
       {/* === ACTIVE MEMBERS — Card layout with online indicator === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredActive.map(user => {
-          const presence = getPresenceInfo(user);
+          const presence = getPresenceInfo(user, currentUser?.uid);
           return (
             <div
               key={user.id}
