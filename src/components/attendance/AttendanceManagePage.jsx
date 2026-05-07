@@ -1,5 +1,6 @@
 // AttendanceManagePage — Quản lý điểm danh cho cấp trên (admin/manager/member)
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { MdAdd, MdDelete, MdEdit, MdCheckCircle, MdCancel, MdAccessTime, MdGroup, MdVisibility, MdClose, MdPhone, MdPerson, MdImage, MdMoreTime } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import useAttendancePrograms from '../../hooks/useAttendancePrograms';
@@ -275,8 +276,8 @@ const AttendanceManagePage = () => {
       )}
 
       {/* Gia hạn Modal */}
-      {extendingProgram && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      {extendingProgram && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setExtendingProgram(null)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-fade-in-up z-10">
             <h4 className="text-base font-black text-gray-900 dark:text-white mb-4">Gia hạn điểm danh</h4>
@@ -297,7 +298,8 @@ const AttendanceManagePage = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Confirm delete */}
@@ -322,9 +324,9 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
 
   const attendedUnitIds = useMemo(() => new Set(records.map(r => r.unitId)), [records]);
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
         <div
           className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-fade-in-up z-10"
@@ -399,14 +401,15 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
       {viewingRecord && (
         <RecordDetailPopup record={viewingRecord} onClose={() => setViewingRecord(null)} />
       )}
-    </>
+    </>,
+    document.body
   );
 };
 
 // === POPUP CHI TIẾT BẢN GHI ĐIỂM DANH ===
 const RecordDetailPopup = ({ record, onClose }) => {
-  return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div
         className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up z-10"
@@ -472,7 +475,8 @@ const RecordDetailPopup = ({ record, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

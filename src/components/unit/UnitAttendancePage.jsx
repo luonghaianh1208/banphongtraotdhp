@@ -1,5 +1,6 @@
 // UnitAttendancePage — Trang điểm danh cho đơn vị cơ sở
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { MdAccessTime, MdCheckCircle, MdLock, MdSend, MdDelete, MdCloudUpload, MdPerson, MdPhone, MdGroup, MdImage, MdSchedule, MdClose } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import useAttendancePrograms from '../../hooks/useAttendancePrograms';
@@ -213,8 +214,8 @@ const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div
         className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-in-up z-10"
@@ -361,7 +362,8 @@ const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
