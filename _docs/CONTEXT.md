@@ -36,6 +36,8 @@ Xay dung tinh nang Diem danh (Attendance) cho ca cap tren va co so.
 - Auto-delete sau 30 ngay thay vi giu lai vinh vien de tranh day Firestore.
 - loginUnit dung fakeEmail (`username@unit.tdhp`) + Firebase Auth Email/Password thay vi Custom Token de tranh van de quyen IAM.
 - Default password la `abc@123` cho viec onboarding hang loat don vi.
+- **[PATTERN] Modal/Popup phai dung `createPortal`** — Xem chi tiet tai `_docs/PATTERNS.md` muc "Portal Modal".
+- **[PATTERN] DateTimePicker/TimePicker** — Toan he thong dung Flatpickr. Xem chi tiet tai `_docs/PATTERNS.md` muc "Flatpickr".
 
 ## Cau truc file da thay doi
 
