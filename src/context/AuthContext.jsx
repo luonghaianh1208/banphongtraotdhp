@@ -94,7 +94,14 @@ export const AuthProvider = ({ children }) => {
               if (!data.status) {
                 data.status = data.isActive !== false ? 'approved' : 'pending';
               }
-              setUserProfile(data);
+              // So sánh các field quan trọng — bỏ qua lastActiveAt để tránh
+              // re-render toàn bộ tree khi presence heartbeat fire
+              setUserProfile(prev => {
+                if (!prev) return data;
+                const importantFields = ['role', 'isActive', 'status', 'displayName', 'email', 'avatar', 'department'];
+                const changed = importantFields.some(f => prev[f] !== data[f]);
+                return changed ? data : prev;
+              });
             }
           });
 

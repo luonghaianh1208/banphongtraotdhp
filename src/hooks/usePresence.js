@@ -1,5 +1,7 @@
 // usePresence — track online presence bằng cách cập nhật lastActiveAt vào Firestore
-import { useEffect, useRef } from 'react';
+// CHỈ dùng heartbeat + visibility change, KHÔNG bắt click/keydown để tránh
+// race condition với AuthContext onSnapshot → gây mất route navigation
+import { useEffect, useRef, useCallback } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
@@ -9,53 +11,49 @@ const HEARTBEAT_INTERVAL = 60_000; // 1 phút
 const usePresence = () => {
   const { currentUser, userProfile } = useAuth();
   const intervalRef = useRef(null);
+  const userIdRef = useRef(null);
+
+  // Lưu userId vào ref để tránh re-create callback khi currentUser thay đổi ref
+  useEffect(() => {
+    userIdRef.current = currentUser?.uid || null;
+  }, [currentUser?.uid]);
+
+  const updatePresence = useCallback(async () => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        lastActiveAt: serverTimestamp(),
+      });
+    } catch (err) {
+      // Silent fail — không block UX
+    }
+  }, []);
 
   useEffect(() => {
     if (!currentUser || !userProfile || userProfile.role === 'unit') return;
 
-    const updatePresence = async () => {
-      try {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
-          lastActiveAt: serverTimestamp(),
-        });
-      } catch (err) {
-        // Silent fail — không block UX
-      }
-    };
-
     // Update ngay khi mount
     updatePresence();
 
-    // Heartbeat mỗi 1 phút
+    // Heartbeat mỗi 1 phút — đủ để xác định online status
     intervalRef.current = setInterval(updatePresence, HEARTBEAT_INTERVAL);
 
-    // Update khi user tương tác (click, keypress, scroll)
-    const onActivity = () => updatePresence();
-    const throttledActivity = throttle(onActivity, HEARTBEAT_INTERVAL);
+    // Chỉ update khi tab được focus lại (đã rời đi và quay lại)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updatePresence();
+      }
+    };
 
-    window.addEventListener('focus', onActivity);
-    window.addEventListener('click', throttledActivity);
-    window.addEventListener('keydown', throttledActivity);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      window.removeEventListener('focus', onActivity);
-      window.removeEventListener('click', throttledActivity);
-      window.removeEventListener('keydown', throttledActivity);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [currentUser, userProfile]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.uid, userProfile?.role]);
 };
-
-// Simple throttle helper
-function throttle(fn, delay) {
-  let lastCall = 0;
-  return (...args) => {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      fn(...args);
-    }
-  };
-}
 
 export default usePresence;
