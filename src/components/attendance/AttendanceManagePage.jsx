@@ -6,6 +6,7 @@ import useAttendancePrograms from '../../hooks/useAttendancePrograms';
 import useAttendanceRecords from '../../hooks/useAttendanceRecords';
 import { useUnits } from '../../hooks/useUnits';
 import { createAttendanceProgram, updateAttendanceProgram, deleteAttendanceProgram } from '../../firebase/attendanceFirestore';
+import DateTimePicker from '../common/DateTimePicker';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ConfirmDialog from '../common/ConfirmDialog';
 import toast from 'react-hot-toast';
@@ -22,17 +23,17 @@ const AttendanceManagePage = () => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Form state
+  // Form state — dùng Date objects cho Flatpickr
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
 
   const resetForm = () => {
     setTitle('');
     setDescription('');
-    setStartTime('');
-    setEndTime('');
+    setStartTime(null);
+    setEndTime(null);
     setEditingProgram(null);
     setShowForm(false);
   };
@@ -41,8 +42,8 @@ const AttendanceManagePage = () => {
     setEditingProgram(program);
     setTitle(program.title);
     setDescription(program.description || '');
-    setStartTime(program.startTime ? format(program.startTime, "yyyy-MM-dd'T'HH:mm") : '');
-    setEndTime(program.endTime ? format(program.endTime, "yyyy-MM-dd'T'HH:mm") : '');
+    setStartTime(program.startTime || null);
+    setEndTime(program.endTime || null);
     setShowForm(true);
   };
 
@@ -52,17 +53,17 @@ const AttendanceManagePage = () => {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc.');
       return;
     }
-    if (new Date(endTime) <= new Date(startTime)) {
+    if (endTime <= startTime) {
       toast.error('Thời gian kết thúc phải sau thời gian bắt đầu.');
       return;
     }
 
     try {
       if (editingProgram) {
-        await updateAttendanceProgram(editingProgram.id, { title: title.trim(), description: description.trim(), startTime, endTime });
+        await updateAttendanceProgram(editingProgram.id, { title: title.trim(), description: description.trim(), startTime: startTime.toISOString(), endTime: endTime.toISOString() });
         toast.success('Đã cập nhật chương trình.');
       } else {
-        await createAttendanceProgram({ title: title.trim(), description: description.trim(), startTime, endTime, createdBy: userProfile.id });
+        await createAttendanceProgram({ title: title.trim(), description: description.trim(), startTime: startTime.toISOString(), endTime: endTime.toISOString(), createdBy: userProfile.id });
         toast.success('Đã tạo chương trình điểm danh.');
       }
       resetForm();
@@ -82,17 +83,17 @@ const AttendanceManagePage = () => {
     }
   };
 
-  const handleExtend = async (program) => {
-    const newEnd = prompt('Nhập thời gian kết thúc mới (VD: 2026-05-08 18:00):');
-    if (!newEnd) return;
-    const parsed = new Date(newEnd);
-    if (isNaN(parsed.getTime())) {
-      toast.error('Thời gian không hợp lệ.');
-      return;
-    }
+  // Gia hạn — mở modal thay vì prompt
+  const [extendingProgram, setExtendingProgram] = useState(null);
+  const [extendDate, setExtendDate] = useState(null);
+
+  const handleExtendSubmit = async () => {
+    if (!extendDate || !extendingProgram) return;
     try {
-      await updateAttendanceProgram(program.id, { endTime: parsed.toISOString(), status: 'open' });
+      await updateAttendanceProgram(extendingProgram.id, { endTime: extendDate.toISOString(), status: 'open' });
       toast.success('Đã gia hạn thời gian điểm danh.');
+      setExtendingProgram(null);
+      setExtendDate(null);
     } catch (error) {
       toast.error('Lỗi: ' + error.message);
     }
@@ -155,22 +156,21 @@ const AttendanceManagePage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Bắt đầu điểm danh *</label>
-                <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={e => setStartTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                  required
+                <DateTimePicker
+                  selected={startTime}
+                  onChange={setStartTime}
+                  placeholder="Chọn thời gian bắt đầu"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Kết thúc điểm danh *</label>
-                <input
-                  type="datetime-local"
-                  value={endTime}
-                  onChange={e => setEndTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                  required
+                <DateTimePicker
+                  selected={endTime}
+                  onChange={setEndTime}
+                  placeholder="Chọn thời gian kết thúc"
+                  minDate={startTime}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
@@ -208,7 +208,7 @@ const AttendanceManagePage = () => {
               <div key={program.id} className="glass-card p-5 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300 group">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
                       <h3 className="text-base font-black text-gray-900 dark:text-white truncate">{program.title}</h3>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.color}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} animate-pulse`} />
@@ -236,7 +236,7 @@ const AttendanceManagePage = () => {
                     </button>
                     {(status === 'expired' || status === 'closed') && (
                       <button
-                        onClick={() => handleExtend(program)}
+                        onClick={() => { setExtendingProgram(program); setExtendDate(null); }}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 font-bold text-xs transition-all"
                         title="Gia hạn"
                       >
@@ -265,13 +265,39 @@ const AttendanceManagePage = () => {
         </div>
       )}
 
-      {/* Chi tiết chương trình — Popup */}
+      {/* Chi tiết chương trình — Modal */}
       {selectedProgram && (
         <ProgramDetailModal
           program={selectedProgram}
           units={units}
           onClose={() => setSelectedProgram(null)}
         />
+      )}
+
+      {/* Gia hạn Modal */}
+      {extendingProgram && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setExtendingProgram(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-fade-in-up z-10">
+            <h4 className="text-base font-black text-gray-900 dark:text-white mb-4">Gia hạn điểm danh</h4>
+            <p className="text-sm text-gray-500 mb-4">Chọn thời gian kết thúc mới cho "{extendingProgram.title}"</p>
+            <DateTimePicker
+              selected={extendDate}
+              onChange={setExtendDate}
+              placeholder="Chọn thời gian kết thúc mới"
+              minDate={new Date()}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            />
+            <div className="flex gap-3 mt-5">
+              <button onClick={handleExtendSubmit} disabled={!extendDate} className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl font-bold text-sm transition-all">
+                Gia hạn
+              </button>
+              <button onClick={() => setExtendingProgram(null)} className="px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all">
+                Huỷ
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Confirm delete */}
@@ -297,93 +323,93 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
   const attendedUnitIds = useMemo(() => new Set(records.map(r => r.unitId)), [records]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
-      <div
-        className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-black text-gray-900 dark:text-white">{program.title}</h3>
-              <p className="text-xs text-gray-400 mt-1">
-                {program.startTime ? format(program.startTime, 'dd/MM/yyyy HH:mm', { locale: vi }) : ''}
-                {' → '}
-                {program.endTime ? format(program.endTime, 'dd/MM/yyyy HH:mm', { locale: vi }) : ''}
-              </p>
+    <>
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+        <div
+          className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-fade-in-up z-10"
+        >
+          {/* Header */}
+          <div className="p-6 border-b border-gray-100 dark:border-gray-800 shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black text-gray-900 dark:text-white">{program.title}</h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  {program.startTime ? format(program.startTime, 'dd/MM/yyyy HH:mm', { locale: vi }) : ''}
+                  {' → '}
+                  {program.endTime ? format(program.endTime, 'dd/MM/yyyy HH:mm', { locale: vi }) : ''}
+                </p>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                <MdClose size={20} className="text-gray-400" />
+              </button>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-              <MdClose size={20} className="text-gray-400" />
-            </button>
+            <div className="mt-3 flex items-center gap-3 text-sm">
+              <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                {attendedUnitIds.size} đã điểm danh
+              </span>
+              <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold text-xs">
+                {Math.max(0, units.length - attendedUnitIds.size)} chưa điểm danh
+              </span>
+            </div>
           </div>
-          <div className="mt-3 flex items-center gap-3 text-sm">
-            <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-              {attendedUnitIds.size} đã điểm danh
-            </span>
-            <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold text-xs">
-              {Math.max(0, units.length - attendedUnitIds.size)} chưa điểm danh
-            </span>
-          </div>
-        </div>
 
-        {/* Body */}
-        <div className="p-6 overflow-y-auto max-h-[60vh] space-y-2">
-          {loading ? (
-            <LoadingSpinner />
-          ) : units.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">Chưa có đơn vị nào trong hệ thống.</p>
-          ) : (
-            units.map(unit => {
-              const attended = attendedUnitIds.has(unit.id);
-              const record = records.find(r => r.unitId === unit.id);
-              return (
-                <div
-                  key={unit.id}
-                  onClick={() => attended && setViewingRecord(record)}
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 ${
-                    attended
-                      ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 cursor-pointer hover:shadow-md'
-                      : 'border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black ${
-                      attended ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
-                    }`}>
-                      {attended ? <MdCheckCircle size={18} /> : <MdCancel size={18} />}
+          {/* Body — scrollable */}
+          <div className="p-6 overflow-y-auto flex-1 space-y-2">
+            {loading ? (
+              <LoadingSpinner />
+            ) : units.length === 0 ? (
+              <p className="text-center text-gray-400 py-8">Chưa có đơn vị nào trong hệ thống.</p>
+            ) : (
+              units.map(unit => {
+                const attended = attendedUnitIds.has(unit.id);
+                const record = records.find(r => r.unitId === unit.id);
+                return (
+                  <div
+                    key={unit.id}
+                    onClick={() => attended && setViewingRecord(record)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 ${
+                      attended
+                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 cursor-pointer hover:shadow-md'
+                        : 'border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black ${
+                        attended ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}>
+                        {attended ? <MdCheckCircle size={18} /> : <MdCancel size={18} />}
+                      </div>
+                      <span className={`font-bold text-sm ${attended ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+                        {unit.name || unit.unitName}
+                      </span>
                     </div>
-                    <span className={`font-bold text-sm ${attended ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
-                      {unit.name || unit.unitName}
-                    </span>
+                    {attended && (
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Bấm để xem →</span>
+                    )}
                   </div>
-                  {attended && (
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Bấm để xem →</span>
-                  )}
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Record detail popup */}
+      {/* Record detail popup — stacked above */}
       {viewingRecord && (
         <RecordDetailPopup record={viewingRecord} onClose={() => setViewingRecord(null)} />
       )}
-    </div>
+    </>
   );
 };
 
 // === POPUP CHI TIẾT BẢN GHI ĐIỂM DANH ===
 const RecordDetailPopup = ({ record, onClose }) => {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30" />
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
+        className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up z-10"
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">

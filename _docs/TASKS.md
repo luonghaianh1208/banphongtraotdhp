@@ -12,6 +12,10 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Da hoan thanh
 
+- [x] Tính năng Điểm danh (Attendance) — full module cho cả cấp trên và cơ sở - 2026-05-07
+  - Backend: attendancePrograms/attendanceRecords collections, Firestore/Storage rules, autoDeleteExpiredAttendance Cloud Function
+  - Frontend: AttendanceManagePage (internal), UnitAttendancePage (unit), hooks, CRUD helpers
+  - Features: Tạo/sửa/xoá chương trình, gia hạn, form điểm danh (đại diện, SĐT, giờ, số lượng, upload ảnh), popup chi tiết, auto-delete sau 30 ngày
 - [x] Sửa lỗi 403 (Forbidden) khi Đơn vị đăng nhập: Cập nhật mật khẩu mặc định từ abc@123. thành abc@123, xoá dữ liệu cũ và deploy lại Cloud Functions - 2026-05-07
 - [x] Chuyen doi xac thuc don vi tu Google sang Username/Password + Custom Token - 2026-05-07
   - Backend: createUnit (username/password), loginUnit (Custom Token), changeUnitPassword, resetUnitPassword

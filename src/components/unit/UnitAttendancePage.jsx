@@ -1,10 +1,11 @@
 // UnitAttendancePage — Trang điểm danh cho đơn vị cơ sở
 import { useState, useMemo } from 'react';
-import { MdAccessTime, MdCheckCircle, MdLock, MdSend, MdDelete, MdCloudUpload, MdPerson, MdPhone, MdGroup, MdImage, MdSchedule } from 'react-icons/md';
+import { MdAccessTime, MdCheckCircle, MdLock, MdSend, MdDelete, MdCloudUpload, MdPerson, MdPhone, MdGroup, MdImage, MdSchedule, MdClose } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import useAttendancePrograms from '../../hooks/useAttendancePrograms';
 import useAttendanceRecords from '../../hooks/useAttendanceRecords';
 import { submitAttendanceRecord, uploadAttendancePhotos } from '../../firebase/attendanceFirestore';
+import TimePicker from '../common/TimePicker';
 import LoadingSpinner from '../common/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -55,7 +56,7 @@ const UnitAttendancePage = () => {
         </div>
       )}
 
-      {/* Form điểm danh modal */}
+      {/* Form điểm danh — full-screen modal */}
       {selectedProgram && (
         <AttendanceFormModal
           program={selectedProgram}
@@ -85,7 +86,7 @@ const ProgramCard = ({ program, status, unitId, unitName, onSelect }) => {
     <div className={`glass-card p-5 rounded-2xl border ${cfg.color} transition-all duration-300`}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
             <h3 className="text-base font-black text-gray-900 dark:text-white truncate">{program.title}</h3>
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.badge}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${status === 'open' ? 'animate-pulse' : ''}`} />
@@ -132,7 +133,7 @@ const ProgramCard = ({ program, status, unitId, unitName, onSelect }) => {
   );
 };
 
-// === FORM ĐIỂM DANH ===
+// === FORM ĐIỂM DANH — FULL OVERLAY MODAL ===
 const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
   const [representativeName, setRepresentativeName] = useState('');
   const [representativePhone, setRepresentativePhone] = useState('');
@@ -184,10 +185,8 @@ const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
 
     setSubmitting(true);
     try {
-      // Upload photos
       const photoUrls = await uploadAttendancePhotos(program.id, unitId, photos);
 
-      // Build arrival timestamp from date part of now + time part from picker
       const [hours, minutes] = arrivalTime.split(':');
       const arrivalDate = new Date();
       arrivalDate.setHours(Number(hours), Number(minutes), 0, 0);
@@ -215,14 +214,19 @@ const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div
-        className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
+        className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-in-up z-10"
       >
         <div className="p-6">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1">Điểm danh</h3>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-black text-gray-900 dark:text-white">Điểm danh</h3>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+              <MdClose size={20} className="text-gray-400" />
+            </button>
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{program.title}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -260,17 +264,16 @@ const AttendanceFormModal = ({ program, unitId, unitName, onClose }) => {
               )}
             </div>
 
-            {/* Thời gian có mặt */}
+            {/* Thời gian có mặt — Flatpickr TimePicker */}
             <div>
               <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                 <MdSchedule size={16} /> Thời gian có mặt *
               </label>
-              <input
-                type="time"
+              <TimePicker
                 value={arrivalTime}
-                onChange={e => setArrivalTime(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                required
+                onChange={setArrivalTime}
+                placeholder="Chọn giờ có mặt"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
               />
             </div>
 
