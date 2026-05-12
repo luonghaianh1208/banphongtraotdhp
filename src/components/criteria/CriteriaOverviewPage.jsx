@@ -108,8 +108,15 @@ const CriteriaOverviewPage = () => {
                 totalSelfScore: submission ? submission.totalSelfScore || 0 : 0,
                 totalGradedScore: submission ? submission.totalGradedScore || null : null,
             };
-        })
-        .filter((item) => item.assignment.unitName.toLowerCase().includes(searchTerm.toLowerCase()));
+        });
+
+    // Tách: overviewData dùng cho stats (không filter search), displayData dùng cho hiển thị (có filter search)
+    const displayData = overviewData.filter((item) => item.assignment.unitName.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Stats luôn tính trên toàn bộ assignments (không phụ thuộc search)
+    const countSubmitted = overviewData.filter((d) => d.status === 'submitted').length;
+    const countGraded = overviewData.filter((d) => d.status === 'graded').length;
+    const countNotSubmitted = overviewData.filter((d) => d.status === 'not_submitted' || d.status === 'draft').length;
 
     const statusMap = {
         not_submitted: { label: 'Chưa nộp', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
@@ -185,15 +192,15 @@ const CriteriaOverviewPage = () => {
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Đơn vị</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
-                        <p className="text-2xl font-black text-blue-600">{overviewData.filter((d) => d.status === 'submitted').length}</p>
+                        <p className="text-2xl font-black text-blue-600">{countSubmitted}</p>
                         <p className="text-[10px] font-bold text-blue-400 uppercase">Đã nộp</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
-                        <p className="text-2xl font-black text-emerald-600">{overviewData.filter((d) => d.status === 'graded').length}</p>
+                        <p className="text-2xl font-black text-emerald-600">{countGraded}</p>
                         <p className="text-[10px] font-bold text-emerald-400 uppercase">Đã thẩm định</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
-                        <p className="text-2xl font-black text-slate-500">{overviewData.filter((d) => d.status === 'not_submitted').length}</p>
+                        <p className="text-2xl font-black text-slate-500">{countNotSubmitted}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Chưa nộp</p>
                     </div>
                 </div>
@@ -215,7 +222,7 @@ const CriteriaOverviewPage = () => {
             </div>
 
             <div className="space-y-4">
-                {overviewData.map((item) => {
+                {displayData.map((item) => {
                     const statusInfo = statusMap[item.status];
                     const isGrading = gradingUnit === item.assignment.unitId;
 
@@ -495,7 +502,7 @@ const CriteriaOverviewPage = () => {
                     );
                 })}
 
-                {overviewData.length === 0 && (
+                {displayData.length === 0 && (
                     <div className="text-center py-20 text-gray-400 font-bold">
                         Chưa có đơn vị nào được giao tiêu chí này.
                     </div>
