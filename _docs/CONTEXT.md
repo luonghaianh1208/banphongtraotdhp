@@ -4,20 +4,19 @@ Cap nhat lan cuoi: 2026-05-12
 
 ## Muc tieu session
 
-Bo sung chuc nang tim kiem, loc cho 3 trang quan ly admin: Quan ly don vi, Quan ly bo tieu chi, Quan ly ke hoach.
+Fix loi dang nhap don vi (loginUnit) va bo sung cascade delete day du cho deleteUnit.
 
 ## Da lam trong session nay
 
-- UnitsPage: Them o tim kiem (search bar) voi icon kinh lup, ho tro tim theo ten don vi, username, ten khoi, ten loai hinh. Ket hop voi filter khoi hien co. Hien thi counter ket qua loc.
-- PlansManagePage: Them dropdown loc theo khoi doi tuong (UNIT_BLOCKS). Tim kiem bo sung match ca truong mo ta. Them nut xoa nhanh noi dung search. Hien thi counter ket qua loc. Chuyen filteredPlans sang useMemo.
-- CriteriaSetsPage: Da du chuc nang tim kiem va loc — khong can thay doi.
-- Build thanh cong khong loi.
+- Fix loginUnit: xu ly edge case `auth/email-already-exists` khi fakeEmail bi chiem boi Auth user cu (UID khac). Logic moi: tim Auth user cu theo email → xoa → tao lai dung UID.
+- Fix loginUnit: sua `unitData.name` (field khong ton tai) thanh `unitData.unitName` cho displayName.
+- Fix deleteUnit cascade: bo sung xoa Firebase Auth user (ca bang uid va fakeEmail), xoa contestEntries, xoa attendanceRecords. Loai bo logic sai xoa plans theo unitId (plans la collection chung).
 
 ## Ket qua quan trong
 
-- Admin co the tim kiem nhanh don vi bang tu khoa bat ky (ten, username, khoi, loai) tai trang Quan ly don vi.
-- Admin co the loc ke hoach theo khoi doi tuong tai trang Quan ly ke hoach.
-- Tat ca 3 trang quan ly admin deu co chuc nang tim kiem/loc day du va nhat quan.
+- Don vi co the dang nhap lai sau khi bi xoa va tao lai voi cung username.
+- deleteUnit gio clean toan bo: Auth user + criteriaSubmissions + criteriaAssignments + contestEntries + attendanceRecords + Firestore doc.
+- Khong con du lieu rac khi admin xoa va tao lai don vi.
 
 ## Quyet dinh ky thuat da chot
 
@@ -25,8 +24,9 @@ Bo sung chuc nang tim kiem, loc cho 3 trang quan ly admin: Quan ly don vi, Quan 
 - **[PATTERN] Modal/Popup phai dung `createPortal`** — Xem chi tiet tai `_docs/PATTERNS.md` muc "Portal Modal".
 - **[PATTERN] DateTimePicker/TimePicker** — Toan he thong dung Flatpickr. Xem chi tiet tai `_docs/PATTERNS.md` muc "Flatpickr".
 - **[PATTERN] Search/Filter** — Su dung `useMemo` cho logic loc, ket hop nhieu dieu kien (text + dropdown). Hien thi counter "Hien thi X/Y" khi dang loc.
+- **[FIX] loginUnit** — Khi createUser gap `email-already-exists`, tim Auth user cu theo fakeEmail, xoa, tao lai. Luon dung `unitData.unitName` cho displayName.
+- **[FIX] deleteUnit** — Cascade delete: Auth user (uid + fakeEmail) → criteriaSubmissions → criteriaAssignments → contestEntries → attendanceRecords → Firestore doc.
 
 ## Cau truc file da thay doi
 
-- `src/components/criteria/UnitsPage.jsx` — Them searchQuery state, sua filteredUnits (useMemo), them search input voi MdSearch
-- `src/components/criteria/PlansManagePage.jsx` — Them blockFilter state, sua filteredPlans (useMemo), them dropdown khoi, them clear button
+- `functions/index.js` — Fix loginUnit (dong ~708-742), fix deleteUnit (dong ~828-920)

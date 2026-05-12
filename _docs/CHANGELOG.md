@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-05-12c] - Fix Unit Login & Cascade Delete
+
+### Sửa lỗi (Bug Fixes)
+- **loginUnit**: Fix lỗi `auth/email-already-exists` khi fakeEmail đã bị Auth user cũ chiếm. Logic mới: tìm Auth user cũ theo email → xoá → tạo lại đúng UID. Fix `unitData.name` → `unitData.unitName`.
+- **deleteUnit cascade**: Bổ sung xoá Firebase Auth user (cả bằng uid và fakeEmail), xoá `contestEntries`, xoá `attendanceRecords`. Loại bỏ logic sai xoá `plans` theo unitId.
+
+### File bị ảnh hưởng
+- `functions/index.js` — loginUnit (dòng ~708-742), deleteUnit (dòng ~828-920)
+
+---
+
 ## [2026-05-12b] - Search & Filter Enhancements for Admin Pages
 
 ### Đã thêm (Features)

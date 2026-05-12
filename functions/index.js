@@ -710,12 +710,32 @@ exports.loginUnit = onCall(async (request) => {
     await getAuth().updateUser(uid, { password: password, email: fakeEmail });
   } catch (error) {
     if (error.code === 'auth/user-not-found') {
-      await getAuth().createUser({
-        uid: uid,
-        email: fakeEmail,
-        password: password,
-        displayName: unitData.name || username
-      });
+      try {
+        await getAuth().createUser({
+          uid: uid,
+          email: fakeEmail,
+          password: password,
+          displayName: unitData.unitName || unitData.displayName || username
+        });
+      } catch (createError) {
+        // Email bị chiếm bởi Auth user cũ → xoá user cũ rồi tạo lại
+        if (createError.code === 'auth/email-already-exists') {
+          try {
+            const existingUser = await getAuth().getUserByEmail(fakeEmail);
+            await getAuth().deleteUser(existingUser.uid);
+            await getAuth().createUser({
+              uid: uid,
+              email: fakeEmail,
+              password: password,
+              displayName: unitData.unitName || unitData.displayName || username
+            });
+          } catch (retryError) {
+            throw new HttpsError("internal", "Lỗi đồng bộ Auth (retry): " + retryError.message);
+          }
+        } else {
+          throw new HttpsError("internal", "Lỗi tạo Auth user: " + createError.message);
+        }
+      }
       await getAuth().setCustomUserClaims(uid, { role: "unit", unitId: uid });
     } else {
       throw new HttpsError("internal", "Lỗi đồng bộ hệ thống: " + error.message);
@@ -834,6 +854,37 @@ exports.deleteUnit = onCall(async (request) => {
     return totalDeleted;
   }
 
+  // 0. Xoá Firebase Auth user (nếu tồn tại) — tránh trùng khi tạo lại
+  try {
+    // Thử xoá trực tiếp bằng uid (unitId = Auth uid)
+    await getAuth().deleteUser(unitId);
+    console.log(`[deleteUnit] Đã xóa Auth user uid: ${unitId}`);
+  } catch (authErr) {
+    if (authErr.code === 'auth/user-not-found') {
+      // Auth user chưa từng được tạo (đơn vị chưa đăng nhập lần nào) — OK, bỏ qua
+      console.log(`[deleteUnit] Auth user uid ${unitId} không tồn tại, bỏ qua.`);
+    } else {
+      console.warn(`[deleteUnit] Lỗi xoá Auth user: ${authErr.message}`);
+    }
+  }
+
+  // Đọc thông tin đơn vị trước khi xoá (để lấy username → fakeEmail)
+  const unitDoc = await db.collection("units").doc(unitId).get();
+  if (unitDoc.exists) {
+    const unitData = unitDoc.data();
+    const fakeEmail = `${(unitData.username || "").trim()}@unit.tdhp`;
+    // Xoá Auth user theo fakeEmail nếu UID khác (edge case: Auth bị mismatch)
+    try {
+      const authUser = await getAuth().getUserByEmail(fakeEmail);
+      if (authUser.uid !== unitId) {
+        await getAuth().deleteUser(authUser.uid);
+        console.log(`[deleteUnit] Đã xóa Auth user orphan (uid: ${authUser.uid}, email: ${fakeEmail})`);
+      }
+    } catch (e) {
+      // user-not-found = OK, đã bị xoá ở bước trên
+    }
+  }
+
   // 1. Xóa tất cả criteriaSubmissions có unitId
   await deleteQueryResults(
     db.collection("criteriaSubmissions").where("unitId", "==", unitId).limit(500),
@@ -846,13 +897,19 @@ exports.deleteUnit = onCall(async (request) => {
     "criteriaAssignments"
   );
 
-  // 3. Xóa tất cả plans có unitId (nếu có)
+  // 3. Xóa tất cả contestEntries có unitId (hồ sơ kế hoạch/hội thi)
   await deleteQueryResults(
-    db.collection("plans").where("unitId", "==", unitId).limit(500),
-    "plans"
+    db.collection("contestEntries").where("unitId", "==", unitId).limit(500),
+    "contestEntries"
   );
 
-  // 4. Xóa Firestore document đơn vị
+  // 4. Xóa tất cả attendanceRecords có unitId (phiếu điểm danh)
+  await deleteQueryResults(
+    db.collection("attendanceRecords").where("unitId", "==", unitId).limit(500),
+    "attendanceRecords"
+  );
+
+  // 5. Xóa Firestore document đơn vị
   await db.collection("units").doc(unitId).delete();
 
   console.log(`[deleteUnit] Cascade delete hoàn tất cho unitId: ${unitId}`);
