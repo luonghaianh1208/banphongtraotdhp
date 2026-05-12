@@ -257,7 +257,7 @@ const CriteriaDetailPage = () => {
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
                                     <th className="min-w-[100px] px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm được chấm</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
@@ -344,7 +344,7 @@ const CriteriaDetailPage = () => {
                                                 </span>
                                             </td>
                                             
-                                            {/* Điểm cấp trên (trước GT) - Editable */}
+                                            {/* Điểm được chấm - Editable */}
                                             <td className="px-2 py-4">
                                                 <input
                                                     type="number"

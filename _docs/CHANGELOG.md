@@ -1,5 +1,30 @@
 # Changelog
 
+## [2026-05-12e] - UI Table Cleanup: Dynamic Columns & Label Sync
+
+### Thay đổi (Changes)
+- **UnitSubmitPage**: Ẩn cột theo tab — Tab "Bộ tiêu chí" ẩn 3 cột giải trình (Nội dung GT, Thời hạn GT, Điểm sau GT); Tab "Giải trình" ẩn 3 cột (Tổ, Hạn nộp, Đánh giá của đơn vị).
+- **UnitSubmitPage + CriteriaDetailPage + CriteriaOverviewPage**: Đổi tên "Điểm cấp trên (trước GT)" → "Điểm được chấm" đồng bộ cả 3 file.
+- **UnitSubmitPage**: Bỏ `sticky` positioning trên cột Tiêu chí và Nội dung để không che khuất cột Điều kiện chấm.
+- **Table width**: Giảm `min-w` từ 1600px → 1200px vì ít cột hơn tại mỗi tab.
+
+### File bị ảnh hưởng
+- `src/components/unit/UnitSubmitPage.jsx`
+- `src/components/criteria/CriteriaDetailPage.jsx`
+- `src/components/criteria/CriteriaOverviewPage.jsx`
+
+---
+
+## [2026-05-12d] - Fix Stats Counter Mismatch in CriteriaOverviewPage
+
+### Sửa lỗi (Bug Fixes)
+- **CriteriaOverviewPage**: Số liệu thống kê (Đơn vị / Đã nộp / Đã thẩm định / Chưa nộp) không khớp nhau. Nguyên nhân: 1) Status `draft` (bản nháp) không được đếm vào nhóm nào → thiếu 1; 2) Counter dùng `overviewData` đã bị filter bởi searchTerm → lệch khi đang tìm kiếm. Fix: Tách `overviewData` (stats) và `displayData` (hiển thị), gộp `draft` + `not_submitted` vào "Chưa nộp".
+
+### File bị ảnh hưởng
+- `src/components/criteria/CriteriaOverviewPage.jsx`
+
+---
+
 ## [2026-05-12c] - Fix Unit Login & Cascade Delete
 
 ### Sửa lỗi (Bug Fixes)

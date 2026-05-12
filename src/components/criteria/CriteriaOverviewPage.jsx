@@ -292,8 +292,8 @@ const CriteriaOverviewPage = () => {
                                         <table className="min-w-[1600px] w-full text-sm">
                                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                                 <tr>
-                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Tiêu chí</th>
-                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-[120px] bg-gray-50/80 dark:bg-gray-900/90 z-10">Nội dung</th>
+                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
                                                     <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
                                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
                                                     <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
@@ -302,7 +302,7 @@ const CriteriaOverviewPage = () => {
                                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
                                                     <th className="min-w-[100px] px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
-                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
+                                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm được chấm</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Y/C Giải trình</th>
                                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
                                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
@@ -320,16 +320,14 @@ const CriteriaOverviewPage = () => {
 
                                                     return (
                                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
-                                                            {/* Tiêu chí - Sticky */}
-                                                            <td className="px-3 py-4 sticky left-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
+                                                            <td className="px-4 py-4">
                                                                 {showTc ? (
                                                                     <div className="font-black text-gray-900 dark:text-white">{row.tcTitle}</div>
                                                                 ) : (
                                                                     <span className="text-xs font-bold text-gray-300 dark:text-gray-700">↳</span>
                                                                 )}
                                                             </td>
-                                                            {/* Nội dung - Sticky */}
-                                                            <td className="px-3 py-4 sticky left-[120px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
+                                                            <td className="px-4 py-4">
                                                                 {row.ndTitle ? (
                                                                     showNd ? (
                                                                         <div className="font-semibold text-gray-700 dark:text-gray-200">{row.ndTitle}</div>
@@ -340,19 +338,16 @@ const CriteriaOverviewPage = () => {
                                                                     <span className="text-sm text-gray-400">—</span>
                                                                 )}
                                                             </td>
-                                                            {/* Điều kiện chấm */}
                                                             <td className="px-3 py-4">
                                                                 <div className="whitespace-pre-line font-medium text-gray-700 dark:text-gray-200 text-xs">
                                                                     {row.dieuKienCham || '—'}
                                                                 </div>
                                                             </td>
-                                                            {/* YC minh chứng */}
                                                             <td className="px-3 py-4">
                                                                 <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
                                                                     {row.yeucauMinhChung || '—'}
                                                                 </div>
                                                             </td>
-                                                            {/* Tổ */}
                                                             <td className="px-2 py-4">
                                                                 {row.toTheoDoi ? (
                                                                     <span className="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
@@ -362,33 +357,28 @@ const CriteriaOverviewPage = () => {
                                                                     <span className="text-xs text-gray-400">—</span>
                                                                 )}
                                                             </td>
-                                                            {/* Hạn nộp */}
                                                             <td className="px-2 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
-                                                            {/* Điểm tối đa */}
                                                             <td className="px-2 py-4 text-center">
                                                                 <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                                     {row.khungDiem}
                                                                 </span>
                                                             </td>
-                                                            {/* Đánh giá của đơn vị */}
                                                             <td className="px-3 py-4">
                                                                 <div className="min-w-[160px] text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
                                                                     {res.notes || <span className="text-gray-400 italic">Không có mô tả</span>}
                                                                 </div>
                                                             </td>
-                                                            {/* Minh chứng */}
                                                             <td className="px-2 py-4">
                                                                 <div className="max-w-[180px]">
                                                                     <EvidenceUpload files={evidenceFiles} readOnly={true} />
                                                                 </div>
                                                             </td>
-                                                            {/* Điểm tự chấm */}
                                                             <td className="px-2 py-4 text-center">
                                                                 <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
                                                                     {res.selfScore ?? '—'}
                                                                 </span>
                                                             </td>
-                                                            {/* Điểm cấp trên (trước GT) - Editable */}
+                                                            {/* Điểm được chấm */}
                                                             <td className="px-2 py-4">
                                                                 <input
                                                                     type="number"
@@ -402,7 +392,7 @@ const CriteriaOverviewPage = () => {
                                                                     placeholder="0"
                                                                 />
                                                             </td>
-                                                            {/* Y/C Giải trình - Checkbox (locked if not assigned) */}
+                                                            {/* Y/C Giải trình - Checkbox */}
                                                             <td className="px-2 py-4 text-center">
                                                                 <label className={`flex items-center justify-center ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                                                                     <input
@@ -430,7 +420,7 @@ const CriteriaOverviewPage = () => {
                                                                         {dl ? (
                                                                             <div className="flex flex-col items-center gap-1">
                                                                                 <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dl).toLocaleDateString('vi-VN')}</span>
-                                                                                {isExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Hết hạn</span>}
+                                                                                {isExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">⏰ Hết hạn</span>}
                                                                             </div>
                                                                         ) : <span className="text-gray-400">—</span>}
                                                                     </td>

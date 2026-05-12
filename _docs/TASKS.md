@@ -12,6 +12,8 @@ Cap nhat lan cuoi: 2026-05-12
 
 ## Da hoan thanh
 
+- [x] UnitSubmitPage: An cot theo tab (bTC an giai trinh, giaiTrinh an To/Han nop/Danh gia), doi ten "Diem cap tren" -> "Diem duoc cham", bo sticky cot Tieu chi/Noi dung - 2026-05-12
+- [x] CriteriaOverviewPage + CriteriaDetailPage: Dong bo doi ten "Diem cap tren (truoc GT)" -> "Diem duoc cham", bo sticky cot gay che khuat - 2026-05-12
 - [x] Bo sung chuc nang tim kiem va loc cho 3 trang quan ly admin - 2026-05-12
   - UnitsPage: Them o tim kiem theo ten don vi, username, khoi, loai + hien thi ket qua loc
   - PlansManagePage: Them loc theo khoi doi tuong, them nut xoa noi dung search, hien thi ket qua loc

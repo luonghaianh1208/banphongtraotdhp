@@ -364,23 +364,23 @@ const UnitSubmitPage = () => {
 
                 {tableRows.length > 0 ? (
                     <div className="overflow-x-auto">
-                        <table className="min-w-[1600px] w-full text-sm">
+                        <table className="min-w-[1200px] w-full text-sm">
                             <thead className="bg-gray-50/80 dark:bg-gray-900/70">
                                 <tr>
-                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50/80 dark:bg-gray-900/90 z-10">Tiêu chí</th>
-                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 sticky left-[120px] bg-gray-50/80 dark:bg-gray-900/90 z-10">Nội dung</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tiêu chí</th>
+                                    <th className="px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Nội dung</th>
                                     <th className="min-w-[200px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Điều kiện chấm</th>
                                     <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Yêu cầu minh chứng</th>
-                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>
-                                    <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn nộp</th>
+                                    {activeTab === 'bTC' && <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Tổ</th>}
+                                    {activeTab === 'bTC' && <th className="px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Hạn nộp</th>}
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tối đa</th>
-                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>
+                                    {activeTab === 'bTC' && <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Đánh giá của đơn vị</th>}
                                     <th className="min-w-[100px] px-2 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Minh chứng</th>
                                     <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Điểm tự chấm</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm cấp trên (trước GT)</th>
-                                    <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>
-                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>
+                                    <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Điểm được chấm</th>
+                                    {activeTab === 'giaiTrinh' && <th className="min-w-[160px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-amber-600">Nội dung giải trình</th>}
+                                    {activeTab === 'giaiTrinh' && <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-amber-600">Thời hạn GT</th>}
+                                    {activeTab === 'giaiTrinh' && <th className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-wider text-blue-600">Điểm sau GT</th>}
                                     <th className="min-w-[140px] px-3 py-4 text-left text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Nhận xét</th>
                                 </tr>
                             </thead>
@@ -402,14 +402,14 @@ const UnitSubmitPage = () => {
 
                                     return (
                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
-                                            <td className="px-4 py-4 sticky left-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
+                                            <td className="px-4 py-4">
                                                 {showTc ? (
                                                     <div className="font-black text-gray-900 dark:text-white">{row.tcTitle}</div>
                                                 ) : (
                                                     <span className="text-xs font-bold text-gray-300 dark:text-gray-700">↳</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-4 sticky left-[120px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 border-r border-gray-100 dark:border-gray-800">
+                                            <td className="px-4 py-4">
                                                 {row.ndTitle ? (
                                                     showNd ? (
                                                         <div className="font-semibold text-gray-700 dark:text-gray-200">{row.ndTitle}</div>
@@ -431,32 +431,36 @@ const UnitSubmitPage = () => {
                                                     {row.yeucauMinhChung || '—'}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4">
-                                                {row.toTheoDoi ? (
-                                                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                                        {row.toTheoDoi}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400">—</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
+                                            {activeTab === 'bTC' && (
+                                                <td className="px-4 py-4">
+                                                    {row.toTheoDoi ? (
+                                                        <span className="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                                            {row.toTheoDoi}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                            )}
+                                            {activeTab === 'bTC' && <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>}
                                             <td className="px-4 py-4 text-center">
                                                 <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                     {row.khungDiem}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-4">
-                                                <TextareaAutosize
-                                                    minRows={1}
-                                                    maxRows={5}
-                                                    value={res.notes || ''}
-                                                    onChange={(e) => handleResponseChange(row.id, 'notes', e.target.value)}
-                                                    disabled={isRowLocked}
-                                                    className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${isRowLocked ? 'bg-gray-50' : ''}`}
-                                                    placeholder="Đánh giá của đơn vị..."
-                                                />
-                                            </td>
+                                            {activeTab === 'bTC' && (
+                                                <td className="px-3 py-4">
+                                                    <TextareaAutosize
+                                                        minRows={1}
+                                                        maxRows={5}
+                                                        value={res.notes || ''}
+                                                        onChange={(e) => handleResponseChange(row.id, 'notes', e.target.value)}
+                                                        disabled={isRowLocked}
+                                                        className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${isRowLocked ? 'bg-gray-50' : ''}`}
+                                                        placeholder="Đánh giá của đơn vị..."
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-2 py-4">
                                                 <div className="max-w-[180px]">
                                                     <EvidenceUpload
@@ -480,7 +484,7 @@ const UnitSubmitPage = () => {
                                                 />
                                             </td>
                                             
-                                            {/* Điểm cấp trên (trước GT) */}
+                                            {/* Điểm được chấm */}
                                             <td className="px-2 py-4 text-center">
                                                 {graded.officialScore != null ? (
                                                     <span className="inline-flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 text-sm font-black text-emerald-700 dark:text-emerald-400">
@@ -493,39 +497,45 @@ const UnitSubmitPage = () => {
 
 
 
-                                            {/* Nội dung giải trình */}
-                                            <td className="px-3 py-4">
-                                                <TextareaAutosize
-                                                    minRows={1}
-                                                    maxRows={5}
-                                                    value={res.justificationText || ''}
-                                                    onChange={(e) => handleResponseChange(row.id, 'justificationText', e.target.value)}
-                                                    disabled={!isJustificationUnlocked}
-                                                    className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${!isJustificationUnlocked ? 'bg-gray-50' : 'border-amber-300 focus:border-amber-500'}`}
-                                                    placeholder={isDeadlineExpired ? 'Hết hạn giải trình' : 'Nhập nội dung giải trình...'}
-                                                />
-                                            </td>
+                                            {/* Nội dung giải trình - chỉ hiện trong tab Giải trình */}
+                                            {activeTab === 'giaiTrinh' && (
+                                                <td className="px-3 py-4">
+                                                    <TextareaAutosize
+                                                        minRows={1}
+                                                        maxRows={5}
+                                                        value={res.justificationText || ''}
+                                                        onChange={(e) => handleResponseChange(row.id, 'justificationText', e.target.value)}
+                                                        disabled={!isJustificationUnlocked}
+                                                        className={`input min-w-[160px] w-full px-3 py-2 text-xs resize-none ${!isJustificationUnlocked ? 'bg-gray-50' : 'border-amber-300 focus:border-amber-500'}`}
+                                                        placeholder={isDeadlineExpired ? 'Hết hạn giải trình' : 'Nhập nội dung giải trình...'}
+                                                    />
+                                                </td>
+                                            )}
 
-                                            {/* Thời hạn GT */}
-                                            <td className="px-2 py-4 text-center text-xs">
-                                                {dlStr ? (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dlStr).toLocaleDateString('vi-VN')}</span>
-                                                        {isDeadlineExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">⏰ Hết hạn</span>}
-                                                    </div>
-                                                ) : <span className="text-gray-400">—</span>}
-                                            </td>
+                                            {/* Thời hạn GT - chỉ hiện trong tab Giải trình */}
+                                            {activeTab === 'giaiTrinh' && (
+                                                <td className="px-2 py-4 text-center text-xs">
+                                                    {dlStr ? (
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dlStr).toLocaleDateString('vi-VN')}</span>
+                                                            {isDeadlineExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">⏰ Hết hạn</span>}
+                                                        </div>
+                                                    ) : <span className="text-gray-400">—</span>}
+                                                </td>
+                                            )}
 
-                                            {/* Điểm sau GT */}
-                                            <td className="px-2 py-4 text-center">
-                                                {graded.afterJustificationScore != null ? (
-                                                    <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
-                                                        {graded.afterJustificationScore}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-300">—</span>
-                                                )}
-                                            </td>
+                                            {/* Điểm sau GT - chỉ hiện trong tab Giải trình */}
+                                            {activeTab === 'giaiTrinh' && (
+                                                <td className="px-2 py-4 text-center">
+                                                    {graded.afterJustificationScore != null ? (
+                                                        <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
+                                                            {graded.afterJustificationScore}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-300">—</span>
+                                                    )}
+                                                </td>
+                                            )}
 
                                             {/* Nhận xét */}
                                             <td className="px-3 py-4">
