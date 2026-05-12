@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd, MdRefresh } from 'react-icons/md';
+import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd, MdRefresh, MdFileDownload } from 'react-icons/md';
 import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import { useUnits } from '../../hooks/useUnits';
 import { updateUnit } from '../../firebase/criteriaFirestore';
 import { deleteUnitAccount, createUnitAccount, resetUnitPassword } from '../../firebase/functions';
 import { UNIT_BLOCKS } from '../../utils/constants';
-import { exportUnitTemplate } from '../../utils/exportExcel';
+import { exportUnitTemplate, exportUnitsToExcel } from '../../utils/exportExcel';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
@@ -203,6 +203,13 @@ const UnitsPage = () => {
                             <span className="flex items-center gap-2">
                                 <MdDownload className="group-hover/btn:translate-y-1 transition-transform" size={20} />
                                 <span className="hidden sm:inline">Mẫu Excel</span>
+                            </span>
+                        </button>
+
+                        <button onClick={() => exportUnitsToExcel(filteredUnits)} className="btn-emerald py-2.5 px-5 shadow-sm group/btn" title="Xuất danh sách đơn vị kèm tài khoản">
+                            <span className="flex items-center gap-2">
+                                <MdFileDownload className="group-hover/btn:translate-y-1 transition-transform" size={20} />
+                                <span className="hidden sm:inline">Xuất danh sách</span>
                             </span>
                         </button>
 

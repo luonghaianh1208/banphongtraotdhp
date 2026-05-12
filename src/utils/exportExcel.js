@@ -361,6 +361,45 @@ export const exportUnitTemplate = () => {
 };
 
 // ======================================
+// UNITS — Export danh sách đơn vị (tài khoản)
+// ======================================
+
+export const exportUnitsToExcel = (units, filename = 'danh-sach-don-vi') => {
+  const data = units.map((unit, index) => ({
+    'STT': index + 1,
+    'Tên đơn vị': unit.unitName || '',
+    'Username': unit.username || '',
+    'Mật khẩu': unit.password || '',
+    'Khối': unit.blockName || '',
+    'Loại': unit.typeName || '',
+    'Trạng thái': unit.isActive !== false ? 'Hoạt động' : 'Đã khóa',
+  }));
+
+  if (data.length === 0) {
+    data.push({
+      'STT': '',
+      'Tên đơn vị': '(Không có đơn vị nào)',
+      'Username': '',
+      'Mật khẩu': '',
+      'Khối': '',
+      'Loại': '',
+      'Trạng thái': '',
+    });
+  }
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [
+    { wch: 5 }, { wch: 38 }, { wch: 25 }, { wch: 20 },
+    { wch: 35 }, { wch: 25 }, { wch: 15 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Danh sách Đơn vị');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
+};
+
+// ======================================
 // TASKS — Export
 // ======================================
 

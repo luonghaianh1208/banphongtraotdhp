@@ -1,5 +1,21 @@
 # Changelog
 
+## [2026-05-12] - Export Unit List & Bulk Selection by Block
+
+### Đã thêm (Features)
+- **Xuất danh sách đơn vị**: Nút "Xuất danh sách" tại `UnitsPage` cho phép Admin tải file Excel chứa đầy đủ thông tin các đơn vị (Tên, Username, Mật khẩu, Khối, Loại, Trạng thái) để phân phối tài khoản.
+- **Chọn hàng loạt theo khối**: Tại phần giao bộ tiêu chí (`CriteriaSetDetailPage`), thêm toolbar chọn nhanh:
+  - Nút "Chọn tất cả" / "Bỏ chọn tất cả" đơn vị khả dụng
+  - Các nút chọn theo từng khối đối tượng (UNIT_BLOCKS), toggle on/off, hiển thị số lượng đơn vị mỗi khối
+  - Hiển thị tên khối trên mỗi checkbox đơn vị (responsive, ẩn trên mobile)
+
+### File bị ảnh hưởng
+- `src/utils/exportExcel.js` — Thêm hàm `exportUnitsToExcel()`
+- `src/components/criteria/UnitsPage.jsx` — Thêm nút xuất danh sách, import mới
+- `src/components/criteria/CriteriaSetDetailPage.jsx` — Toolbar chọn hàng loạt theo khối, import `UNIT_BLOCKS`
+
+---
+
 ## [2026-05-07d] - Unit Authentication Migration (Username/Password)
 
 ### Da thay doi (Features)

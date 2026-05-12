@@ -1,6 +1,6 @@
 # Task Board
 
-Cap nhat lan cuoi: 2026-05-07
+Cap nhat lan cuoi: 2026-05-12
 
 ## Dang uu tien tiep theo
 
@@ -12,6 +12,8 @@ Cap nhat lan cuoi: 2026-05-07
 
 ## Da hoan thanh
 
+- [x] Xuat danh sach don vi (ten, username, password, khoi, loai, trang thai) ra Excel tu UnitsPage - 2026-05-12
+- [x] Chon hang loat theo khoi doi tuong + chon tat ca khi giao bo tieu chi tai CriteriaSetDetailPage - 2026-05-12
 - [x] Tính năng Điểm danh (Attendance) — full module cho cả cấp trên và cơ sở - 2026-05-07
   - Backend: attendancePrograms/attendanceRecords collections, Firestore/Storage rules, autoDeleteExpiredAttendance Cloud Function
   - Frontend: AttendanceManagePage (internal), UnitAttendancePage (unit), hooks, CRUD helpers

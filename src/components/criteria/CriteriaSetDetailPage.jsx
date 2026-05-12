@@ -12,6 +12,7 @@ import { useSetAssignments } from '../../hooks/useAssignments';
 import { updateCriteriaSet, assignCriteriaToUnits, revokeCriteriaAssignment } from '../../firebase/criteriaFirestore';
 import { exportCriteriaSetToExcel } from '../../utils/exportExcel';
 import { useAuth } from '../../context/AuthContext';
+import { UNIT_BLOCKS } from '../../utils/constants';
 import toast from 'react-hot-toast';
 import TextareaAutosize from 'react-textarea-autosize';
 
@@ -598,7 +599,67 @@ const CriteriaSetDetailPage = () => {
 
                         {/* Assign new units */}
                         <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
-                            <p className="text-xs font-black text-gray-400 uppercase mb-2">Chọn đơn vị để giao</p>
+                            <p className="text-xs font-black text-gray-400 uppercase mb-3">Chọn đơn vị để giao</p>
+
+                            {/* Quick select toolbar */}
+                            {(() => {
+                                const availableUnits = units.filter(u => !assignments.some(a => a.unitId === u.id && a.status === 'active'));
+                                return (
+                                    <div className="mb-3 space-y-2">
+                                        {/* Select All / Deselect All */}
+                                        <div className="flex flex-wrap gap-2 items-center">
+                                            <button
+                                                onClick={() => setSelectedUnits(availableUnits.map(u => u.id))}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-700/50 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+                                            >
+                                                <MdSelectAll size={14} />
+                                                Chọn tất cả ({availableUnits.length})
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedUnits([])}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all"
+                                            >
+                                                <MdClose size={14} />
+                                                Bỏ chọn tất cả
+                                            </button>
+                                        </div>
+
+                                        {/* Select by block */}
+                                        <div className="flex flex-wrap gap-1.5 items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase mr-1">Chọn theo khối:</span>
+                                            {UNIT_BLOCKS.map(block => {
+                                                const blockUnits = availableUnits.filter(u => u.blockId === block.id);
+                                                if (blockUnits.length === 0) return null;
+                                                const allSelected = blockUnits.every(u => selectedUnits.includes(u.id));
+                                                return (
+                                                    <button
+                                                        key={block.id}
+                                                        onClick={() => {
+                                                            if (allSelected) {
+                                                                setSelectedUnits(prev => prev.filter(id => !blockUnits.some(u => u.id === id)));
+                                                            } else {
+                                                                setSelectedUnits(prev => [...new Set([...prev, ...blockUnits.map(u => u.id)])]);
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${allSelected
+                                                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
+                                                            : 'bg-white dark:bg-gray-800/40 text-gray-600 dark:text-gray-400 border-gray-200/50 dark:border-gray-700/50 hover:border-emerald-300'
+                                                            }`}
+                                                        title={`${allSelected ? 'Bỏ chọn' : 'Chọn'} tất cả ${block.name} (${blockUnits.length})`}
+                                                    >
+                                                        <MdCheckCircle size={12} className={allSelected ? 'text-emerald-500' : 'text-gray-300'} />
+                                                        {block.name}
+                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${allSelected ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                                            {blockUnits.length}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto">
                                 {units.filter(u => !assignments.some(a => a.unitId === u.id && a.status === 'active')).map(unit => (
                                     <label key={unit.id} className={`flex items-center gap-2 p-2 rounded-xl text-xs cursor-pointer border transition-all ${selectedUnits.includes(unit.id)
@@ -612,6 +673,7 @@ const CriteriaSetDetailPage = () => {
                                             className="w-3.5 h-3.5 rounded"
                                         />
                                         <span className="truncate">{unit.unitName || unit.name}</span>
+                                        {unit.blockName && <span className="text-[9px] text-gray-400 ml-auto hidden lg:inline">{unit.blockName}</span>}
                                     </label>
                                 ))}
                             </div>
@@ -633,12 +695,6 @@ const CriteriaSetDetailPage = () => {
                                     >
                                         {isAssigning ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <MdSend size={14} />}
                                         Giao {selectedUnits.length} đơn vị
-                                    </button>
-                                    <button onClick={() => setSelectedUnits(units.filter(u => !assignments.some(a => a.unitId === u.id && a.status === 'active')).map(u => u.id))} className="text-xs text-blue-500 hover:underline font-bold">
-                                        Chọn tất cả
-                                    </button>
-                                    <button onClick={() => setSelectedUnits([])} className="text-xs text-gray-400 hover:underline font-bold">
-                                        Bỏ chọn
                                     </button>
                                 </div>
                             )}
