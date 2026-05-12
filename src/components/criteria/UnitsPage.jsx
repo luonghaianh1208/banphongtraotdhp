@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd, MdRefresh, MdFileDownload } from 'react-icons/md';
+import { MdDownload, MdUpload, MdCorporateFare, MdDelete, MdEdit, MdClose, MdCheck, MdSelectAll, MdAdd, MdRefresh, MdFileDownload, MdSearch } from 'react-icons/md';
 import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import { useUnits } from '../../hooks/useUnits';
 import { updateUnit } from '../../firebase/criteriaFirestore';
@@ -20,12 +20,26 @@ const UnitsPage = () => {
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
     const [filterBlock, setFilterBlock] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [importProgress, setImportProgress] = useState(null);
 
     const selectedBlock = useMemo(() => UNIT_BLOCKS.find(b => b.id === formData.blockId), [formData.blockId]);
     const editBlock = useMemo(() => UNIT_BLOCKS.find(b => b.id === editData.blockId), [editData.blockId]);
 
-    const filteredUnits = filterBlock === 'all' ? units : units.filter(u => u.blockId === filterBlock);
+    const filteredUnits = useMemo(() => {
+        let result = units;
+        if (filterBlock !== 'all') result = result.filter(u => u.blockId === filterBlock);
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(u =>
+                (u.unitName || '').toLowerCase().includes(q) ||
+                (u.username || '').toLowerCase().includes(q) ||
+                (u.blockName || '').toLowerCase().includes(q) ||
+                (u.typeName || '').toLowerCase().includes(q)
+            );
+        }
+        return result;
+    }, [units, filterBlock, searchQuery]);
 
     // === HANDLERS ===
     const handleBlockChange = (e, target = 'form') => {
@@ -188,6 +202,21 @@ const UnitsPage = () => {
 
                 <div className="flex flex-wrap gap-3">
                     <div className="flex flex-wrap gap-4 items-center">
+                        <div className="flex items-center gap-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 transition-all min-w-[200px]">
+                            <MdSearch size={18} className="text-gray-400 flex-shrink-0" />
+                            <input
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-200 outline-none placeholder-gray-400 font-medium"
+                                placeholder="Tìm đơn vị..."
+                            />
+                            {searchQuery && (
+                                <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-red-500 transition-colors">
+                                    <MdClose size={16} />
+                                </button>
+                            )}
+                        </div>
+
                         <select
                             value={filterBlock}
                             onChange={e => setFilterBlock(e.target.value)}
@@ -196,6 +225,10 @@ const UnitsPage = () => {
                             <option value="all">Tất cả Khối</option>
                             {UNIT_BLOCKS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
+
+                        {(searchQuery || filterBlock !== 'all') && (
+                            <span className="text-xs text-gray-400 italic hidden sm:inline">Hiển thị {filteredUnits.length}/{units.length}</span>
+                        )}
 
                         <div className="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2 hidden lg:block"></div>
 

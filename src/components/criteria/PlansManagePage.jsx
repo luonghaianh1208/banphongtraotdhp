@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish, MdSearch, MdFilterList } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +18,7 @@ const PlansManagePage = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [blockFilter, setBlockFilter] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selected, setSelected] = useState([]);
@@ -37,11 +38,14 @@ const PlansManagePage = () => {
         return plans.filter(p => p.createdBy === currentUser?.uid);
     }, [plans, isAdmin, isManager, currentUser]);
 
-    const filteredPlans = visiblePlans.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredPlans = useMemo(() => {
+        return visiblePlans.filter(p => {
+            const matchesSearch = !searchTerm.trim() || p.title.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+            const matchesBlock = blockFilter === 'all' || (p.targetBlocks || []).includes(blockFilter) || (p.targetBlocks || []).length === 0;
+            return matchesSearch && matchesStatus && matchesBlock;
+        });
+    }, [visiblePlans, searchTerm, statusFilter, blockFilter]);
 
     const getBlockLabel = (plan) => {
         if (!plan.targetBlocks?.length) return 'Tất cả khối';
@@ -158,12 +162,20 @@ const PlansManagePage = () => {
                     <select
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value)}
-                        className="input min-w-[160px]"
+                        className="input min-w-[150px]"
                     >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="draft">Bản nháp</option>
                         <option value="published">Đang mở</option>
                         <option value="closed">Đã đóng</option>
+                    </select>
+                    <select
+                        value={blockFilter}
+                        onChange={e => setBlockFilter(e.target.value)}
+                        className="input min-w-[160px]"
+                    >
+                        <option value="all">Tất cả khối</option>
+                        {UNIT_BLOCKS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </select>
                     <div className="relative">
                         <input
@@ -171,12 +183,20 @@ const PlansManagePage = () => {
                             placeholder="Tìm kế hoạch..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="input pl-10"
+                            className="input pl-10 pr-8"
                         />
                         <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors">
+                                <MdClose size={16} />
+                            </button>
+                        )}
                     </div>
+                    {(searchTerm || statusFilter !== 'all' || blockFilter !== 'all') && (
+                        <span className="text-xs text-slate-400 italic self-center">Hiển thị {filteredPlans.length}/{visiblePlans.length}</span>
+                    )}
                     <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center gap-2">
                         <MdAdd size={20} /> Thêm Mới
                     </button>

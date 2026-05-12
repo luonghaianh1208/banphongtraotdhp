@@ -12,6 +12,10 @@ Cap nhat lan cuoi: 2026-05-12
 
 ## Da hoan thanh
 
+- [x] Bo sung chuc nang tim kiem va loc cho 3 trang quan ly admin - 2026-05-12
+  - UnitsPage: Them o tim kiem theo ten don vi, username, khoi, loai + hien thi ket qua loc
+  - PlansManagePage: Them loc theo khoi doi tuong, them nut xoa noi dung search, hien thi ket qua loc
+  - CriteriaSetsPage: Da du chuc nang (khong can thay doi)
 - [x] Xuat danh sach don vi (ten, username, password, khoi, loai, trang thai) ra Excel tu UnitsPage - 2026-05-12
 - [x] Chon hang loat theo khoi doi tuong + chon tat ca khi giao bo tieu chi tai CriteriaSetDetailPage - 2026-05-12
 - [x] Tính năng Điểm danh (Attendance) — full module cho cả cấp trên và cơ sở - 2026-05-07

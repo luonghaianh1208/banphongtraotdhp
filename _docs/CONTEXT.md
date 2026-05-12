@@ -4,32 +4,29 @@ Cap nhat lan cuoi: 2026-05-12
 
 ## Muc tieu session
 
-Bo sung 2 tinh nang admin: Xuat danh sach don vi ra Excel va Chon hang loat theo khoi khi giao bo tieu chi.
+Bo sung chuc nang tim kiem, loc cho 3 trang quan ly admin: Quan ly don vi, Quan ly bo tieu chi, Quan ly ke hoach.
 
 ## Da lam trong session nay
 
-- Them ham `exportUnitsToExcel()` vao `src/utils/exportExcel.js` — xuat Excel voi cac truong: STT, Ten don vi, Username, Mat khau, Khoi, Loai, Trang thai.
-- Them nut "Xuat danh sach" mau emerald vao `UnitsPage.jsx`, xuat danh sach don vi da loc (filteredUnits).
-- Cai tien giao dien giao bo tieu chi tai `CriteriaSetDetailPage.jsx`:
-  - Them toolbar chon nhanh: "Chon tat ca" / "Bo chon tat ca" don vi kha dung.
-  - Them cac nut chon theo tung khoi doi tuong (UNIT_BLOCKS) voi toggle on/off va hien thi so luong.
-  - Hien thi ten khoi tren moi checkbox don vi (responsive, an tren mobile).
-  - Xoa cac nut "Chon tat ca" / "Bo chon" cu o duoi, thay bang toolbar moi phia tren.
+- UnitsPage: Them o tim kiem (search bar) voi icon kinh lup, ho tro tim theo ten don vi, username, ten khoi, ten loai hinh. Ket hop voi filter khoi hien co. Hien thi counter ket qua loc.
+- PlansManagePage: Them dropdown loc theo khoi doi tuong (UNIT_BLOCKS). Tim kiem bo sung match ca truong mo ta. Them nut xoa nhanh noi dung search. Hien thi counter ket qua loc. Chuyen filteredPlans sang useMemo.
+- CriteriaSetsPage: Da du chuc nang tim kiem va loc — khong can thay doi.
 - Build thanh cong khong loi.
 
 ## Ket qua quan trong
 
-- Admin co the tai file Excel day du thong tin don vi de gui cho cac don vi biet tai khoan dang nhap.
-- Admin co the chon nhanh nhieu don vi theo khoi (VD: "Khoi Xa", "Khoi DH-CD") khi giao bo tieu chi, thay vi chon tung don vi mot.
+- Admin co the tim kiem nhanh don vi bang tu khoa bat ky (ten, username, khoi, loai) tai trang Quan ly don vi.
+- Admin co the loc ke hoach theo khoi doi tuong tai trang Quan ly ke hoach.
+- Tat ca 3 trang quan ly admin deu co chuc nang tim kiem/loc day du va nhat quan.
 
 ## Quyet dinh ky thuat da chot
 
 - Tat ca quyet dinh tu session truoc van con hieu luc (xem CHANGELOG.md).
 - **[PATTERN] Modal/Popup phai dung `createPortal`** — Xem chi tiet tai `_docs/PATTERNS.md` muc "Portal Modal".
 - **[PATTERN] DateTimePicker/TimePicker** — Toan he thong dung Flatpickr. Xem chi tiet tai `_docs/PATTERNS.md` muc "Flatpickr".
+- **[PATTERN] Search/Filter** — Su dung `useMemo` cho logic loc, ket hop nhieu dieu kien (text + dropdown). Hien thi counter "Hien thi X/Y" khi dang loc.
 
 ## Cau truc file da thay doi
 
-- `src/utils/exportExcel.js` — Them ham `exportUnitsToExcel()`
-- `src/components/criteria/UnitsPage.jsx` — Them nut "Xuat danh sach", import `exportUnitsToExcel` va `MdFileDownload`
-- `src/components/criteria/CriteriaSetDetailPage.jsx` — Toolbar chon hang loat theo khoi, import `UNIT_BLOCKS` va `MdCheckCircle`
+- `src/components/criteria/UnitsPage.jsx` — Them searchQuery state, sua filteredUnits (useMemo), them search input voi MdSearch
+- `src/components/criteria/PlansManagePage.jsx` — Them blockFilter state, sua filteredPlans (useMemo), them dropdown khoi, them clear button

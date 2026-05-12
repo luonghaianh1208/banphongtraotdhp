@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026-05-12b] - Search & Filter Enhancements for Admin Pages
+
+### Đã thêm (Features)
+- **UnitsPage - Tìm kiếm đơn vị**: Thêm ô tìm kiếm (search bar) theo tên đơn vị, username, tên khối, tên loại hình. Kết hợp với filter theo khối hiện có, hiển thị số lượng kết quả khi đang lọc.
+- **PlansManagePage - Lọc theo khối đối tượng**: Thêm dropdown lọc kế hoạch theo khối đối tượng (UNIT_BLOCKS). Tìm kiếm bổ sung match cả trường mô tả. Thêm nút xoá nội dung search (clear button) và hiển thị số lượng kết quả.
+- **CriteriaSetsPage**: Đã có đầy đủ chức năng tìm kiếm và lọc, không cần thay đổi.
+
+### Cải thiện UX
+- Tất cả search input đều có icon kính lúp và nút xoá nhanh (X) khi có nội dung
+- Hiển thị counter "Hiển thị X/Y" khi đang lọc để admin biết đang xem bao nhiêu kết quả
+- Logic filter được memo hoá bằng `useMemo` để tối ưu hiệu năng
+
+### File bị ảnh hưởng
+- `src/components/criteria/UnitsPage.jsx` — Thêm searchQuery state, cập nhật filteredUnits, thêm search input
+- `src/components/criteria/PlansManagePage.jsx` — Thêm blockFilter state, cập nhật filteredPlans (useMemo), thêm dropdown khối
+
+---
+
 ## [2026-05-12] - Export Unit List & Bulk Selection by Block
 
 ### Đã thêm (Features)
