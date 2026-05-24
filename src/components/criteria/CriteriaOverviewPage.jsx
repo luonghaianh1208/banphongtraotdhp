@@ -286,12 +286,12 @@ const CriteriaOverviewPage = () => {
                         type="button"
                         onClick={() => setStatusFilter('not_submitted')}
                         className={`rounded-2xl p-4 text-center border transition-all ${activeStatusFilter === 'not_submitted'
-                            ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm'
-                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-slate-200 dark:hover:border-slate-700'
+                            ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 shadow-sm'
+                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800'
                             }`}
                     >
-                        <p className="text-2xl font-black text-slate-500">{countNotSubmitted}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Chưa nộp</p>
+                        <p className="text-2xl font-black text-red-500 dark:text-red-300">{countNotSubmitted}</p>
+                        <p className="text-[10px] font-bold text-red-400 dark:text-red-300 uppercase">Chưa nộp</p>
                     </button>
                 </div>
             </div>
