@@ -1,5 +1,6 @@
 // Xuất Excel
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { formatDateTime } from './dateUtils';
 import { getTaskDisplayStatus } from './statusUtils';
 import { PRIORITIES, UNIT_BLOCKS } from './constants';
@@ -315,12 +316,128 @@ export const exportCriteriaSetToExcel = (criteriaSet) => {
   XLSX.writeFile(wb, `${safeName}.xlsx`);
 };
 
-export const exportCriteriaOverviewToExcel = (criteriaSet, displayData, tableRows) => {
+export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, tableRows) => {
   const statusMap = {
-    not_submitted: 'Chua nop',
-    draft: 'Ban nhap',
-    submitted: 'Da nop',
-    graded: 'Da tham dinh',
+    not_submitted: 'Chưa nộp',
+    draft: 'Bản nháp',
+    submitted: 'Đã nộp',
+    graded: 'Đã thẩm định',
+  };
+
+  const summaryHeaders = [
+    'STT',
+    'Đơn vị',
+    'Trạng thái',
+    'Tự chấm',
+    'Thẩm định',
+    'Nội dung đã nộp',
+    'Tổng minh chứng',
+  ];
+
+  const detailHeaders = [
+    'STT',
+    'Đơn vị',
+    'Trạng thái',
+    'Tiêu chí',
+    'Nội dung',
+    'Điều kiện chấm',
+    'Yêu cầu minh chứng',
+    'Tổ',
+    'Hạn nộp',
+    'Điểm tối đa',
+    'Đánh giá của đơn vị',
+    'Minh chứng',
+    'Điểm tự chấm',
+    'Điểm được chấm',
+    'Yêu cầu giải trình',
+    'Nội dung giải trình',
+    'Minh chứng giải trình',
+    'Hạn giải trình',
+    'Điểm sau giải trình',
+    'Nhận xét',
+  ];
+
+  const getSafeText = (value) => (value === null || value === undefined ? '' : String(value));
+  const getLineCount = (value) => Math.max(1, getSafeText(value).split('\n').length);
+  const buildLinkBlock = (files = []) => (
+    files
+      .map((file) => file?.url || '')
+      .filter(Boolean)
+      .join('\n')
+  );
+  const autoFitWorksheet = (worksheet, minWidths = {}) => {
+    worksheet.columns.forEach((column, index) => {
+      const columnLetter = column.letter || String(index + 1);
+      let maxLength = minWidths[columnLetter] || 10;
+
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        const rawValue = cell.value?.richText
+          ? cell.value.richText.map((part) => part.text).join('')
+          : cell.value?.text || cell.value;
+        const text = getSafeText(rawValue);
+        const longestLine = text.split('\n').reduce((max, line) => Math.max(max, line.length), 0);
+        maxLength = Math.max(maxLength, longestLine + 2);
+      });
+
+      column.width = Math.min(Math.max(maxLength, minWidths[columnLetter] || 10), 60);
+    });
+  };
+  const styleWorksheet = (worksheet, headerCount) => {
+    worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: headerCount },
+    };
+
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 24;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0F766E' },
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        right: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      };
+    });
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      let lineCount = 1;
+
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        lineCount = Math.max(lineCount, getLineCount(cell.value?.text || cell.value));
+        cell.alignment = { vertical: 'top', wrapText: true };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        };
+      });
+
+      row.height = Math.min(Math.max(18, lineCount * 16), 96);
+    });
+  };
+  const downloadWorkbook = async (workbook, filename) => {
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(objectUrl);
   };
 
   const summaryRows = displayData.map((item, index) => {
@@ -331,15 +448,15 @@ export const exportCriteriaOverviewToExcel = (criteriaSet, displayData, tableRow
     }).length;
     const totalEvidence = Object.values(responses).reduce((total, response) => total + ((response?.evidenceFiles || []).length), 0);
 
-    return {
-      'STT': index + 1,
-      'Don vi': item.assignment.unitName || '',
-      'Trang thai': statusMap[item.status] || item.status || '',
-      'Tu cham': item.totalSelfScore ?? '',
-      'Tham dinh': item.totalGradedScore ?? '',
-      'Noi dung da nop': submittedCount === 0 ? 'Chua nop noi dung nao' : `${submittedCount}/${tableRows.length}`,
-      'Tong minh chung': totalEvidence,
-    };
+    return [
+      index + 1,
+      item.assignment.unitName || '',
+      statusMap[item.status] || item.status || '',
+      item.totalSelfScore ?? '',
+      item.totalGradedScore ?? '',
+      submittedCount === 0 ? 'Chưa nộp nội dung nào' : `${submittedCount}/${tableRows.length}`,
+      totalEvidence,
+    ];
   });
 
   const detailRows = [];
@@ -348,109 +465,93 @@ export const exportCriteriaOverviewToExcel = (criteriaSet, displayData, tableRow
       const response = item.submission?.responses?.[row.id] || {};
       const justificationResponse = item.submission?.justificationResponses?.[row.id] || {};
       const graded = item.submission?.gradedScores?.[row.id] || {};
-      const evidenceLinks = (response.evidenceFiles || []).map((file) => file?.url || '').filter(Boolean);
-      const justificationEvidenceLinks = (justificationResponse.evidenceFiles || []).map((file) => file?.url || '').filter(Boolean);
 
-      detailRows.push({
-        'STT': detailRows.length + 1,
-        'Don vi': item.assignment.unitName || '',
-        'Trang thai': statusMap[item.status] || item.status || '',
-        'Tieu chi': row.tcTitle || '',
-        'Noi dung': row.ndTitle || '',
-        'Dieu kien cham': row.dieuKienCham || '',
-        'Yeu cau minh chung': row.yeucauMinhChung || '',
-        'To': row.toTheoDoi || '',
-        'Han nop': row.deadline || '',
-        'Diem toi da': row.khungDiem ?? '',
-        'Danh gia cua don vi': response.notes || '',
-        'Minh chung': evidenceLinks.join('\n'),
-        'Diem tu cham': response.selfScore ?? '',
-        'Diem duoc cham': typeof graded === 'object' ? (graded.officialScore ?? '') : graded,
-        'Yeu cau giai trinh': graded?.requireJustification ? 'Co' : '',
-        'Noi dung giai trinh': justificationResponse.justificationText ?? response.justificationText ?? '',
-        'Minh chung giai trinh': justificationEvidenceLinks.join('\n'),
-        'Han giai trinh': graded?.justificationDeadline || '',
-        'Diem sau giai trinh': graded?.afterJustificationScore ?? '',
-        'Nhan xet': graded?.feedback || '',
-      });
+      detailRows.push([
+        detailRows.length + 1,
+        item.assignment.unitName || '',
+        statusMap[item.status] || item.status || '',
+        row.tcTitle || '',
+        row.ndTitle || '',
+        row.dieuKienCham || '',
+        row.yeucauMinhChung || '',
+        row.toTheoDoi || '',
+        row.deadline || '',
+        row.khungDiem ?? '',
+        response.notes || '',
+        buildLinkBlock(response.evidenceFiles || []),
+        response.selfScore ?? '',
+        typeof graded === 'object' ? (graded.officialScore ?? '') : graded,
+        graded?.requireJustification ? 'Có' : '',
+        justificationResponse.justificationText ?? response.justificationText ?? '',
+        buildLinkBlock(justificationResponse.evidenceFiles || []),
+        graded?.justificationDeadline || '',
+        graded?.afterJustificationScore ?? '',
+        graded?.feedback || '',
+      ]);
     });
 
     if (unitIndex < displayData.length - 1) {
-      detailRows.push({
-        'STT': '',
-        'Don vi': '',
-        'Trang thai': '',
-        'Tieu chi': '',
-        'Noi dung': '',
-        'Dieu kien cham': '',
-        'Yeu cau minh chung': '',
-        'To': '',
-        'Han nop': '',
-        'Diem toi da': '',
-        'Danh gia cua don vi': '',
-        'Minh chung': '',
-        'Diem tu cham': '',
-        'Diem duoc cham': '',
-        'Yeu cau giai trinh': '',
-        'Noi dung giai trinh': '',
-        'Minh chung giai trinh': '',
-        'Han giai trinh': '',
-        'Diem sau giai trinh': '',
-        'Nhan xet': '',
-      });
+      detailRows.push(Array(detailHeaders.length).fill(''));
     }
   });
 
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'OpenAI Codex';
+  workbook.created = new Date();
+  workbook.modified = new Date();
 
-  const summarySheet = XLSX.utils.json_to_sheet(summaryRows.length > 0 ? summaryRows : [{
-    'STT': '',
-    'Don vi': '(Khong co don vi nao trong danh sach hien tai)',
-    'Trang thai': '',
-    'Tu cham': '',
-    'Tham dinh': '',
-    'Noi dung da nop': '',
-    'Tong minh chung': '',
-  }]);
-  summarySheet['!cols'] = [
-    { wch: 6 }, { wch: 36 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 14 },
-  ];
+  const summarySheet = workbook.addWorksheet('Tổng quan');
+  summarySheet.addRow(summaryHeaders);
+  if (summaryRows.length > 0) {
+    summaryRows.forEach((row) => summarySheet.addRow(row));
+  } else {
+    summarySheet.addRow(['', '(Không có đơn vị nào trong danh sách hiện tại)', '', '', '', '', '']);
+  }
+  autoFitWorksheet(summarySheet, {
+    A: 6,
+    B: 28,
+    C: 16,
+    D: 12,
+    E: 12,
+    F: 20,
+    G: 14,
+  });
+  styleWorksheet(summarySheet, summaryHeaders.length);
 
-  const detailSheet = XLSX.utils.json_to_sheet(detailRows.length > 0 ? detailRows : [{
-    'STT': '',
-    'Don vi': '(Khong co du lieu chi tiet)',
-    'Trang thai': '',
-    'Tieu chi': '',
-    'Noi dung': '',
-    'Dieu kien cham': '',
-    'Yeu cau minh chung': '',
-    'To': '',
-    'Han nop': '',
-    'Diem toi da': '',
-    'Danh gia cua don vi': '',
-    'Minh chung': '',
-    'Diem tu cham': '',
-    'Diem duoc cham': '',
-    'Yeu cau giai trinh': '',
-    'Noi dung giai trinh': '',
-    'Minh chung giai trinh': '',
-    'Han giai trinh': '',
-    'Diem sau giai trinh': '',
-    'Nhan xet': '',
-  }]);
-  detailSheet['!cols'] = [
-    { wch: 6 }, { wch: 32 }, { wch: 18 }, { wch: 28 }, { wch: 24 },
-    { wch: 32 }, { wch: 32 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
-    { wch: 28 }, { wch: 50 }, { wch: 12 }, { wch: 12 }, { wch: 16 },
-    { wch: 28 }, { wch: 50 }, { wch: 14 }, { wch: 14 }, { wch: 24 },
-  ];
-
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Tong quan');
-  XLSX.utils.book_append_sheet(workbook, detailSheet, 'Chi tiet');
+  const detailSheet = workbook.addWorksheet('Chi tiết');
+  detailSheet.addRow(detailHeaders);
+  if (detailRows.length > 0) {
+    detailRows.forEach((row) => detailSheet.addRow(row));
+  } else {
+    detailSheet.addRow(['', '(Không có dữ liệu chi tiết)', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+  }
+  autoFitWorksheet(detailSheet, {
+    A: 6,
+    B: 28,
+    C: 16,
+    D: 22,
+    E: 18,
+    F: 24,
+    G: 24,
+    H: 10,
+    I: 12,
+    J: 10,
+    K: 24,
+    L: 38,
+    M: 12,
+    N: 12,
+    O: 16,
+    P: 24,
+    Q: 38,
+    R: 14,
+    S: 14,
+    T: 22,
+  });
+  styleWorksheet(detailSheet, detailHeaders.length);
 
   const safeName = (criteriaSet?.title || 'tong-quan-bo-tieu-chi').replace(/[^a-zA-Z0-9\u00C0-\u1EF9 ]/g, '').trim().replace(/\s+/g, '_');
   const dateStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(workbook, `${safeName}_tong_quan_${dateStr}.xlsx`);
+  await downloadWorkbook(workbook, `${safeName}_tong_quan_${dateStr}.xlsx`);
 };
 
 

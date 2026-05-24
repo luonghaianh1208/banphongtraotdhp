@@ -136,7 +136,7 @@ const CriteriaOverviewPage = () => {
     const countNotSubmitted = overviewData.filter((d) => d.status === 'not_submitted' || d.status === 'draft').length;
 
     const statusMap = {
-        not_submitted: { label: 'Chưa nộp', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+        not_submitted: { label: 'Chưa nộp', color: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300' },
         draft: { label: 'Bản nháp', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
         submitted: { label: 'Đã nộp', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
         graded: { label: 'Đã thẩm định', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
@@ -221,9 +221,14 @@ const CriteriaOverviewPage = () => {
         }
     };
 
-    const handleExportOverview = () => {
-        exportCriteriaOverviewToExcel(criteriaSet, displayData, tableRows);
-        toast.success('Da xuat file Excel tong quan.');
+    const handleExportOverview = async () => {
+        try {
+            await exportCriteriaOverviewToExcel(criteriaSet, displayData, tableRows);
+            toast.success('Da xuat file Excel tong quan.');
+        } catch (err) {
+            console.error(err);
+            toast.error('Loi khi xuat file Excel.');
+        }
     };
 
     return (
