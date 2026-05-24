@@ -254,7 +254,7 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chi duoc luu link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được lưu link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         if (normalizedResponses !== responses) {
@@ -297,12 +297,12 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chi duoc nop link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được nộp link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         const submitRequirementIssue = getSubmitRequirementIssue(normalizedResponses);
         if (submitRequirementIssue) {
-            toast.error(`Muc ${getRowLabel(submitRequirementIssue.row)} dang thieu: ${submitRequirementIssue.missingFields.join(', ')}`);
+            toast.error(`Mục ${getRowLabel(submitRequirementIssue.row)} đang thiếu: ${submitRequirementIssue.missingFields.join(', ')}`);
             return;
         }
         if (normalizedResponses !== responses) {
@@ -358,7 +358,7 @@ const UnitSubmitPage = () => {
             });
             const invalidEvidenceRow = findInvalidEvidenceRow(requestedResponses);
             if (invalidEvidenceRow) {
-                toast.error(`Chi duoc gui link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+                toast.error(`Chỉ được gửi link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
                 return;
             }
             setSavingMessage('Dang gui giai trinh...');
@@ -595,7 +595,7 @@ const UnitSubmitPage = () => {
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
                                                         allowFileUpload={false}
                                                         enforceFacebookLinks={true}
-                                                        helperText="Chi nhap link Facebook dua tin bai. Khong nhan file tai len hoac link ngoai Facebook."
+                                                        helperText="Chỉ nhập link Facebook đưa tin bài. Không nhận file tải lên hoặc link ngoài Facebook."
                                                         readOnly={isRowLocked && !isJustificationUnlocked}
                                                     />
                                                 </div>
@@ -719,7 +719,7 @@ const UnitSubmitPage = () => {
                             ) : (
                                 <>
                                     <div className="hidden lg:flex items-center max-w-xs text-xs font-bold text-amber-600 dark:text-amber-300">
-                                        Can dien du noi dung, link Facebook va diem tu cham cho tung muc truoc khi nop.
+                                        Cần điền đủ nội dung, link Facebook và điểm tự chấm cho từng mục trước khi nộp.
                                     </div>
                                     <button
                                         type="button"
@@ -753,9 +753,9 @@ const UnitSubmitPage = () => {
                 isOpen={showSubmitConfirm}
                 onClose={() => setShowSubmitConfirm(false)}
                 onConfirm={confirmSubmit}
-                title="Xac nhan nop bao cao"
-                message="Sau khi nop chinh thuc, don vi se khong the chinh sua bao cao nay nua."
-                confirmText="Nop chinh thuc"
+                title="Xác nhận nộp báo cáo"
+                message="Sau khi nộp chính thức, đơn vị sẽ không thể chỉnh sửa báo cáo này nữa."
+                confirmText="Nộp chính thức"
             />
         </div>
         </>

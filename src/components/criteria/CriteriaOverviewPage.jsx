@@ -224,10 +224,10 @@ const CriteriaOverviewPage = () => {
     const handleExportOverview = async () => {
         try {
             await exportCriteriaOverviewToExcel(criteriaSet, displayData, tableRows);
-            toast.success('Da xuat file Excel tong quan.');
+            toast.success('Đã xuất file Excel tổng quan.');
         } catch (err) {
             console.error(err);
-            toast.error('Loi khi xuat file Excel.');
+            toast.error('Lỗi khi xuất file Excel.');
         }
     };
 
@@ -328,7 +328,7 @@ const CriteriaOverviewPage = () => {
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-black hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300"
                     >
                         <MdDownload size={16} />
-                        Xuat Excel
+                        Xuất Excel
                     </button>
                     <button
                         type="button"

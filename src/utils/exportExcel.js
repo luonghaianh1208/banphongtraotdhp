@@ -332,6 +332,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
     'Thẩm định',
     'Nội dung đã nộp',
     'Tổng minh chứng',
+    'Link Facebook tin bài',
   ];
 
   const detailHeaders = [
@@ -447,6 +448,11 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
       return response && response.selfScore !== undefined && response.selfScore !== '' && response.selfScore !== null;
     }).length;
     const totalEvidence = Object.values(responses).reduce((total, response) => total + ((response?.evidenceFiles || []).length), 0);
+    const summaryEvidenceLinks = Object.values(responses).flatMap((response) => (
+      (response?.evidenceFiles || [])
+        .map((file) => file?.url || '')
+        .filter(Boolean)
+    ));
 
     return [
       index + 1,
@@ -456,6 +462,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
       item.totalGradedScore ?? '',
       submittedCount === 0 ? 'Chưa nộp nội dung nào' : `${submittedCount}/${tableRows.length}`,
       totalEvidence,
+      summaryEvidenceLinks.join('\n'),
     ];
   });
 
@@ -505,7 +512,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
   if (summaryRows.length > 0) {
     summaryRows.forEach((row) => summarySheet.addRow(row));
   } else {
-    summarySheet.addRow(['', '(Không có đơn vị nào trong danh sách hiện tại)', '', '', '', '', '']);
+    summarySheet.addRow(['', '(Không có đơn vị nào trong danh sách hiện tại)', '', '', '', '', '', '']);
   }
   autoFitWorksheet(summarySheet, {
     A: 6,
@@ -515,6 +522,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
     E: 12,
     F: 20,
     G: 14,
+    H: 38,
   });
   styleWorksheet(summarySheet, summaryHeaders.length);
 

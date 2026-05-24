@@ -203,9 +203,9 @@ const UnitPlanDetail = () => {
                 isOpen={showSubmitConfirm}
                 onClose={() => setShowSubmitConfirm(false)}
                 onConfirm={confirmSubmit}
-                title="Xac nhan nop ho so"
-                message="Sau khi nop chinh thuc, don vi se khong the chinh sua ho so nay nua."
-                confirmText="Nop chinh thuc"
+                title="Xác nhận nộp hồ sơ"
+                message="Sau khi nộp chính thức, đơn vị sẽ không thể chỉnh sửa hồ sơ này nữa."
+                confirmText="Nộp chính thức"
             />
         </div>
     );
