@@ -17,6 +17,26 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/units/$(request.auth.uid));
     }
 
+    function isUnitJustificationUpdate() {
+      return isUnit()
+        && resource.data.unitId == request.auth.uid
+        && request.resource.data.unitId == request.auth.uid
+        && (resource.data.status in ['pending', 'submitted', 'graded'])
+        && request.resource.data.status == resource.data.status
+        && ('periodId' in resource.data)
+        && resource.data.periodId != null
+        && (
+          !exists(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId))
+          || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'open'
+          || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'draft'
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'justificationResponses',
+          'justifiedAt',
+          'justificationStatus'
+        ]);
+    }
+
     // Kiểm tra assignee chỉ sửa các field được phép
     function isAssigneeAllowedUpdate() {
       let allowed = ['notes', 'attachments', 'status', 'submittedBy', 'submittedAt', 'updatedAt', 'editHistory'];
@@ -120,6 +140,7 @@ service cloud.firestore {
       // Đơn vị update: chặn khi period đã locked hoặc published
       // Staff (Admin/Manager/Member) update: cho phép
       allow update: if isStaff()
+        || isUnitJustificationUpdate()
         || (
           isUnit()
           && resource.data.unitId == request.auth.uid

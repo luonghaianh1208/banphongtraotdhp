@@ -33,12 +33,16 @@ const UnitSubmissionsList = () => {
                 snap.docs.forEach(doc => {
                     const data = doc.data();
                     const scores = data.gradedScores || {};
-                    const jtItems = Object.values(scores).filter(s => s.justificationDeadline);
+                    const jtItems = Object.entries(scores).filter(([, s]) => s.justificationDeadline);
                     if (jtItems.length > 0) {
                         map[data.criteriaSetId] = {
                             totalItems: jtItems.length,
-                            pendingItems: jtItems.filter(s => !data.responses?.[Object.keys(scores).find(k => scores[k] === s)]?.justificationText).length,
-                            hasExpired: jtItems.some(s => new Date(s.justificationDeadline) < new Date(new Date().toDateString()))
+                            pendingItems: jtItems.filter(([mucId]) => {
+                                const newText = data.justificationResponses?.[mucId]?.justificationText;
+                                const legacyText = data.responses?.[mucId]?.justificationText;
+                                return !newText && !legacyText;
+                            }).length,
+                            hasExpired: jtItems.some(([, s]) => new Date(s.justificationDeadline) < new Date(new Date().toDateString()))
                         };
                     }
                 });

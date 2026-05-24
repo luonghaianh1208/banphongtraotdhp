@@ -449,14 +449,17 @@ export const gradeCriteriaSubmission = async (submissionId, gradedScores, commen
 };
 
 // Đơn vị nộp giải trình
-export const submitUnitJustification = async (criteriaSetId, unitId, responses) => {
+export const submitUnitJustification = async (criteriaSetId, unitId, justificationResponses) => {
     const compId = `${criteriaSetId}_${unitId}`;
     const ref = doc(db, 'criteriaSubmissions', compId);
-    return setDoc(ref, {
-        responses,
+    const updates = {
         justifiedAt: serverTimestamp(),
         justificationStatus: 'submitted'
-    }, { merge: true });
+    };
+    Object.entries(justificationResponses || {}).forEach(([mucId, response]) => {
+        updates[`justificationResponses.${mucId}`] = response;
+    });
+    return updateDoc(ref, updates);
 };
 
 // ======================================
@@ -473,6 +476,9 @@ export const submitUnitJustification = async (criteriaSetId, unitId, responses) 
 export const sendJustificationRequest = async (criteriaSetId, selectionsByUnit, deadline, sentBy) => {
     const requestId = `jr_${Date.now()}`;
     const batch = writeBatch(db);
+    const criteriaSetSnap = await getDoc(doc(db, 'criteriaSets', criteriaSetId));
+    const criteriaSetData = criteriaSetSnap.exists() ? criteriaSetSnap.data() : {};
+    const periodId = criteriaSetData.periodId || null;
 
     for (const [unitId, mucIds] of Object.entries(selectionsByUnit)) {
         const compId = `${criteriaSetId}_${unitId}`;
@@ -505,15 +511,18 @@ export const sendJustificationRequest = async (criteriaSetId, selectionsByUnit, 
         };
 
         if (snap.exists()) {
-            batch.update(ref, {
+            const updates = {
                 gradedScores: updatedGradedScores,
                 justificationRequests: [...existingRequests, newRequest],
-            });
+            };
+            if (periodId && !existing.periodId) updates.periodId = periodId;
+            batch.update(ref, updates);
         } else {
             // Doc chưa tồn tại → tạo mới với setDoc thay vì skip
             batch.set(ref, {
                 criteriaSetId,
                 unitId,
+                periodId,
                 gradedScores: updatedGradedScores,
                 justificationRequests: [newRequest],
                 status: 'pending',

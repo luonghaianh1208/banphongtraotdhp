@@ -26,6 +26,7 @@ const UnitSubmitPage = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [responses, setResponses] = useState({});
+    const [justificationResponses, setJustificationResponses] = useState({});
     const [submissionStatus, setSubmissionStatus] = useState(null);
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
@@ -101,8 +102,14 @@ const UnitSubmitPage = () => {
             unitId,
             (sub) => {
                 if (!sub) return;
+                const mainResponses = sub.responses || {};
+                const jtResponses = sub.justificationResponses || {};
                 setResponses((prev) => {
-                    if (Object.keys(prev).length === 0 && sub.responses) return sub.responses;
+                    if (Object.keys(prev).length === 0) return mainResponses;
+                    return prev;
+                });
+                setJustificationResponses((prev) => {
+                    if (Object.keys(prev).length === 0) return jtResponses;
                     return prev;
                 });
                 setSubmissionStatus(sub.status);
@@ -133,7 +140,14 @@ const UnitSubmitPage = () => {
         return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
-    const isReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
+    const isMainReportReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
+    const canEditJustificationRow = (graded) => {
+        const dlStr = graded?.justificationDeadline;
+        if (!dlStr || assignmentRevoked || isPeriodLocked) return false;
+        const isDeadlineExpired = new Date(dlStr) < new Date(new Date().toDateString());
+        return activeTab === 'giaiTrinh' && !isDeadlineExpired;
+    };
+    const isReadOnly = isMainReportReadOnly;
     const isGraded = submissionStatus === 'graded';
     const tableRows = buildCriteriaTableRows(criteriaSet);
 
@@ -165,7 +179,17 @@ const UnitSubmitPage = () => {
     };
 
     const handleResponseChange = (mucId, field, value) => {
-        if (isReadOnly) return;
+        const graded = gradedData.scores[mucId] || {};
+        const canEditJustificationField = ['justificationText', 'evidenceFiles'].includes(field) && canEditJustificationRow(graded);
+        if (isMainReportReadOnly && !canEditJustificationField) return;
+        if (activeTab === 'giaiTrinh' && !canEditJustificationField) return;
+        if (canEditJustificationField) {
+            setJustificationResponses((prev) => ({
+                ...prev,
+                [mucId]: { ...(prev[mucId] || {}), [field]: value },
+            }));
+            return;
+        }
         setResponses((prev) => ({
             ...prev,
             [mucId]: { ...(prev[mucId] || {}), [field]: value },
@@ -252,7 +276,17 @@ const UnitSubmitPage = () => {
         const unitId = userProfile.id;
         setSaving(true);
         try {
-            await submitUnitJustification(criteriaSetId, unitId, responses);
+            const requestedResponses = {};
+            tableRows.forEach((row) => {
+                if (!canEditJustificationRow(gradedData.scores[row.id] || {})) return;
+                const jt = justificationResponses[row.id] || {};
+                const legacy = responses[row.id] || {};
+                requestedResponses[row.id] = {
+                    justificationText: jt.justificationText ?? legacy.justificationText ?? '',
+                    evidenceFiles: jt.evidenceFiles ?? (legacy.justificationText ? (legacy.evidenceFiles || []) : []),
+                };
+            });
+            await submitUnitJustification(criteriaSetId, unitId, requestedResponses);
             toast.success('Đã gửi giải trình thành công!');
         } catch (err) {
             console.error('Lỗi khi gửi giải trình:', err);
@@ -386,7 +420,13 @@ const UnitSubmitPage = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
                                 {tableRows.map((row, index) => {
-                                    const res = responses[row.id] || {};
+                                    const baseRes = responses[row.id] || {};
+                                    const jtRes = justificationResponses[row.id] || {};
+                                    const res = {
+                                        ...baseRes,
+                                        justificationText: jtRes.justificationText ?? baseRes.justificationText,
+                                    };
+                                    const evidenceFiles = activeTab === 'giaiTrinh' ? (jtRes.evidenceFiles || []) : (baseRes.evidenceFiles || []);
                                     const graded = gradedData.scores[row.id] || {};
                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
@@ -398,7 +438,7 @@ const UnitSubmitPage = () => {
                                     const isRowLocked = isReadOnly || activeTab === 'giaiTrinh';
                                     const dlStr = graded.justificationDeadline;
                                     const isDeadlineExpired = dlStr && new Date(dlStr) < new Date(new Date().toDateString());
-                                    const isJustificationUnlocked = !isPeriodLocked && activeTab === 'giaiTrinh' && !isDeadlineExpired;
+                                    const isJustificationUnlocked = canEditJustificationRow(graded);
 
                                     return (
                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
@@ -464,7 +504,7 @@ const UnitSubmitPage = () => {
                                             <td className="px-2 py-4">
                                                 <div className="max-w-[180px]">
                                                     <EvidenceUpload
-                                                        files={res.evidenceFiles || []}
+                                                        files={evidenceFiles}
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
                                                         readOnly={isRowLocked && !isJustificationUnlocked}
                                                     />
@@ -560,7 +600,7 @@ const UnitSubmitPage = () => {
                 )}
             </div>
 
-            {!isReadOnly && (
+            {(!isMainReportReadOnly || activeTab === 'giaiTrinh') && (
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
                     <div className="glass-card p-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl shadow-2xl border border-primary-500/30 flex justify-between items-center gap-4">
                         <button
@@ -576,7 +616,7 @@ const UnitSubmitPage = () => {
                                 <button
                                     type="button"
                                     onClick={handleSubmitJustification}
-                                    disabled={saving || isPeriodLocked}
+                                    disabled={saving || !tableRows.some((row) => canEditJustificationRow(gradedData.scores[row.id] || {}))}
                                     className="btn-primary bg-amber-500 hover:bg-amber-600 border-amber-600 text-white px-10 py-3 flex items-center gap-2 group/submit shadow-[0_0_15px_rgba(245,158,11,0.4)]"
                                 >
                                     {saving ? (

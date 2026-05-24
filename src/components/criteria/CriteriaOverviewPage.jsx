@@ -313,7 +313,10 @@ const CriteriaOverviewPage = () => {
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">
                                                 {tableRows.map((row, index) => {
                                                     const res = item.submission?.responses?.[row.id] || {};
+                                                    const jtRes = item.submission?.justificationResponses?.[row.id] || {};
                                                     const evidenceFiles = res.evidenceFiles || [];
+                                                    const justificationEvidenceFiles = jtRes.evidenceFiles || [];
+                                                    const justificationText = jtRes.justificationText ?? res.justificationText;
                                                     const showTc = index === 0 || tableRows[index - 1].tcId !== row.tcId;
                                                     const showNd = index === 0 || tableRows[index - 1].tcId !== row.tcId || tableRows[index - 1].ndId !== row.ndId;
                                                     const locked = isRowReadOnly(row);
@@ -407,7 +410,12 @@ const CriteriaOverviewPage = () => {
                                                             {/* Nội dung giải trình - Readonly */}
                                                             <td className="px-3 py-4">
                                                                 <div className="min-w-[160px] text-xs text-amber-700 dark:text-amber-400 whitespace-pre-line p-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                                                                    {res.justificationText || <span className="text-gray-400 italic">Chưa giải trình</span>}
+                                                                    {justificationText || <span className="text-gray-400 italic">Chưa giải trình</span>}
+                                                                    {justificationEvidenceFiles.length > 0 && (
+                                                                        <div className="mt-2 pt-2 border-t border-amber-100 dark:border-amber-900/30">
+                                                                            <EvidenceUpload files={justificationEvidenceFiles} readOnly={true} />
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                             {/* Thời hạn GT */}
