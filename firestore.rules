@@ -23,10 +23,10 @@ service cloud.firestore {
         && request.resource.data.unitId == request.auth.uid
         && (resource.data.status in ['pending', 'submitted', 'graded'])
         && request.resource.data.status == resource.data.status
-        && ('periodId' in resource.data)
-        && resource.data.periodId != null
         && (
-          !exists(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId))
+          !('periodId' in resource.data)
+          || resource.data.periodId == null
+          || !exists(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId))
           || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'open'
           || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'draft'
         )
