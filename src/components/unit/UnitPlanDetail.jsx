@@ -9,6 +9,7 @@ import {
     submitContestEntry
 } from '../../firebase/criteriaFirestore';
 import EvidenceUpload from '../criteria/EvidenceUpload';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 const UnitPlanDetail = () => {
     const { planId } = useParams();
@@ -18,9 +19,10 @@ const UnitPlanDetail = () => {
     const [plan, setPlan] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
     // Custom form state để linh hoạt
-    const [docsData, setDocsData] = useState([]);
+    const [draftDocsData, setDraftDocsData] = useState(null);
 
     // Hook lấy data cũ đã lưu (nếu có)
     const { entry, loading: entryLoading } = useUnitContestEntry(planId, userProfile?.id);
@@ -45,12 +47,6 @@ const UnitPlanDetail = () => {
         fetchPlanData();
     }, [planId, navigate]);
 
-    useEffect(() => {
-        if (entry && entry.docs) {
-            setDocsData(entry.docs);
-        }
-    }, [entry]);
-
     if (loading || entryLoading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -62,6 +58,7 @@ const UnitPlanDetail = () => {
     if (!plan) return null;
 
     const isReadOnly = entry?.status === 'submitted' || plan.status === 'locked';
+    const docsData = draftDocsData ?? entry?.docs ?? [];
 
     const handleSaveDraft = async () => {
         if (!userProfile) return;
@@ -82,14 +79,10 @@ const UnitPlanDetail = () => {
         }
     };
 
-    const handleSubmit = async () => {
+    const confirmSubmit = async () => {
         if (!userProfile) return;
         if (docsData.length === 0) {
             toast.error('Vui lòng đính kèm ít nhất 1 hồ sơ hoặc minh chứng trước khi nộp.');
-            return;
-        }
-
-        if (!window.confirm('Bạn có chắc chắn muốn nộp chính thức? Sau khi nộp sẽ không thể chỉnh sửa hồ sơ.')) {
             return;
         }
 
@@ -117,6 +110,11 @@ const UnitPlanDetail = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleSubmit = () => {
+        if (saving) return;
+        setShowSubmitConfirm(true);
     };
 
     return (
@@ -172,7 +170,7 @@ const UnitPlanDetail = () => {
                 <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
                     <EvidenceUpload
                         files={docsData}
-                        onChange={setDocsData}
+                        onChange={setDraftDocsData}
                         readOnly={isReadOnly}
                     />
                 </div>
@@ -201,6 +199,14 @@ const UnitPlanDetail = () => {
                     </button>
                 </div>
             )}
+            <ConfirmDialog
+                isOpen={showSubmitConfirm}
+                onClose={() => setShowSubmitConfirm(false)}
+                onConfirm={confirmSubmit}
+                title="Xac nhan nop ho so"
+                message="Sau khi nop chinh thuc, don vi se khong the chinh sua ho so nay nua."
+                confirmText="Nop chinh thuc"
+            />
         </div>
     );
 };

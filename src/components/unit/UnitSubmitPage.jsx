@@ -14,6 +14,7 @@ import {
 } from '../../firebase/criteriaFirestore';
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
+import ConfirmDialog from '../common/ConfirmDialog';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 import { clampCriteriaScore } from '../../utils/criteriaScore';
 import { hasOnlyFacebookEvidenceLinks } from '../../utils/evidenceLinks';
@@ -34,6 +35,7 @@ const UnitSubmitPage = () => {
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
     const [gradedData, setGradedData] = useState({ scores: {}, comment: '', total: null });
     const [savingMessage, setSavingMessage] = useState('');
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const [searchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') === 'giaiTrinh' ? 'giaiTrinh' : 'bTC';
 
@@ -195,6 +197,25 @@ const UnitSubmitPage = () => {
         if (row.ndTitle) return `${row.tcTitle} / ${row.ndTitle}`;
         return row.tcTitle || row.id;
     };
+    const getSubmitRequirementIssue = (responseMap = {}) => {
+        for (const row of tableRows) {
+            const response = responseMap[row.id] || {};
+            const missingFields = [];
+            const noteValue = typeof response.notes === 'string' ? response.notes.trim() : '';
+            const evidenceFiles = response.evidenceFiles || [];
+            const selfScore = response.selfScore;
+
+            if (!noteValue) missingFields.push('noi dung');
+            if (!evidenceFiles.length) missingFields.push('link Facebook');
+            if (selfScore === '' || selfScore == null) missingFields.push('diem tu cham');
+
+            if (missingFields.length > 0) {
+                return { row, missingFields };
+            }
+        }
+
+        return null;
+    };
 
     const handleResponseChange = (mucId, field, value) => {
         const graded = gradedData.scores[mucId] || {};
@@ -260,7 +281,7 @@ const UnitSubmitPage = () => {
         }
     };
 
-    const handleSubmit = async () => {
+    const confirmSubmit = async () => {
         if (!userProfile) return;
         if (assignmentRevoked) {
             toast.error('Đợt nộp đã bị thu hồi, không thể nộp.');
@@ -270,7 +291,6 @@ const UnitSubmitPage = () => {
             toast.error('Đợt báo cáo đã bị khóa hoặc đã nộp, không thể nộp.');
             return;
         }
-        if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
         const unitId = userProfile.id;
         const normalizedResponses = normalizeResponses(responses);
@@ -278,6 +298,11 @@ const UnitSubmitPage = () => {
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
             toast.error(`Chi duoc nop link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+            return;
+        }
+        const submitRequirementIssue = getSubmitRequirementIssue(normalizedResponses);
+        if (submitRequirementIssue) {
+            toast.error(`Muc ${getRowLabel(submitRequirementIssue.row)} dang thieu: ${submitRequirementIssue.missingFields.join(', ')}`);
             return;
         }
         if (normalizedResponses !== responses) {
@@ -304,6 +329,11 @@ const UnitSubmitPage = () => {
             setSaving(false);
             setSavingMessage('');
         }
+    };
+
+    const handleSubmit = () => {
+        if (saving) return;
+        setShowSubmitConfirm(true);
     };
 
     const handleSubmitJustification = async () => {
@@ -688,6 +718,9 @@ const UnitSubmitPage = () => {
                                 </button>
                             ) : (
                                 <>
+                                    <div className="hidden lg:flex items-center max-w-xs text-xs font-bold text-amber-600 dark:text-amber-300">
+                                        Can dien du noi dung, link Facebook va diem tu cham cho tung muc truoc khi nop.
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={handleSaveDraft}
@@ -716,6 +749,14 @@ const UnitSubmitPage = () => {
                     </div>
                 </div>
             )}
+            <ConfirmDialog
+                isOpen={showSubmitConfirm}
+                onClose={() => setShowSubmitConfirm(false)}
+                onConfirm={confirmSubmit}
+                title="Xac nhan nop bao cao"
+                message="Sau khi nop chinh thuc, don vi se khong the chinh sua bao cao nay nua."
+                confirmText="Nop chinh thuc"
+            />
         </div>
         </>
     );
