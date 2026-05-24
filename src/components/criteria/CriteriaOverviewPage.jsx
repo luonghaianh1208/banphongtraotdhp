@@ -19,6 +19,7 @@ const CriteriaOverviewPage = () => {
     const { assignments } = useSetAssignments(criteriaSetId);
     const [submissions, setSubmissions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeStatusFilter, setActiveStatusFilter] = useState('all');
     const [gradingUnit, setGradingUnit] = useState(null);
     const [gradedScores, setGradedScores] = useState({});
     const [gradedComment, setGradedComment] = useState('');
@@ -43,6 +44,11 @@ const CriteriaOverviewPage = () => {
 
     const totalJustificationItems = Object.values(justificationSelections).reduce((s, set) => s + set.size, 0);
     const totalJustificationUnits = Object.keys(justificationSelections).length;
+
+    const setStatusFilter = (nextFilter) => {
+        setActiveStatusFilter((prev) => (prev === nextFilter ? 'all' : nextFilter));
+        setGradingUnit(null);
+    };
 
     const handleSendJustification = async () => {
         if (totalJustificationItems === 0) return toast.error('Chưa chọn nội dung nào.');
@@ -110,8 +116,17 @@ const CriteriaOverviewPage = () => {
             };
         });
 
-    // Tách: overviewData dùng cho stats (không filter search), displayData dùng cho hiển thị (có filter search)
-    const displayData = overviewData.filter((item) => item.assignment.unitName.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatusFilter = (item) => {
+        if (activeStatusFilter === 'all') return true;
+        if (activeStatusFilter === 'not_submitted') return item.status === 'not_submitted' || item.status === 'draft';
+        return item.status === activeStatusFilter;
+    };
+
+    // Tách: overviewData dùng cho stats (không filter search), displayData dùng cho hiển thị (có filter search + status)
+    const displayData = overviewData.filter((item) => (
+        item.assignment.unitName.toLowerCase().includes(searchTerm.toLowerCase())
+        && matchesStatusFilter(item)
+    ));
 
     // Stats luôn tính trên toàn bộ assignments (không phụ thuộc search)
     const countSubmitted = overviewData.filter((d) => d.status === 'submitted').length;
@@ -124,6 +139,41 @@ const CriteriaOverviewPage = () => {
         submitted: { label: 'Đã nộp', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
         graded: { label: 'Đã thẩm định', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
     };
+
+    const selectableRowIds = tableRows.filter((row) => !isRowReadOnly(row)).map((row) => row.id);
+
+    const selectJustificationForUnits = (unitIds) => {
+        if (selectableRowIds.length === 0) {
+            toast.error('Báº¡n khÃ´ng cÃ³ quyá»n chá»n má»¥c giáº£i trÃ¬nh trong bá»™ tiÃªu chÃ­ nÃ y.');
+            return;
+        }
+        if (unitIds.length === 0) {
+            toast.error('KhÃ´ng cÃ³ Ä‘Æ¡n vá»‹ nÃ o phÃ¹ há»£p Ä‘á»ƒ chá»n.');
+            return;
+        }
+
+        setJustificationSelections((prev) => {
+            const next = { ...prev };
+            unitIds.forEach((unitId) => {
+                next[unitId] = new Set(selectableRowIds);
+            });
+            return next;
+        });
+        toast.success(`Da chon nhanh toan bo ${selectableRowIds.length} noi dung cho ${unitIds.length} don vi.`);
+    };
+
+    const clearJustificationSelectionForUnit = (unitId) => {
+        setJustificationSelections((prev) => {
+            const next = { ...prev };
+            delete next[unitId];
+            return next;
+        });
+    };
+
+    const isUnitFullySelected = (unitId) => (
+        selectableRowIds.length > 0
+        && selectableRowIds.every((mucId) => justificationSelections[unitId]?.has(mucId))
+    );
 
     const getOfficialScoreValue = (scoreEntry) => (
         typeof scoreEntry === 'object' ? (scoreEntry?.officialScore ?? '') : (scoreEntry ?? '')
@@ -187,44 +237,135 @@ const CriteriaOverviewPage = () => {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('all')}
+                        className={`rounded-2xl p-4 text-center border transition-all ${activeStatusFilter === 'all'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 shadow-sm'
+                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-primary-200 dark:hover:border-primary-800'
+                            }`}
+                    >
                         <p className="text-2xl font-black text-gray-900 dark:text-white">{activeAssignments.length}</p>
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Đơn vị</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('submitted')}
+                        className={`rounded-2xl p-4 text-center border transition-all ${activeStatusFilter === 'submitted'
+                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 shadow-sm'
+                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800'
+                            }`}
+                    >
                         <p className="text-2xl font-black text-blue-600">{countSubmitted}</p>
                         <p className="text-[10px] font-bold text-blue-400 uppercase">Đã nộp</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('graded')}
+                        className={`rounded-2xl p-4 text-center border transition-all ${activeStatusFilter === 'graded'
+                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 shadow-sm'
+                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800'
+                            }`}
+                    >
                         <p className="text-2xl font-black text-emerald-600">{countGraded}</p>
                         <p className="text-[10px] font-bold text-emerald-400 uppercase">Đã thẩm định</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-800">
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('not_submitted')}
+                        className={`rounded-2xl p-4 text-center border transition-all ${activeStatusFilter === 'not_submitted'
+                            ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm'
+                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-slate-200 dark:hover:border-slate-700'
+                            }`}
+                    >
                         <p className="text-2xl font-black text-slate-500">{countNotSubmitted}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Chưa nộp</p>
-                    </div>
+                    </button>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-200/50 dark:border-gray-700/50 shadow-sm max-w-md">
-                <MdSearch size={18} className="text-gray-400" />
-                <input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
-                    placeholder="Tìm đơn vị..."
-                />
-                {searchTerm && (
-                    <button onClick={() => setSearchTerm('')}>
-                        <MdClose size={16} className="text-gray-400 hover:text-red-500" />
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-200/50 dark:border-gray-700/50 shadow-sm max-w-md w-full">
+                    <MdSearch size={18} className="text-gray-400" />
+                    <input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex-1 bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                        placeholder="Tìm đơn vị..."
+                    />
+                    {searchTerm && (
+                        <button onClick={() => setSearchTerm('')}>
+                            <MdClose size={16} className="text-gray-400 hover:text-red-500" />
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    {activeStatusFilter !== 'all' && (
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('all')}
+                            className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                        >
+                            Bỏ lọc
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => selectJustificationForUnits(displayData.map((item) => item.assignment.unitId))}
+                        disabled={displayData.length === 0 || selectableRowIds.length === 0}
+                        className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-black hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Y/C GT hàng loạt theo danh sách
                     </button>
-                )}
+                </div>
             </div>
+
+            {totalJustificationItems > 0 && (
+                <div className="sticky top-4 z-40 animate-fade-in-up">
+                    <div className="flex flex-wrap items-center gap-4 bg-amber-600 dark:bg-amber-700 text-white rounded-2xl px-6 py-4 shadow-2xl shadow-amber-600/30 border border-amber-500">
+                        <div className="text-sm font-bold">
+                            <span className="text-amber-100">Đã chọn</span>{' '}
+                            <span className="text-white text-lg font-black">{totalJustificationItems}</span>{' '}
+                            <span className="text-amber-100">nội dung từ</span>{' '}
+                            <span className="text-white text-lg font-black">{totalJustificationUnits}</span>{' '}
+                            <span className="text-amber-100">đơn vị</span>
+                        </div>
+                        <div className="hidden sm:block h-8 w-px bg-amber-400/50" />
+                        <div className="flex items-center gap-2">
+                            <MdAccessTime size={18} className="text-amber-200" />
+                            <DatePicker
+                                selected={justificationDeadline}
+                                onChange={setJustificationDeadline}
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Chọn hạn GT..."
+                                minDate={new Date()}
+                                className="bg-white/20 backdrop-blur text-white placeholder-amber-200 border border-amber-400/50 rounded-xl px-3 py-2 text-sm font-bold w-40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSendJustification}
+                            disabled={isSendingJustification}
+                            className="flex items-center gap-2 bg-white text-amber-700 font-black rounded-xl px-5 py-2.5 text-sm hover:bg-amber-50 transition-colors disabled:opacity-50"
+                        >
+                            <MdSend size={16} />
+                            {isSendingJustification ? 'Đang gửi...' : 'Gửi yêu cầu GT'}
+                        </button>
+                        <button
+                            onClick={() => { setJustificationSelections({}); setJustificationDeadline(null); }}
+                            className="text-amber-200 hover:text-white transition-colors"
+                        >
+                            <MdClose size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-4">
                 {displayData.map((item) => {
                     const statusInfo = statusMap[item.status];
                     const isGrading = gradingUnit === item.assignment.unitId;
+                    const isFullySelected = isUnitFullySelected(item.assignment.unitId);
 
                     return (
                         <div
@@ -257,21 +398,37 @@ const CriteriaOverviewPage = () => {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => {
-                                        if (isGrading) {
-                                            setGradingUnit(null);
-                                            return;
-                                        }
-                                        setGradingUnit(item.assignment.unitId);
-                                        setGradedScores(item.submission?.gradedScores || {});
-                                        setGradedComment(item.submission?.gradedComment || '');
-                                    }}
-                                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                                >
-                                    <MdGrade size={14} />
-                                    {isGrading ? 'Đóng' : item.status === 'graded' ? 'Xem/Sửa điểm' : item.status === 'not_submitted' ? 'Xem / Y/C Giải trình' : 'Thẩm định'}
-                                </button>
+                                <div className="flex flex-wrap items-center gap-3 justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isFullySelected) {
+                                                clearJustificationSelectionForUnit(item.assignment.unitId);
+                                                return;
+                                            }
+                                            selectJustificationForUnits([item.assignment.unitId]);
+                                        }}
+                                        disabled={selectableRowIds.length === 0}
+                                        className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:no-underline"
+                                    >
+                                        {isFullySelected ? 'Bỏ chọn GT nhanh' : 'Chọn GT nhanh'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (isGrading) {
+                                                setGradingUnit(null);
+                                                return;
+                                            }
+                                            setGradingUnit(item.assignment.unitId);
+                                            setGradedScores(item.submission?.gradedScores || {});
+                                            setGradedComment(item.submission?.gradedComment || '');
+                                        }}
+                                        className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    >
+                                        <MdGrade size={14} />
+                                        {isGrading ? 'Đóng' : item.status === 'graded' ? 'Xem/Sửa điểm' : item.status === 'not_submitted' ? 'Xem / Y/C Giải trình' : 'Thẩm định'}
+                                    </button>
+                                </div>
                             </div>
 
                             {isGrading && (
@@ -452,7 +609,7 @@ const CriteriaOverviewPage = () => {
                                                                         });
                                                                     }}
                                                                     disabled={locked}
-                                                                    className={`input w-16 text-center font-black text-blue-600 dark:text-blue-400 mx-auto block ${locked ? 'opacity-70 bg-gray-100' : ''}`}
+                                                                    className={`input w-20 min-w-[5rem] text-center font-black text-blue-600 dark:text-blue-400 mx-auto block ${locked ? 'opacity-70 bg-gray-100' : ''}`}
                                                                     placeholder="0"
                                                                 />
                                                             </td>
@@ -502,51 +659,13 @@ const CriteriaOverviewPage = () => {
 
                 {displayData.length === 0 && (
                     <div className="text-center py-20 text-gray-400 font-bold">
-                        Chưa có đơn vị nào được giao tiêu chí này.
+                        {searchTerm || activeStatusFilter !== 'all'
+                            ? 'Không có đơn vị nào phù hợp với bộ lọc hiện tại.'
+                            : 'Chưa có đơn vị nào được giao tiêu chí này.'}
                     </div>
                 )}
             </div>
 
-            {/* Floating Justification Control Bar */}
-            {totalJustificationItems > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
-                    <div className="flex items-center gap-4 bg-amber-600 dark:bg-amber-700 text-white rounded-2xl px-6 py-4 shadow-2xl shadow-amber-600/30 border border-amber-500">
-                        <div className="text-sm font-bold">
-                            <span className="text-amber-100">Đã chọn</span>{' '}
-                            <span className="text-white text-lg font-black">{totalJustificationItems}</span>{' '}
-                            <span className="text-amber-100">nội dung từ</span>{' '}
-                            <span className="text-white text-lg font-black">{totalJustificationUnits}</span>{' '}
-                            <span className="text-amber-100">đơn vị</span>
-                        </div>
-                        <div className="h-8 w-px bg-amber-400/50" />
-                        <div className="flex items-center gap-2">
-                            <MdAccessTime size={18} className="text-amber-200" />
-                            <DatePicker
-                                selected={justificationDeadline}
-                                onChange={setJustificationDeadline}
-                                dateFormat="dd/MM/yyyy"
-                                placeholderText="Chọn hạn GT..."
-                                minDate={new Date()}
-                                className="bg-white/20 backdrop-blur text-white placeholder-amber-200 border border-amber-400/50 rounded-xl px-3 py-2 text-sm font-bold w-40 focus:outline-none focus:ring-2 focus:ring-white/50"
-                            />
-                        </div>
-                        <button
-                            onClick={handleSendJustification}
-                            disabled={isSendingJustification}
-                            className="flex items-center gap-2 bg-white text-amber-700 font-black rounded-xl px-5 py-2.5 text-sm hover:bg-amber-50 transition-colors disabled:opacity-50"
-                        >
-                            <MdSend size={16} />
-                            {isSendingJustification ? 'Đang gửi...' : 'Gửi yêu cầu GT'}
-                        </button>
-                        <button
-                            onClick={() => { setJustificationSelections({}); setJustificationDeadline(null); }}
-                            className="text-amber-200 hover:text-white transition-colors"
-                        >
-                            <MdClose size={20} />
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
