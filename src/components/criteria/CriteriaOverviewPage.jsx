@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MdArrowBack, MdSearch, MdClose, MdAssignment, MdGrade, MdSend, MdAccessTime } from 'react-icons/md';
+import { MdArrowBack, MdSearch, MdClose, MdAssignment, MdGrade, MdSend, MdAccessTime, MdDownload } from 'react-icons/md';
 import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
 import DatePicker from 'react-datepicker';
@@ -10,6 +10,8 @@ import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToAllCriteriaSubmissions, gradeCriteriaSubmission, sendJustificationRequest } from '../../firebase/criteriaFirestore';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
+import { clampCriteriaScore } from '../../utils/criteriaScore';
+import { exportCriteriaOverviewToExcel } from '../../utils/exportExcel';
 
 const CriteriaOverviewPage = () => {
     const { criteriaSetId } = useParams();
@@ -219,6 +221,11 @@ const CriteriaOverviewPage = () => {
         }
     };
 
+    const handleExportOverview = () => {
+        exportCriteriaOverviewToExcel(criteriaSet, displayData, tableRows);
+        toast.success('Da xuat file Excel tong quan.');
+    };
+
     return (
         <div className="space-y-6">
             <div className="mb-6 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
@@ -310,6 +317,14 @@ const CriteriaOverviewPage = () => {
                             Bỏ lọc
                         </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={handleExportOverview}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-black hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                    >
+                        <MdDownload size={16} />
+                        Xuat Excel
+                    </button>
                     <button
                         type="button"
                         onClick={() => selectJustificationForUnits(displayData.map((item) => item.assignment.unitId))}
@@ -535,7 +550,10 @@ const CriteriaOverviewPage = () => {
                                                             </td>
                                                             <td className="px-2 py-4 text-center">
                                                                 <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
-                                                                    {res.selfScore ?? '—'}
+                                                                    {(() => {
+                                                                        const safeSelfScore = clampCriteriaScore(res.selfScore, row.khungDiem);
+                                                                        return safeSelfScore === '' ? '—' : safeSelfScore;
+                                                                    })()}
                                                                 </span>
                                                             </td>
                                                             {/* Điểm được chấm */}

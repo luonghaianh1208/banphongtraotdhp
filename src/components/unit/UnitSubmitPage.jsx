@@ -15,6 +15,8 @@ import {
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
+import { clampCriteriaScore } from '../../utils/criteriaScore';
+import { hasOnlyFacebookEvidenceLinks } from '../../utils/evidenceLinks';
 import TextareaAutosize from 'react-textarea-autosize';
 
 const UnitSubmitPage = () => {
@@ -31,6 +33,7 @@ const UnitSubmitPage = () => {
     const [assignmentRevoked, setAssignmentRevoked] = useState(false);
     const [isPeriodLocked, setIsPeriodLocked] = useState(false);
     const [gradedData, setGradedData] = useState({ scores: {}, comment: '', total: null });
+    const [savingMessage, setSavingMessage] = useState('');
     const [searchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') === 'giaiTrinh' ? 'giaiTrinh' : 'bTC';
 
@@ -140,6 +143,38 @@ const UnitSubmitPage = () => {
         return <div className="text-center mt-10 dark:text-white font-bold">Dữ liệu không hợp lệ.</div>;
     }
 
+    const tableRows = buildCriteriaTableRows(criteriaSet);
+    const scoreLimitsByRow = Object.fromEntries(tableRows.map((row) => [row.id, row.khungDiem]));
+    const normalizeSelfScore = (mucId, value) => {
+        const normalizedScore = clampCriteriaScore(value, scoreLimitsByRow[mucId]);
+        return normalizedScore === '' ? '' : String(normalizedScore);
+    };
+    const normalizeResponses = (nextResponses = {}) => {
+        let hasChanges = false;
+        const sanitizedResponses = Object.entries(nextResponses).reduce((acc, [mucId, response]) => {
+            if (!response || typeof response !== 'object' || !Object.prototype.hasOwnProperty.call(response, 'selfScore')) {
+                acc[mucId] = response;
+                return acc;
+            }
+
+            const sanitizedSelfScore = normalizeSelfScore(mucId, response.selfScore);
+            if (sanitizedSelfScore !== response.selfScore) {
+                hasChanges = true;
+                acc[mucId] = { ...response, selfScore: sanitizedSelfScore };
+                return acc;
+            }
+
+            acc[mucId] = response;
+            return acc;
+        }, {});
+
+        return hasChanges ? sanitizedResponses : nextResponses;
+    };
+    const getTotalSelfScore = (nextResponses = {}) => Object.entries(nextResponses).reduce((total, [mucId, response]) => {
+        const safeScore = clampCriteriaScore(response?.selfScore, scoreLimitsByRow[mucId]);
+        return total + (Number(safeScore) || 0);
+    }, 0);
+
     const isMainReportReadOnly = submissionStatus === 'submitted' || submissionStatus === 'graded' || assignmentRevoked || isPeriodLocked;
     const canEditJustificationRow = (graded) => {
         const dlStr = graded?.justificationDeadline;
@@ -149,33 +184,16 @@ const UnitSubmitPage = () => {
     };
     const isReadOnly = isMainReportReadOnly;
     const isGraded = submissionStatus === 'graded';
-    const tableRows = buildCriteriaTableRows(criteriaSet);
-
-    const getGradedScore = (mucId) => {
-        const entry = gradedData.scores[mucId];
-        if (entry == null) return null;
-        return typeof entry === 'object' ? (entry.officialScore ?? null) : entry;
-    };
-    const getGradedFeedback = (mucId) => {
-        const entry = gradedData.scores[mucId];
-        if (entry && typeof entry === 'object') return entry.feedback || '';
-        return '';
-    };
-
-    const handleKeyDown = (e, colName) => {
-        if (e.key === 'Enter') {
-            if (e.shiftKey) {
-                // Allow default Shift+Enter behavior (newline) for textareas
-                return;
-            }
-            // Prevent default Enter behavior (newline) and jump to next row
-            e.preventDefault();
-            const inputsInCol = Array.from(document.querySelectorAll(`[data-col="${colName}"]`));
-            const currentIndex = inputsInCol.indexOf(e.target);
-            if (currentIndex > -1 && currentIndex < inputsInCol.length - 1) {
-                inputsInCol[currentIndex + 1].focus();
-            }
-        }
+    const findInvalidEvidenceRow = (responseMap = {}) => (
+        tableRows.find((row) => {
+            const evidenceFiles = responseMap[row.id]?.evidenceFiles || [];
+            return evidenceFiles.length > 0 && !hasOnlyFacebookEvidenceLinks(evidenceFiles);
+        }) || null
+    );
+    const getRowLabel = (row) => {
+        if (!row) return 'minh chung';
+        if (row.ndTitle) return `${row.tcTitle} / ${row.ndTitle}`;
+        return row.tcTitle || row.id;
     };
 
     const handleResponseChange = (mucId, field, value) => {
@@ -190,16 +208,14 @@ const UnitSubmitPage = () => {
             }));
             return;
         }
+        const nextValue = field === 'selfScore' ? normalizeSelfScore(mucId, value) : value;
         setResponses((prev) => ({
             ...prev,
-            [mucId]: { ...(prev[mucId] || {}), [field]: value },
+            [mucId]: { ...(prev[mucId] || {}), [field]: nextValue },
         }));
     };
 
-    let currentTotalScore = 0;
-    Object.values(responses).forEach((res) => {
-        currentTotalScore += Number(res.selfScore) || 0;
-    });
+    const currentTotalScore = getTotalSelfScore(responses);
 
     const handleSaveDraft = async () => {
         if (!userProfile) return;
@@ -213,14 +229,25 @@ const UnitSubmitPage = () => {
         }
 
         const unitId = userProfile.id;
+        const normalizedResponses = normalizeResponses(responses);
+        const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
+        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
+        if (invalidEvidenceRow) {
+            toast.error(`Chi duoc luu link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+            return;
+        }
+        if (normalizedResponses !== responses) {
+            setResponses(normalizedResponses);
+        }
         setSaving(true);
+        setSavingMessage('Dang luu ban nhap...');
         try {
             await saveUnitCriteriaResponse(
                 criteriaSetId,
                 unitId,
                 userProfile.unitName || userProfile.displayName,
-                responses,
-                currentTotalScore,
+                normalizedResponses,
+                normalizedTotalScore,
                 criteriaSet?.periodId || null
             );
             toast.success('Đã lưu thành công!');
@@ -229,6 +256,7 @@ const UnitSubmitPage = () => {
             toast.error('Có lỗi xảy ra khi lưu.');
         } finally {
             setSaving(false);
+            setSavingMessage('');
         }
     };
 
@@ -245,14 +273,25 @@ const UnitSubmitPage = () => {
         if (!window.confirm('Bạn có chắc chắn muốn nộp báo cáo chính thức? Sau khi nộp sẽ không thể chỉnh sửa.')) return;
 
         const unitId = userProfile.id;
+        const normalizedResponses = normalizeResponses(responses);
+        const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
+        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
+        if (invalidEvidenceRow) {
+            toast.error(`Chi duoc nop link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+            return;
+        }
+        if (normalizedResponses !== responses) {
+            setResponses(normalizedResponses);
+        }
         setSaving(true);
+        setSavingMessage('Dang gui bao cao va ghi du lieu...');
         try {
             await saveUnitCriteriaResponse(
                 criteriaSetId,
                 unitId,
                 userProfile.unitName || userProfile.displayName,
-                responses,
-                currentTotalScore,
+                normalizedResponses,
+                normalizedTotalScore,
                 criteriaSet?.periodId || null
             );
             await submitCriteriaSubmission(criteriaSetId, unitId);
@@ -263,6 +302,7 @@ const UnitSubmitPage = () => {
             toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {
             setSaving(false);
+            setSavingMessage('');
         }
     };
 
@@ -286,6 +326,12 @@ const UnitSubmitPage = () => {
                     evidenceFiles: jt.evidenceFiles ?? (legacy.justificationText ? (legacy.evidenceFiles || []) : []),
                 };
             });
+            const invalidEvidenceRow = findInvalidEvidenceRow(requestedResponses);
+            if (invalidEvidenceRow) {
+                toast.error(`Chi duoc gui link Facebook o muc: ${getRowLabel(invalidEvidenceRow)}`);
+                return;
+            }
+            setSavingMessage('Dang gui giai trinh...');
             await submitUnitJustification(criteriaSetId, unitId, requestedResponses);
             toast.success('Đã gửi giải trình thành công!');
         } catch (err) {
@@ -293,10 +339,21 @@ const UnitSubmitPage = () => {
             toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {
             setSaving(false);
+            setSavingMessage('');
         }
     };
 
     return (
+        <>
+            {saving && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 backdrop-blur-sm px-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl dark:bg-gray-900">
+                        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600 dark:border-emerald-900/50 dark:border-t-emerald-400"></div>
+                        <p className="text-base font-black text-gray-900 dark:text-white">{savingMessage || 'Dang xu ly...'}</p>
+                        <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">Thong bao thanh cong chi hien sau khi du lieu da ghi xong.</p>
+                    </div>
+                </div>
+            )}
         <div className="max-w-[1920px] w-full mx-auto pb-32 relative px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4 mb-8">
                 <button
@@ -506,6 +563,9 @@ const UnitSubmitPage = () => {
                                                     <EvidenceUpload
                                                         files={evidenceFiles}
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
+                                                        allowFileUpload={false}
+                                                        enforceFacebookLinks={true}
+                                                        helperText="Chi nhap link Facebook dua tin bai. Khong nhan file tai len hoac link ngoai Facebook."
                                                         readOnly={isRowLocked && !isJustificationUnlocked}
                                                     />
                                                 </div>
@@ -516,7 +576,7 @@ const UnitSubmitPage = () => {
                                                     min="0"
                                                     max={row.khungDiem}
                                                     step="0.5"
-                                                    value={res.selfScore ?? ''}
+                                                    value={res.selfScore === '' || res.selfScore == null ? '' : clampCriteriaScore(res.selfScore, row.khungDiem)}
                                                     onChange={(e) => handleResponseChange(row.id, 'selfScore', e.target.value)}
                                                     disabled={isRowLocked}
                                                     className={`input w-16 text-center text-sm font-black text-emerald-600 dark:text-emerald-400 mx-auto block ${isRowLocked ? 'bg-gray-50' : ''}`}
@@ -657,6 +717,7 @@ const UnitSubmitPage = () => {
                 </div>
             )}
         </div>
+        </>
     );
 };
 

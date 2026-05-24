@@ -9,6 +9,7 @@ import { getCriteriaSubmission, gradeCriteriaSubmission, sendJustificationReques
 import EvidenceUpload from './EvidenceUpload';
 import { MdArrowBack, MdSave, MdTrendingUp, MdCheckCircle, MdGrade, MdList, MdChat, MdSend, MdAccessTime, MdClose } from 'react-icons/md';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
+import { clampCriteriaScore } from '../../utils/criteriaScore';
 import TextareaAutosize from 'react-textarea-autosize';
 
 const CriteriaDetailPage = () => {
@@ -20,7 +21,6 @@ const CriteriaDetailPage = () => {
 
     const [submission, setSubmission] = useState(null);
     const [subLoading, setSubLoading] = useState(true);
-    const [criteriaSet, setCriteriaSet] = useState(null);
     const [gradeData, setGradeData] = useState({});
     const [generalComment, setGeneralComment] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -73,11 +73,9 @@ const CriteriaDetailPage = () => {
         if (submissionId) fetchSubmission();
     }, [submissionId]);
 
-    useEffect(() => {
-        if (!criteriaLoading && submission && criteriaSets.length > 0) {
-            const set = criteriaSets.find(c => c.id === submission.criteriaSetId);
-            setCriteriaSet(set);
-        }
+    const criteriaSet = useMemo(() => {
+        if (criteriaLoading || !submission || criteriaSets.length === 0) return null;
+        return criteriaSets.find((set) => set.id === submission.criteriaSetId) || null;
     }, [criteriaLoading, submission, criteriaSets]);
 
     const tableRows = useMemo(() => {
@@ -133,8 +131,6 @@ const CriteriaDetailPage = () => {
             </div>
         );
     }
-
-    const isStaff = ['member', 'manager', 'admin'].includes(userProfile?.role);
 
     const isRowReadOnly = (row) => {
         if (userProfile?.role === 'admin') return false;
@@ -343,7 +339,10 @@ const CriteriaDetailPage = () => {
                                             </td>
                                             <td className="px-2 py-4 text-center">
                                                 <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-sm font-black text-blue-700 dark:text-blue-400">
-                                                    {res.selfScore ?? '—'}
+                                                    {(() => {
+                                                        const safeSelfScore = clampCriteriaScore(res.selfScore, row.khungDiem);
+                                                        return safeSelfScore === '' ? '—' : safeSelfScore;
+                                                    })()}
                                                 </span>
                                             </td>
                                             

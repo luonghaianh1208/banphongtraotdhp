@@ -198,15 +198,13 @@ export const buildCriteriaSetsFromRows = (flatRows, year) => {
   const groupedByTC = [];
   let currentTC = null;
   let currentND = null;
-  let tcIdx = 0, ndIdx = 0, mucIdx = 0;
+  let mucIdx = 0;
 
   for (const row of flatRows) {
     // New TC?
     if (row.tieuChi || (!currentTC && row._tcTitle)) {
       const title = row.tieuChi || row._tcTitle;
       if (!currentTC || currentTC._title !== title) {
-        tcIdx++;
-        ndIdx = 0;
         currentTC = { _title: title, noiDung: [], units: new Set() };
         groupedByTC.push(currentTC);
         currentND = null;
@@ -221,13 +219,11 @@ export const buildCriteriaSetsFromRows = (flatRows, year) => {
     if (row.noiDung || (!currentND && row._ndTitle)) {
       const ndTitle = row.noiDung || row._ndTitle;
       if (!currentND || currentND._title !== ndTitle) {
-        ndIdx++;
         currentND = { _title: ndTitle, muc: [] };
         currentTC.noiDung.push(currentND);
       }
     }
     if (!currentND) {
-      ndIdx++;
       currentND = { _title: 'Nội dung chung', muc: [] };
       currentTC.noiDung.push(currentND);
     }
@@ -317,6 +313,144 @@ export const exportCriteriaSetToExcel = (criteriaSet) => {
   XLSX.utils.book_append_sheet(wb, ws, 'Bộ Tiêu Chí');
   const safeName = (criteriaSet.title || 'bo-tieu-chi').replace(/[^a-zA-Z0-9\u00C0-\u1EF9 ]/g, '').trim().replace(/\s+/g, '_');
   XLSX.writeFile(wb, `${safeName}.xlsx`);
+};
+
+export const exportCriteriaOverviewToExcel = (criteriaSet, displayData, tableRows) => {
+  const statusMap = {
+    not_submitted: 'Chua nop',
+    draft: 'Ban nhap',
+    submitted: 'Da nop',
+    graded: 'Da tham dinh',
+  };
+
+  const summaryRows = displayData.map((item, index) => {
+    const responses = item.submission?.responses || {};
+    const submittedCount = tableRows.filter((row) => {
+      const response = responses[row.id];
+      return response && response.selfScore !== undefined && response.selfScore !== '' && response.selfScore !== null;
+    }).length;
+    const totalEvidence = Object.values(responses).reduce((total, response) => total + ((response?.evidenceFiles || []).length), 0);
+
+    return {
+      'STT': index + 1,
+      'Don vi': item.assignment.unitName || '',
+      'Trang thai': statusMap[item.status] || item.status || '',
+      'Tu cham': item.totalSelfScore ?? '',
+      'Tham dinh': item.totalGradedScore ?? '',
+      'Noi dung da nop': submittedCount === 0 ? 'Chua nop noi dung nao' : `${submittedCount}/${tableRows.length}`,
+      'Tong minh chung': totalEvidence,
+    };
+  });
+
+  const detailRows = [];
+  displayData.forEach((item, unitIndex) => {
+    tableRows.forEach((row) => {
+      const response = item.submission?.responses?.[row.id] || {};
+      const justificationResponse = item.submission?.justificationResponses?.[row.id] || {};
+      const graded = item.submission?.gradedScores?.[row.id] || {};
+      const evidenceLinks = (response.evidenceFiles || []).map((file) => file?.url || '').filter(Boolean);
+      const justificationEvidenceLinks = (justificationResponse.evidenceFiles || []).map((file) => file?.url || '').filter(Boolean);
+
+      detailRows.push({
+        'STT': detailRows.length + 1,
+        'Don vi': item.assignment.unitName || '',
+        'Trang thai': statusMap[item.status] || item.status || '',
+        'Tieu chi': row.tcTitle || '',
+        'Noi dung': row.ndTitle || '',
+        'Dieu kien cham': row.dieuKienCham || '',
+        'Yeu cau minh chung': row.yeucauMinhChung || '',
+        'To': row.toTheoDoi || '',
+        'Han nop': row.deadline || '',
+        'Diem toi da': row.khungDiem ?? '',
+        'Danh gia cua don vi': response.notes || '',
+        'Minh chung': evidenceLinks.join('\n'),
+        'Diem tu cham': response.selfScore ?? '',
+        'Diem duoc cham': typeof graded === 'object' ? (graded.officialScore ?? '') : graded,
+        'Yeu cau giai trinh': graded?.requireJustification ? 'Co' : '',
+        'Noi dung giai trinh': justificationResponse.justificationText ?? response.justificationText ?? '',
+        'Minh chung giai trinh': justificationEvidenceLinks.join('\n'),
+        'Han giai trinh': graded?.justificationDeadline || '',
+        'Diem sau giai trinh': graded?.afterJustificationScore ?? '',
+        'Nhan xet': graded?.feedback || '',
+      });
+    });
+
+    if (unitIndex < displayData.length - 1) {
+      detailRows.push({
+        'STT': '',
+        'Don vi': '',
+        'Trang thai': '',
+        'Tieu chi': '',
+        'Noi dung': '',
+        'Dieu kien cham': '',
+        'Yeu cau minh chung': '',
+        'To': '',
+        'Han nop': '',
+        'Diem toi da': '',
+        'Danh gia cua don vi': '',
+        'Minh chung': '',
+        'Diem tu cham': '',
+        'Diem duoc cham': '',
+        'Yeu cau giai trinh': '',
+        'Noi dung giai trinh': '',
+        'Minh chung giai trinh': '',
+        'Han giai trinh': '',
+        'Diem sau giai trinh': '',
+        'Nhan xet': '',
+      });
+    }
+  });
+
+  const workbook = XLSX.utils.book_new();
+
+  const summarySheet = XLSX.utils.json_to_sheet(summaryRows.length > 0 ? summaryRows : [{
+    'STT': '',
+    'Don vi': '(Khong co don vi nao trong danh sach hien tai)',
+    'Trang thai': '',
+    'Tu cham': '',
+    'Tham dinh': '',
+    'Noi dung da nop': '',
+    'Tong minh chung': '',
+  }]);
+  summarySheet['!cols'] = [
+    { wch: 6 }, { wch: 36 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 14 },
+  ];
+
+  const detailSheet = XLSX.utils.json_to_sheet(detailRows.length > 0 ? detailRows : [{
+    'STT': '',
+    'Don vi': '(Khong co du lieu chi tiet)',
+    'Trang thai': '',
+    'Tieu chi': '',
+    'Noi dung': '',
+    'Dieu kien cham': '',
+    'Yeu cau minh chung': '',
+    'To': '',
+    'Han nop': '',
+    'Diem toi da': '',
+    'Danh gia cua don vi': '',
+    'Minh chung': '',
+    'Diem tu cham': '',
+    'Diem duoc cham': '',
+    'Yeu cau giai trinh': '',
+    'Noi dung giai trinh': '',
+    'Minh chung giai trinh': '',
+    'Han giai trinh': '',
+    'Diem sau giai trinh': '',
+    'Nhan xet': '',
+  }]);
+  detailSheet['!cols'] = [
+    { wch: 6 }, { wch: 32 }, { wch: 18 }, { wch: 28 }, { wch: 24 },
+    { wch: 32 }, { wch: 32 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+    { wch: 28 }, { wch: 50 }, { wch: 12 }, { wch: 12 }, { wch: 16 },
+    { wch: 28 }, { wch: 50 }, { wch: 14 }, { wch: 14 }, { wch: 24 },
+  ];
+
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Tong quan');
+  XLSX.utils.book_append_sheet(workbook, detailSheet, 'Chi tiet');
+
+  const safeName = (criteriaSet?.title || 'tong-quan-bo-tieu-chi').replace(/[^a-zA-Z0-9\u00C0-\u1EF9 ]/g, '').trim().replace(/\s+/g, '_');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(workbook, `${safeName}_tong_quan_${dateStr}.xlsx`);
 };
 
 
