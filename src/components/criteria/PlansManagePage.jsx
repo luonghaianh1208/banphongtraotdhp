@@ -10,6 +10,7 @@ import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
 import { getVietnameseError } from '../../utils/errorUtils';
+import { formatDisplayDate } from '../../utils/dateUtils';
 
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
@@ -289,7 +290,7 @@ const PlansManagePage = () => {
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
-                                                    {new Date(plan.submissionDeadline).toLocaleDateString('vi-VN')}
+                                                    {formatDisplayDate(plan.submissionDeadline)}
                                                 </div>
                                             ) : (
                                                 <span className="text-slate-300 dark:text-slate-600 italic">Chưa thiết lập</span>

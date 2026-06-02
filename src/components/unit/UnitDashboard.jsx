@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useUnitAssignments } from '../../hooks/useAssignments';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { usePlans } from '../../hooks/usePlans';
+import { formatDisplayDate } from '../../utils/dateUtils';
 
 const UnitDashboard = () => {
     const { userProfile } = useAuth();
@@ -140,7 +141,7 @@ const UnitDashboard = () => {
                                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{p.title}</p>
                                         <p className="text-xs text-gray-400 mt-0.5">
                                             {p.type === 'contest' ? 'Hội thi' : 'Kế hoạch'}
-                                            {p.submissionDeadline && ` · Hạn: ${new Date(p.submissionDeadline).toLocaleDateString('vi-VN')}`}
+                                            {p.submissionDeadline && ` · Hạn: ${formatDisplayDate(p.submissionDeadline)}`}
                                         </p>
                                     </div>
                                     <MdChevronRight size={16} className="text-gray-300 group-hover/item:text-blue-500" />

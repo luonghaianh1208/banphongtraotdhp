@@ -289,7 +289,7 @@ export const exportCriteriaSetToExcel = (criteriaSet) => {
         r[CRITERIA_HEADERS[3]] = m.yeucauMinhChung || '';
         r[CRITERIA_HEADERS[4]] = m.toTheoDoi || '';
         r[CRITERIA_HEADERS[5]] = m.khungDiem || 0;
-        r[CRITERIA_HEADERS[6]] = m.deadline || '';
+        r[CRITERIA_HEADERS[6]] = formatDisplayDate(m.deadline) || '';
         r[CRITERIA_HEADERS[7]] = '';
         rows.push(r);
         isFirstRowOfTC = false;

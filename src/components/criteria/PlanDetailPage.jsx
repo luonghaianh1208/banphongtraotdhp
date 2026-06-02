@@ -6,6 +6,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
+import { formatDateTime, formatDisplayDate } from '../../utils/dateUtils';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
     MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
@@ -67,8 +68,7 @@ const PlanDetailPage = () => {
 
     const formatTimestamp = (ts) => {
         if (!ts) return '—';
-        if (ts.seconds) return new Date(ts.seconds * 1000).toLocaleString('vi-VN');
-        if (ts instanceof Date) return ts.toLocaleString('vi-VN');
+        if (ts.seconds || ts instanceof Date) return formatDateTime(ts);
         return String(ts);
     };
 
@@ -136,7 +136,7 @@ const PlanDetailPage = () => {
                     <div>
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hạn nộp</p>
                         <p className="text-sm font-bold text-slate-800 dark:text-white">
-                            {plan.submissionDeadline ? new Date(plan.submissionDeadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+                            {plan.submissionDeadline ? formatDisplayDate(plan.submissionDeadline) : 'Không giới hạn'}
                         </p>
                     </div>
                 </div>

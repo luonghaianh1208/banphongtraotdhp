@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
 import { useAuth } from '../../context/AuthContext';
+import { formatDisplayDate } from '../../utils/dateUtils';
 
 const UnitPlansList = () => {
     const [filter, setFilter] = useState('all');
@@ -91,7 +92,7 @@ const UnitPlansList = () => {
                                 <div className="flex items-center mt-2">
                                     <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     Hạn nộp hồ sơ: <span className="ml-1 font-medium text-red-600 text-sm">
-                                        {plan.submissionDeadline ? new Date(plan.submissionDeadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+                                        {plan.submissionDeadline ? formatDisplayDate(plan.submissionDeadline) : 'Không giới hạn'}
                                     </span>
                                 </div>
                             </div>

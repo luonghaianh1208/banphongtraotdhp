@@ -26,6 +26,8 @@ Thay đổi chỉ tập trung vào module bộ tiêu chí, màn tổng quan/th�
 - Thêm helper `formatDisplayDate`.
 - Các deadline bộ tiêu chí dạng `yyyy-MM-dd` được hiển thị thành `dd/MM/yyyy`.
 - Excel tổng quan bộ tiêu chí cũng dùng định dạng ngày `dd/MM/yyyy`.
+- Bổ sung quét sau cùng: các màn kế hoạch/hội thi và export bộ tiêu chí cũng dùng helper ngày chung.
+- Không còn `toLocaleDateString` hoặc `toLocaleString` trực tiếp trong `src`.
 
 ## 4. Giao Cho Đơn Vị Theo Nhóm
 
