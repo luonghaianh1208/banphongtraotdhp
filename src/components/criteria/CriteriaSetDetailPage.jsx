@@ -25,8 +25,8 @@ const CriteriaSetDetailPage = () => {
     const { setId } = useParams();
     const { criteriaSets, loading: csLoading } = useCriteriaSets();
     const { users, loading: usersLoading } = useUsers();
-    const { units } = useUnits();
-    const { assignments } = useSetAssignments(setId);
+    const { units, loading: unitsLoading } = useUnits();
+    const { assignments, loading: assignmentsLoading } = useSetAssignments(setId);
     const { userProfile } = useAuth();
     const canManageCriteria = ['admin', 'manager', 'member'].includes(userProfile?.role);
     const isReadOnly = !canManageCriteria;
@@ -41,6 +41,7 @@ const CriteriaSetDetailPage = () => {
     const [selectedUnits, setSelectedUnits] = useState([]);
     const [isAssigning, setIsAssigning] = useState(false);
     const loading = csLoading || usersLoading;
+    const isAssignmentDataLoading = unitsLoading || assignmentsLoading;
     const staff = users.filter(u => ['admin', 'manager', 'member'].includes(u.role) && u.isActive !== false);
 
     // Load data from Firestore
@@ -623,13 +624,15 @@ const CriteriaSetDetailPage = () => {
                                         <div className="flex flex-wrap gap-2 items-center">
                                             <button
                                                 onClick={() => setSelectedUnits(availableUnits.map(u => u.id))}
+                                                disabled={isAssignmentDataLoading || availableUnits.length === 0}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-700/50 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
                                             >
                                                 <MdSelectAll size={14} />
-                                                Chọn tất cả ({availableUnits.length})
+                                                {isAssignmentDataLoading ? 'Đang tải đơn vị...' : `Chọn tất cả (${availableUnits.length})`}
                                             </button>
                                             <button
                                                 onClick={() => setSelectedUnits([])}
+                                                disabled={selectedUnits.length === 0}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all"
                                             >
                                                 <MdClose size={14} />
@@ -700,6 +703,13 @@ const CriteriaSetDetailPage = () => {
                                                 );
                                             }))}
                                         </div>
+                                        {!isAssignmentDataLoading && availableUnits.length === 0 && (
+                                            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800/30 dark:text-gray-400">
+                                                {units.length === 0
+                                                    ? 'Chưa có dữ liệu đơn vị để giao.'
+                                                    : 'Tất cả đơn vị hiện có đã được giao bộ tiêu chí này.'}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })()}
