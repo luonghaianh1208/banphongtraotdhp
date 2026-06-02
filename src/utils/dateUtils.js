@@ -12,6 +12,31 @@ export const formatDate = (date) => {
   return formatInTimeZone(d, TZ, 'dd/MM/yyyy', { locale: vi });
 };
 
+// Format ngày hiển thị an toàn cho cả Firestore Timestamp, Date, yyyy-MM-dd và dd/MM/yyyy.
+export const formatDisplayDate = (date) => {
+  if (!date) return '';
+  if (date?.toDate || date instanceof Date) return formatDate(date);
+
+  if (typeof date === 'string') {
+    const value = date.trim();
+    const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+
+    const vnDate = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (vnDate) {
+      const day = vnDate[1].padStart(2, '0');
+      const month = vnDate[2].padStart(2, '0');
+      return `${day}/${month}/${vnDate[3]}`;
+    }
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return formatDate(parsed);
+    return value;
+  }
+
+  return formatDate(date);
+};
+
 // Format ngày + giờ (tự động 24h vì dùng HH)
 export const formatDateTime = (date) => {
   if (!date) return '';

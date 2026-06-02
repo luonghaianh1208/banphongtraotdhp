@@ -161,7 +161,7 @@ const EvidenceUpload = ({
             return;
         }
         if (enforceFacebookLinks && !isFacebookEvidenceUrl(url)) {
-            toast.error('Chi nhan link Facebook dua tin bai.');
+            toast.error('Chỉ nhận link Facebook hoặc thanhdoanhaiphong.gov.vn đưa tin bài.');
             return;
         }
 
@@ -201,7 +201,7 @@ const EvidenceUpload = ({
                         <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] font-semibold text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300">
                             <div className="flex items-start gap-2">
                                 <MdInfoOutline size={14} className="mt-0.5 flex-shrink-0" />
-                                <span>{helperText || 'Chi nhap link Facebook dua tin bai. Link khac se khong duoc chap nhan.'}</span>
+                                <span>{helperText || 'Chỉ nhập link Facebook hoặc thanhdoanhaiphong.gov.vn đưa tin bài. Link khác sẽ không được chấp nhận.'}</span>
                             </div>
                         </div>
                     )}

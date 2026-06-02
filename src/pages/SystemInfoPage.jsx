@@ -125,7 +125,7 @@ const PERMISSIONS = [
   { feature: 'Xem thông tin hệ thống', admin: true, manager: true, member: true },
   // --- Bộ tiêu chí ---
   { feature: 'Xem toàn bộ Bộ tiêu chí', admin: true, manager: true, member: true },
-  { feature: 'Tạo / Sửa / Xóa Bộ tiêu chí', admin: true, manager: false, member: false },
+  { feature: 'Tạo / Sửa / Xóa Bộ tiêu chí', admin: true, manager: true, member: true },
   { feature: 'Chấm điểm tiêu chí (theo phân công)', admin: true, manager: true, member: true },
   // --- Kế hoạch ---
   { feature: 'Tạo kế hoạch mới', admin: true, manager: true, member: true },

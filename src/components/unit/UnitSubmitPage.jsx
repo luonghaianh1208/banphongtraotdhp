@@ -14,10 +14,12 @@ import {
 } from '../../firebase/criteriaFirestore';
 import { db } from '../../firebase/config';
 import EvidenceUpload from '../criteria/EvidenceUpload';
+import CriteriaGuideFiles from '../criteria/CriteriaGuideFiles';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 import { clampCriteriaScore } from '../../utils/criteriaScore';
 import { hasOnlyFacebookEvidenceLinks } from '../../utils/evidenceLinks';
+import { formatDisplayDate } from '../../utils/dateUtils';
 import TextareaAutosize from 'react-textarea-autosize';
 
 const UnitSubmitPage = () => {
@@ -206,7 +208,7 @@ const UnitSubmitPage = () => {
             const selfScore = response.selfScore;
 
             if (!noteValue) missingFields.push('noi dung');
-            if (!evidenceFiles.length) missingFields.push('link Facebook');
+            if (!evidenceFiles.length) missingFields.push('link tin bài');
             if (selfScore === '' || selfScore == null) missingFields.push('diem tu cham');
 
             if (missingFields.length > 0) {
@@ -254,7 +256,7 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chỉ được lưu link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được lưu link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         if (normalizedResponses !== responses) {
@@ -297,7 +299,7 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chỉ được nộp link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được nộp link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         const submitRequirementIssue = getSubmitRequirementIssue(normalizedResponses);
@@ -358,7 +360,7 @@ const UnitSubmitPage = () => {
             });
             const invalidEvidenceRow = findInvalidEvidenceRow(requestedResponses);
             if (invalidEvidenceRow) {
-                toast.error(`Chỉ được gửi link Facebook ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+                toast.error(`Chỉ được gửi link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
                 return;
             }
             setSavingMessage('Dang gui giai trinh...');
@@ -554,8 +556,11 @@ const UnitSubmitPage = () => {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
-                                                    {row.yeucauMinhChung || '—'}
+                                                <div className="space-y-2">
+                                                    <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
+                                                        {row.yeucauMinhChung || '—'}
+                                                    </div>
+                                                    <CriteriaGuideFiles files={row.guideFiles || []} readOnly />
                                                 </div>
                                             </td>
                                             {activeTab === 'bTC' && (
@@ -569,7 +574,7 @@ const UnitSubmitPage = () => {
                                                     )}
                                                 </td>
                                             )}
-                                            {activeTab === 'bTC' && <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>}
+                                            {activeTab === 'bTC' && <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{formatDisplayDate(row.deadline) || '—'}</td>}
                                             <td className="px-4 py-4 text-center">
                                                 <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                     {row.khungDiem}
@@ -595,7 +600,7 @@ const UnitSubmitPage = () => {
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
                                                         allowFileUpload={false}
                                                         enforceFacebookLinks={true}
-                                                        helperText="Chỉ nhập link Facebook đưa tin bài. Không nhận file tải lên hoặc link ngoài Facebook."
+                                                        helperText="Chỉ nhập link Facebook hoặc thanhdoanhaiphong.gov.vn đưa tin bài. Không nhận file tải lên hoặc link ngoài phạm vi này."
                                                         readOnly={isRowLocked && !isJustificationUnlocked}
                                                     />
                                                 </div>
@@ -647,7 +652,7 @@ const UnitSubmitPage = () => {
                                                 <td className="px-2 py-4 text-center text-xs">
                                                     {dlStr ? (
                                                         <div className="flex flex-col items-center gap-1">
-                                                            <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dlStr).toLocaleDateString('vi-VN')}</span>
+                                                            <span className="font-bold text-gray-700 dark:text-gray-300">{formatDisplayDate(dlStr)}</span>
                                                             {isDeadlineExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">⏰ Hết hạn</span>}
                                                         </div>
                                                     ) : <span className="text-gray-400">—</span>}
@@ -719,7 +724,7 @@ const UnitSubmitPage = () => {
                             ) : (
                                 <>
                                     <div className="hidden lg:flex items-center max-w-xs text-xs font-bold text-amber-600 dark:text-amber-300">
-                                        Cần điền đủ nội dung, link Facebook và điểm tự chấm cho từng mục trước khi nộp.
+                                        Cần điền đủ nội dung, link tin bài hợp lệ và điểm tự chấm cho từng mục trước khi nộp.
                                     </div>
                                     <button
                                         type="button"

@@ -93,7 +93,7 @@ service cloud.firestore {
 
     match /criteriaSets/{setId} {
       allow read: if isAuthenticated();
-      allow write: if isAdminOrManager();
+      allow write: if isStaff();
     }
 
     match /submissionPeriods/{periodId} {
@@ -124,7 +124,7 @@ service cloud.firestore {
 
     match /criteriaAssignments/{assignId} {
       allow read: if isAuthenticated();
-      allow write: if isAdminOrManager();
+      allow write: if isStaff();
     }
 
     match /criteriaSubmissions/{subId} {

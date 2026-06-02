@@ -1,7 +1,7 @@
 // Xuất Excel
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
-import { formatDateTime } from './dateUtils';
+import { formatDateTime, formatDisplayDate } from './dateUtils';
 import { getTaskDisplayStatus } from './statusUtils';
 import { PRIORITIES, UNIT_BLOCKS } from './constants';
 
@@ -238,7 +238,7 @@ export const buildCriteriaSetsFromRows = (flatRows, year) => {
       yeucauMinhChung: row.yeucauMinhChung,
       toTheoDoi: row.toTheoDoi,
       khungDiem: row.khungDiem,
-      deadline: row.deadline,
+      deadline: formatDisplayDate(row.deadline),
     });
   }
 
@@ -482,7 +482,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
         row.dieuKienCham || '',
         row.yeucauMinhChung || '',
         row.toTheoDoi || '',
-        row.deadline || '',
+        formatDisplayDate(row.deadline) || '',
         row.khungDiem ?? '',
         response.notes || '',
         buildLinkBlock(response.evidenceFiles || []),
@@ -491,7 +491,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
         graded?.requireJustification ? 'Có' : '',
         justificationResponse.justificationText ?? response.justificationText ?? '',
         buildLinkBlock(justificationResponse.evidenceFiles || []),
-        graded?.justificationDeadline || '',
+        formatDisplayDate(graded?.justificationDeadline) || '',
         graded?.afterJustificationScore ?? '',
         graded?.feedback || '',
       ]);

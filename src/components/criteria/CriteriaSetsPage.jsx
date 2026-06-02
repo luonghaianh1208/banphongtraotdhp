@@ -16,7 +16,7 @@ import ConfirmDialog from '../common/ConfirmDialog';
 const CriteriaSetsPage = () => {
     const { criteriaSets, loading, error } = useCriteriaSets();
     const { userProfile } = useAuth();
-    const isMember = userProfile?.role === 'member';
+    const canManageCriteria = ['admin', 'manager', 'member'].includes(userProfile?.role);
     const { users } = useUsers();
     const { assignments: allAssignments } = useAssignments();
     const navigate = useNavigate();
@@ -265,7 +265,7 @@ const CriteriaSetsPage = () => {
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    {!isMember && (
+                    {canManageCriteria && (
                         <>
                             <button onClick={exportCriteriaTemplate} className="btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200/50 shadow-sm">
                                 <MdDownload size={20} /> <span className="hidden sm:inline">Tải mẫu Excel</span>
@@ -279,7 +279,7 @@ const CriteriaSetsPage = () => {
                             </button>
                         </>
                     )}
-                    {!isMember && selected.length > 0 && (
+                    {canManageCriteria && selected.length > 0 && (
                         <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 animate-fade-in">
                             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">Đã chọn {selected.length}:</span>
 
@@ -338,7 +338,7 @@ const CriteriaSetsPage = () => {
                     <div className="py-24 glass rounded-3xl flex flex-col items-center justify-center border-dashed border-2 border-gray-200 dark:border-gray-800">
                         <MdUpload size={40} className="text-gray-300 animate-bounce mb-6" />
                         <p className="text-xl font-black text-gray-500">Chưa có bộ tiêu chí nào</p>
-                        {!isMember && (
+                        {canManageCriteria && (
                             <div className="flex gap-3 mt-8">
                                 <button onClick={() => fileInputRef.current?.click()} className="btn bg-blue-600 text-white hover:bg-blue-700"><MdUpload size={20} /> Upload Excel</button>
                                 <button onClick={() => setShowModal(true)} className="btn btn-primary">Tạo thủ công</button>
@@ -350,7 +350,7 @@ const CriteriaSetsPage = () => {
                         <table className="min-w-[1120px] w-full text-sm">
                             <thead className="bg-gray-50/90 dark:bg-gray-800/80">
                                 <tr className="border-b border-gray-200/70 dark:border-gray-700/70">
-                                    {!isMember && <th className="w-14 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Chọn</th>}
+                                    {canManageCriteria && <th className="w-14 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Chọn</th>}
                                     <th className="min-w-[320px] px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-500">Bộ tiêu chí</th>
                                     <th className="w-24 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Năm</th>
                                     <th className="w-28 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-500">Mục chấm</th>
@@ -369,7 +369,7 @@ const CriteriaSetsPage = () => {
                                             key={set.id}
                                             className={"transition-colors hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 " + (isSelected ? 'bg-emerald-50/70 dark:bg-emerald-900/15' : 'bg-transparent')}
                                         >
-                                            {!isMember && (
+                                            {canManageCriteria && (
                                                 <td className="px-4 py-5 text-center align-top">
                                                     <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(set.id)} className="w-5 h-5 rounded-lg border-gray-300 text-primary-600 cursor-pointer" />
                                                 </td>
@@ -405,7 +405,7 @@ const CriteriaSetsPage = () => {
                                             <td className="px-5 py-5 align-top">
                                                 <div className="flex justify-end gap-2">
                                                     <Link to={'/criteria-set/' + set.id} className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 shadow-sm hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"><MdVisibility size={16} /> Chi tiết</Link>
-                                                    {!isMember && (
+                                                    {canManageCriteria && (
                                                         <>
                                                             <button onClick={() => handleClone(set)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"><MdContentCopy size={16} /> Nhân bản</button>
                                                             <button onClick={() => handleDelete(set.id, set.title)} className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 shadow-sm hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"><MdDelete size={16} /> Xóa</button>

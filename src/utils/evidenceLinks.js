@@ -1,4 +1,4 @@
-const FACEBOOK_HOSTS = ['facebook.com', 'fb.watch'];
+const ALLOWED_EVIDENCE_HOSTS = ['facebook.com', 'fb.watch', 'thanhdoanhaiphong.gov.vn'];
 
 export const isFacebookEvidenceUrl = (url) => {
   if (!url) return false;
@@ -6,7 +6,7 @@ export const isFacebookEvidenceUrl = (url) => {
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
-    return FACEBOOK_HOSTS.some((allowedHost) => host === allowedHost || host.endsWith(`.${allowedHost}`));
+    return ALLOWED_EVIDENCE_HOSTS.some((allowedHost) => host === allowedHost || host.endsWith(`.${allowedHost}`));
   } catch {
     return false;
   }

@@ -6,6 +6,7 @@ import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { formatDisplayDate } from '../../utils/dateUtils';
 
 const UnitSubmissionsList = () => {
     const { userProfile } = useAuth();
@@ -140,7 +141,7 @@ const UnitSubmissionsList = () => {
                                             {isValidDeadline && (
                                                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                                                     <MdAccessTime size={18} className="text-gray-400" />
-                                                    <span className="text-sm font-medium">Hạn nộp: <span className="text-red-600 dark:text-red-400 font-bold">{new Date(deadline).toLocaleDateString('vi-VN')}</span></span>
+                                                    <span className="text-sm font-medium">Hạn nộp: <span className="text-red-600 dark:text-red-400 font-bold">{formatDisplayDate(deadline)}</span></span>
                                                 </div>
                                             )}
                                             {isGiaiTrinh && jtInfo && (

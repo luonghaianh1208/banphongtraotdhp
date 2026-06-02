@@ -7,9 +7,11 @@ import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useAuth } from '../../context/AuthContext';
 import { getCriteriaSubmission, gradeCriteriaSubmission, sendJustificationRequest } from '../../firebase/criteriaFirestore';
 import EvidenceUpload from './EvidenceUpload';
+import CriteriaGuideFiles from './CriteriaGuideFiles';
 import { MdArrowBack, MdSave, MdTrendingUp, MdCheckCircle, MdGrade, MdList, MdChat, MdSend, MdAccessTime, MdClose } from 'react-icons/md';
 import { buildCriteriaTableRows } from '../../utils/criteriaTable';
 import { clampCriteriaScore } from '../../utils/criteriaScore';
+import { formatDisplayDate } from '../../utils/dateUtils';
 import TextareaAutosize from 'react-textarea-autosize';
 
 const CriteriaDetailPage = () => {
@@ -133,9 +135,8 @@ const CriteriaDetailPage = () => {
     }
 
     const isRowReadOnly = (row) => {
-        if (userProfile?.role === 'admin') return false;
+        if (['admin', 'manager', 'member'].includes(userProfile?.role)) return false;
         const tc = criteriaSet?.tieuChi?.find(t => t.id === row.tcId) || criteriaSet?.groups?.find(t => t.id === row.tcId);
-        // Member/Manager must be explicitly assigned to edit; unassigned rows are read-only
         if (!tc || !tc.assignedTo || tc.assignedTo !== userProfile?.id) return true;
         return false;
     };
@@ -304,8 +305,11 @@ const CriteriaDetailPage = () => {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
-                                                    {row.yeucauMinhChung || '—'}
+                                                <div className="space-y-2">
+                                                    <div className="whitespace-pre-line text-xs text-blue-700 dark:text-blue-300">
+                                                        {row.yeucauMinhChung || '—'}
+                                                    </div>
+                                                    <CriteriaGuideFiles files={row.guideFiles || []} readOnly />
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
@@ -317,7 +321,7 @@ const CriteriaDetailPage = () => {
                                                     <span className="text-sm text-gray-400">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{row.deadline || '—'}</td>
+                                            <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-300">{formatDisplayDate(row.deadline) || '—'}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <span className="inline-flex rounded-xl bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
                                                     {row.khungDiem}
@@ -394,7 +398,7 @@ const CriteriaDetailPage = () => {
                                                     <td className="px-2 py-4 text-center text-xs">
                                                         {dl ? (
                                                             <div className="flex flex-col items-center gap-1">
-                                                                <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(dl).toLocaleDateString('vi-VN')}</span>
+                                                                <span className="font-bold text-gray-700 dark:text-gray-300">{formatDisplayDate(dl)}</span>
                                                                 {isExpired && <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Hết hạn</span>}
                                                             </div>
                                                         ) : <span className="text-gray-400">—</span>}

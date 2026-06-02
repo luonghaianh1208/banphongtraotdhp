@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import toast from 'react-hot-toast';
 import TextareaAutosize from 'react-textarea-autosize';
+import CriteriaGuideFiles from './CriteriaGuideFiles';
 
 // Unique ID generator
 let _uid = 0;
@@ -27,7 +28,8 @@ const CriteriaSetDetailPage = () => {
     const { units } = useUnits();
     const { assignments } = useSetAssignments(setId);
     const { userProfile } = useAuth();
-    const isMember = userProfile?.role === 'member';
+    const canManageCriteria = ['admin', 'manager', 'member'].includes(userProfile?.role);
+    const isReadOnly = !canManageCriteria;
     const [localSet, setLocalSet] = useState(null); // full editable copy
     const [isSaving, setIsSaving] = useState(false);
     const [expandedTC, setExpandedTC] = useState({});
@@ -143,7 +145,7 @@ const CriteriaSetDetailPage = () => {
                 nd.muc = nd.muc || [];
                 nd.muc.push({
                     id: uid('m'), stt: nd.muc.length + 1,
-                    dieuKienCham: '', yeucauMinhChung: '', toTheoDoi: '', khungDiem: 0, deadline: '',
+                    dieuKienCham: '', yeucauMinhChung: '', guideFiles: [], toTheoDoi: '', khungDiem: 0, deadline: '',
                 });
             }
         }
@@ -203,6 +205,7 @@ const CriteriaSetDetailPage = () => {
                     stt: '',
                     dieuKienCham: '',
                     yeucauMinhChung: '',
+                    guideFiles: [],
                     toTheoDoi: '',
                     khungDiem: '',
                     deadline: '',
@@ -215,6 +218,7 @@ const CriteriaSetDetailPage = () => {
                 stt: muc.stt || mucIndex + 1,
                 dieuKienCham: muc.dieuKienCham || '',
                 yeucauMinhChung: muc.yeucauMinhChung || '',
+                guideFiles: muc.guideFiles || [],
                 toTheoDoi: muc.toTheoDoi || '',
                 khungDiem: muc.__empty ? '' : (muc.khungDiem ?? 0),
                 deadline: muc.deadline || '',
@@ -248,7 +252,7 @@ const CriteriaSetDetailPage = () => {
                         <button onClick={() => exportCriteriaSetToExcel(localSet)} className="btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200/50 text-xs shadow-sm">
                             <MdDownload size={16} /> Xuất Excel
                         </button>
-                        {!isMember && (
+                        {!isReadOnly && (
                             <button
                                 onClick={handleSave} disabled={isSaving || !isDirty}
                                 className={`btn text-xs shadow-sm ${isDirty ? 'btn-primary shadow-glow animate-pulse' : 'bg-gray-100 text-gray-400 dark:bg-gray-800 cursor-not-allowed'}`}
@@ -265,7 +269,7 @@ const CriteriaSetDetailPage = () => {
                     <input
                         value={localSet.title || ''}
                         onChange={e => updateTitle(e.target.value)}
-                        readOnly={isMember}
+                        readOnly={isReadOnly}
                         className="text-2xl font-black text-gray-900 dark:text-white w-full bg-transparent border-b-2 border-transparent hover:border-emerald-300 focus:border-emerald-500 focus:outline-none transition-all px-1 py-1"
                         placeholder="Tên bộ tiêu chí..."
                     />
@@ -275,7 +279,7 @@ const CriteriaSetDetailPage = () => {
                             <input
                                 value={localSet.academicYear || ''}
                                 onChange={e => updateYear(e.target.value)}
-                                readOnly={isMember}
+                                readOnly={isReadOnly}
                                 className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-transparent border-b border-transparent hover:border-emerald-300 focus:border-emerald-500 focus:outline-none w-20 text-center transition-all"
                                 placeholder="2026"
                             />
@@ -295,7 +299,7 @@ const CriteriaSetDetailPage = () => {
                     <textarea
                         value={localSet.description || ''}
                         onChange={e => updateDesc(e.target.value)}
-                        readOnly={isMember}
+                        readOnly={isReadOnly}
                         className="text-sm text-gray-500 dark:text-gray-400 w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-emerald-500 focus:outline-none resize-none transition-all italic"
                         placeholder="Mô tả bộ tiêu chí..."
                         rows={1}
@@ -303,7 +307,7 @@ const CriteriaSetDetailPage = () => {
                 </div>
 
                 {/* Keyboard Shortcut Hint */}
-                {!isMember && (
+                {!isReadOnly && (
                     <div className="mt-4 flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10 px-3 py-2 rounded-lg border border-emerald-100/50 dark:border-emerald-800/30">
                         <span className="font-bold">Mẹo nhập liệu:</span>
                         <span>Nhấn <kbd className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 font-sans font-bold shadow-sm">Enter</kbd> để nhảy xuống dòng dưới, </span>
@@ -327,7 +331,7 @@ const CriteriaSetDetailPage = () => {
                                         value={tc.title || ''}
                                         onChange={e => updateTCTitle(tc.id, e.target.value)}
                                         onClick={e => e.stopPropagation()}
-                                        readOnly={isMember}
+                                        readOnly={isReadOnly}
                                         className="text-white font-black text-sm bg-transparent border-b border-transparent hover:border-white/50 focus:border-white focus:outline-none w-full truncate transition-all"
                                         placeholder="Tên tiêu chí..."
                                     />
@@ -337,7 +341,7 @@ const CriteriaSetDetailPage = () => {
                                 <div className="flex-shrink-0 flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                     <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-xl px-2.5 py-1">
                                         <MdPerson className="text-white" size={14} />
-                                        {isMember ? (
+                                        {isReadOnly ? (
                                             <span className="text-white text-[11px] font-bold min-w-[100px] text-center">
                                                 {tc.assignedTo ? getUserName(tc.assignedTo) : '— Chưa giao —'}
                                             </span>
@@ -391,11 +395,11 @@ const CriteriaSetDetailPage = () => {
                                                                             <input
                                                                                 value={row.ndTitle}
                                                                                 onChange={e => updateNDTitle(tc.id, row.ndId, e.target.value)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="w-full bg-transparent text-sm font-black text-gray-700 dark:text-gray-200 border-b border-transparent hover:border-emerald-300 focus:border-emerald-500 focus:outline-none transition-all"
                                                                                 placeholder="Tên nội dung..."
                                                                             />
-                                                                            {!isMember && (
+                                                                            {!isReadOnly && (
                                                                                 <div className="flex flex-wrap gap-2">
                                                                                     <button
                                                                                         onClick={() => addMuc(tc.id, row.ndId)}
@@ -421,7 +425,7 @@ const CriteriaSetDetailPage = () => {
                                                                     <td colSpan={7} className="px-4 py-6">
                                                                         <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/20 dark:text-gray-400 md:flex-row md:items-center md:justify-between">
                                                                             <span>Nội dung này chưa có mục chấm.</span>
-                                                                            {!isMember && (
+                                                                            {!isReadOnly && (
                                                                                 <button
                                                                                     onClick={() => addMuc(tc.id, row.ndId)}
                                                                                     className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
@@ -439,7 +443,7 @@ const CriteriaSetDetailPage = () => {
                                                                                 onKeyDown={e => handleKeyDown(e, 'stt')}
                                                                                 value={row.stt}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'stt', Number(e.target.value) || '')}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-16 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                                             />
                                                                         </td>
@@ -449,23 +453,32 @@ const CriteriaSetDetailPage = () => {
                                                                                 onKeyDown={e => handleKeyDown(e, 'dieuKienCham')}
                                                                                 value={row.dieuKienCham}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'dieuKienCham', e.target.value)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-full resize-none text-sm leading-relaxed"
                                                                                 minRows={1}
                                                                                 placeholder="Nhập điều kiện chấm..."
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4">
+                                                                            <div className="space-y-2">
                                                                             <TextareaAutosize
                                                                                 data-col="yeucauMinhChung"
                                                                                 onKeyDown={e => handleKeyDown(e, 'yeucauMinhChung')}
                                                                                 value={row.yeucauMinhChung}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'yeucauMinhChung', e.target.value)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-full resize-none text-sm leading-relaxed"
                                                                                 minRows={1}
                                                                                 placeholder="Nhập yêu cầu minh chứng..."
                                                                             />
+                                                                            <CriteriaGuideFiles
+                                                                                files={row.guideFiles || []}
+                                                                                onChange={(newFiles) => updateMuc(tc.id, row.ndId, row.id, 'guideFiles', newFiles)}
+                                                                                readOnly={isReadOnly}
+                                                                                criteriaSetId={setId}
+                                                                                mucId={row.id}
+                                                                            />
+                                                                            </div>
                                                                         </td>
                                                                         <td className="px-4 py-4">
                                                                             <input
@@ -473,7 +486,7 @@ const CriteriaSetDetailPage = () => {
                                                                                 onKeyDown={e => handleKeyDown(e, 'toTheoDoi')}
                                                                                 value={row.toTheoDoi}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'toTheoDoi', e.target.value)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-full font-bold text-blue-600 dark:text-blue-400"
                                                                                 placeholder="PT"
                                                                             />
@@ -485,7 +498,7 @@ const CriteriaSetDetailPage = () => {
                                                                                 type="number"
                                                                                 value={row.khungDiem}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'khungDiem', Number(e.target.value) || 0)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-24 text-center font-black text-emerald-600 dark:text-emerald-400"
                                                                                 placeholder="0"
                                                                             />
@@ -496,13 +509,13 @@ const CriteriaSetDetailPage = () => {
                                                                                 onKeyDown={e => handleKeyDown(e, 'deadline')}
                                                                                 value={row.deadline}
                                                                                 onChange={e => updateMuc(tc.id, row.ndId, row.id, 'deadline', e.target.value)}
-                                                                                readOnly={isMember}
+                                                                                readOnly={isReadOnly}
                                                                                 className="input w-full"
                                                                                 placeholder="30/10/2026"
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4 text-center">
-                                                                            {!isMember && (
+                                                                            {!isReadOnly && (
                                                                                 <button
                                                                                     onClick={() => removeMuc(tc.id, row.ndId, row.id)}
                                                                                     className="inline-flex items-center gap-1 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
@@ -525,7 +538,7 @@ const CriteriaSetDetailPage = () => {
                                         </div>
                                     )}
 
-                                    {!isMember && (
+                                    {!isReadOnly && (
                                         <button onClick={() => addND(tc.id)}
                                             className="w-full py-2.5 border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-400 hover:text-blue-600 hover:border-blue-400 font-bold flex items-center justify-center gap-1 transition-all">
                                             <MdAdd size={16} /> Thêm nội dung đánh giá
@@ -538,7 +551,7 @@ const CriteriaSetDetailPage = () => {
                 })}
 
                 {/* Add tiêu chí */}
-                {!isMember && (
+                {!isReadOnly && (
                     <button onClick={addTC}
                         className="w-full py-5 border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-2xl text-sm text-emerald-500 hover:text-emerald-700 hover:border-emerald-500 font-black flex items-center justify-center gap-2 transition-all bg-emerald-50/30 dark:bg-emerald-900/10 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                         <MdAdd size={20} /> Thêm tiêu chí mới
@@ -547,7 +560,7 @@ const CriteriaSetDetailPage = () => {
             </div>
 
             {/* ===== ASSIGNMENT SECTION ===== */}
-            {!isMember && (
+            {!isReadOnly && (
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-blue-100/20 dark:border-blue-500/10 mt-8">
                 <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setShowAssignPanel(p => !p)}>
                     <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
@@ -579,7 +592,7 @@ const CriteriaSetDetailPage = () => {
                                                     onClick={async () => {
                                                         if (!confirm(`Thu hồi giao "${a.unitName}"?`)) return;
                                                         try {
-                                                            await revokeCriteriaAssignment(a.id, 'admin');
+                                                            await revokeCriteriaAssignment(a.id, userProfile?.id || 'staff');
                                                             toast.success(`Đã thu hồi: ${a.unitName}`);
                                                         } catch (e) { toast.error('Lỗi thu hồi'); }
                                                     }}
@@ -656,6 +669,37 @@ const CriteriaSetDetailPage = () => {
                                                 );
                                             })}
                                         </div>
+                                        <div className="flex flex-wrap gap-1.5 items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase mr-1">Chọn theo loại:</span>
+                                            {UNIT_BLOCKS.flatMap(block => block.types.map(type => {
+                                                const typeUnits = availableUnits.filter(u => u.blockId === block.id && u.typeId === type.id);
+                                                if (typeUnits.length === 0) return null;
+                                                const allSelected = typeUnits.every(u => selectedUnits.includes(u.id));
+                                                return (
+                                                    <button
+                                                        key={`${block.id}:${type.id}`}
+                                                        onClick={() => {
+                                                            if (allSelected) {
+                                                                setSelectedUnits(prev => prev.filter(id => !typeUnits.some(u => u.id === id)));
+                                                            } else {
+                                                                setSelectedUnits(prev => [...new Set([...prev, ...typeUnits.map(u => u.id)])]);
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${allSelected
+                                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                                                            : 'bg-white dark:bg-gray-800/40 text-gray-600 dark:text-gray-400 border-gray-200/50 dark:border-gray-700/50 hover:border-blue-300'
+                                                            }`}
+                                                        title={`${allSelected ? 'Bỏ chọn' : 'Chọn'} tất cả ${type.name} (${typeUnits.length})`}
+                                                    >
+                                                        <MdCheckCircle size={12} className={allSelected ? 'text-blue-500' : 'text-gray-300'} />
+                                                        {type.name}
+                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${allSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                                            {typeUnits.length}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            }))}
+                                        </div>
                                     </div>
                                 );
                             })()}
@@ -684,7 +728,7 @@ const CriteriaSetDetailPage = () => {
                                             setIsAssigning(true);
                                             try {
                                                 const toAssign = units.filter(u => selectedUnits.includes(u.id));
-                                                await assignCriteriaToUnits(localSet, toAssign, 'admin');
+                                                await assignCriteriaToUnits(localSet, toAssign, userProfile?.id || 'staff');
                                                 toast.success(`Đã giao cho ${toAssign.length} đơn vị!`);
                                                 setSelectedUnits([]);
                                             } catch (e) { console.error(e); toast.error('Lỗi khi giao'); }
@@ -706,7 +750,7 @@ const CriteriaSetDetailPage = () => {
 
             {/* Floating save indicator */}
             {
-                isDirty && !isMember && (
+                isDirty && !isReadOnly && (
                     <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">
                         <button onClick={handleSave} disabled={isSaving}
                             className="btn btn-primary shadow-glow py-3 px-6 rounded-2xl flex items-center gap-2 text-sm font-bold">
