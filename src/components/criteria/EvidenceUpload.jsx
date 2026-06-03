@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { isFacebookEvidenceUrl } from '../../utils/evidenceLinks';
+import FilePreviewModal from '../common/FilePreviewModal';
 import {
     MdCloudUpload,
     MdInsertDriveFile,
@@ -85,12 +86,14 @@ const EvidenceUpload = ({
     enforceFacebookLinks = false,
     helperText = '',
     linkButtonLabel = '',
+    previewOnClick = false,
 }) => {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [linkName, setLinkName] = useState('');
+    const [previewFile, setPreviewFile] = useState(null);
 
     const handleFileUpload = async (e) => {
         if (!allowFileUpload || readOnly) return;
@@ -313,15 +316,26 @@ const EvidenceUpload = ({
                                     size={14}
                                     className={`${file.isLink ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-500'} flex-shrink-0`}
                                 />
-                                <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex-1 min-w-0 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors block"
-                                    title={file.name}
-                                >
-                                    {displayName}
-                                </a>
+                                {previewOnClick ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewFile(file)}
+                                        className="flex-1 min-w-0 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors block"
+                                        title={file.name}
+                                    >
+                                        {displayName}
+                                    </button>
+                                ) : (
+                                    <a
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex-1 min-w-0 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors block"
+                                        title={file.name}
+                                    >
+                                        {displayName}
+                                    </a>
+                                )}
                                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${extBadge.color} flex-shrink-0`}>
                                     {extBadge.label}
                                 </span>
@@ -343,6 +357,9 @@ const EvidenceUpload = ({
                     <MdErrorOutline size={14} className="flex-shrink-0" />
                     <span className="font-medium truncate">{emptyText}</span>
                 </div>
+            )}
+            {previewFile && (
+                <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
             )}
         </div>
     );

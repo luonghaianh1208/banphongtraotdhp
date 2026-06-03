@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
 import { useContestEntries } from '../../hooks/useContestEntries';
 import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
+import { updatePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import { formatDateTime, formatDisplayDate } from '../../utils/dateUtils';
+import toast from 'react-hot-toast';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
     MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
-    MdAttachFile, MdFilterList
+    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose
 } from 'react-icons/md';
 
 const PlanDetailPage = () => {
@@ -21,14 +23,14 @@ const PlanDetailPage = () => {
     const { units, loading: unitsLoading } = useUnits();
     const { currentUser, isAdmin, isManager } = useAuth();
 
-    const [plan, setPlan] = useState(null);
+    const [localPlan, setLocalPlan] = useState(null);
+    const [isEditingContent, setIsEditingContent] = useState(false);
+    const [editDescription, setEditDescription] = useState('');
+    const [editAttachments, setEditAttachments] = useState([]);
+    const [isSavingContent, setIsSavingContent] = useState(false);
 
-    useEffect(() => {
-        if (!plansLoading && plans.length > 0) {
-            const p = plans.find(x => x.id === planId);
-            setPlan(p);
-        }
-    }, [plans, planId, plansLoading]);
+    const remotePlan = useMemo(() => plans.find(x => x.id === planId) || null, [plans, planId]);
+    const plan = localPlan?.id === planId ? localPlan : remotePlan;
 
     const combinedUnitEntries = useMemo(() => {
         if (!units || !entries) return [];
@@ -96,6 +98,41 @@ const PlanDetailPage = () => {
     };
 
     const planStatus = statusMap[plan.status] || statusMap.draft;
+    const canEditPlan = isAdmin || isManager || plan.createdBy === currentUser?.uid;
+
+    const startEditContent = () => {
+        setEditDescription(plan.description || '');
+        setEditAttachments(plan.attachments || []);
+        setIsEditingContent(true);
+    };
+
+    const cancelEditContent = () => {
+        setEditDescription(plan.description || '');
+        setEditAttachments(plan.attachments || []);
+        setIsEditingContent(false);
+    };
+
+    const savePlanContent = async () => {
+        setIsSavingContent(true);
+        try {
+            await updatePlan(plan.id, {
+                description: editDescription,
+                attachments: editAttachments,
+            });
+            setLocalPlan((prev) => ({
+                ...(prev || plan),
+                description: editDescription,
+                attachments: editAttachments,
+            }));
+            setIsEditingContent(false);
+            toast.success('Đã cập nhật nội dung kế hoạch.');
+        } catch (error) {
+            console.error(error);
+            toast.error('Lỗi khi cập nhật nội dung kế hoạch.');
+        } finally {
+            setIsSavingContent(false);
+        }
+    };
 
     return (
         <div className="space-y-6 pb-12">
@@ -162,23 +199,79 @@ const PlanDetailPage = () => {
 
             {/* Plan Content */}
             <div className="card overflow-hidden">
-                <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center gap-2">
+                <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
                     <MdInfo size={20} className="text-emerald-600 dark:text-emerald-400" />
                     <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Nội dung kế hoạch & Yêu cầu hồ sơ</h3>
+                    </div>
+                    {canEditPlan && !isEditingContent && (
+                        <button
+                            type="button"
+                            onClick={startEditContent}
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50 dark:bg-gray-900 dark:text-emerald-300 dark:ring-emerald-900/40"
+                        >
+                            <MdEdit size={16} /> Chỉnh sửa
+                        </button>
+                    )}
                 </div>
                 <div className="p-6 space-y-6">
-                    <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    {isEditingContent && (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nội dung kế hoạch & yêu cầu hồ sơ</label>
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    className="input min-h-[140px] w-full resize-y py-3 text-sm leading-relaxed"
+                                    placeholder="Nhập nội dung kế hoạch, yêu cầu hồ sơ..."
+                                />
+                            </div>
+                            <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Tài liệu / link đính kèm</label>
+                                <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                                    <EvidenceUpload
+                                        files={editAttachments}
+                                        onChange={setEditAttachments}
+                                        helperText="Có thể tải thêm file hoặc gắn link tài liệu, link biểu mẫu, link trang web. Có thể xóa tài liệu/link không còn dùng."
+                                        linkButtonLabel="Thêm link"
+                                        previewOnClick
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={cancelEditContent}
+                                    disabled={isSavingContent}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+                                >
+                                    <MdClose size={18} /> Hủy
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={savePlanContent}
+                                    disabled={isSavingContent}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                >
+                                    {isSavingContent ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <MdSave size={18} />}
+                                    Lưu thay đổi
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {!isEditingContent && <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                         {plan.description || <span className="italic text-slate-400">Không có mô tả chi tiết.</span>}
-                    </div>
+                    </div>}
 
                     {/* Tài liệu đính kèm từ cấp trên */}
-                    {plan.attachments && plan.attachments.length > 0 && (
+                    {!isEditingContent && plan.attachments && plan.attachments.length > 0 && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                             <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                                 <MdAttachFile size={14} /> Tài liệu đính kèm ({plan.attachments.length})
                             </h4>
                             <div className="bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3">
-                                <EvidenceUpload files={plan.attachments} onChange={() => {}} readOnly />
+                                <EvidenceUpload files={plan.attachments} onChange={() => {}} readOnly previewOnClick />
                             </div>
                         </div>
                     )}

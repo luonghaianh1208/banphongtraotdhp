@@ -48,12 +48,14 @@ const FilePreviewModal = ({ file, onClose }) => {
   const isPpt = file.type?.includes('presentationml') || file.type?.includes('ms-powerpoint') || /\.(ppt|pptx)$/i.test(name);
   // Word, Excel, PPT đều xem qua Google Docs Viewer
   const useGoogleViewer = isWord || isExcel || isPpt;
+  const isWebLink = file.isLink && !isPdf && !isImage && !useGoogleViewer;
 
   const getTypeBadge = () => {
     if (isPdf) return { label: 'PDF', cls: 'bg-red-100 text-red-700' };
     if (isWord) return { label: 'Word', cls: 'bg-blue-100 text-blue-700' };
     if (isExcel) return { label: 'Excel', cls: 'bg-green-100 text-green-700' };
     if (isPpt) return { label: 'PPT', cls: 'bg-orange-100 text-orange-700' };
+    if (isWebLink) return { label: 'LINK', cls: 'bg-indigo-100 text-indigo-700' };
     if (isImage) return { label: 'Ảnh', cls: 'bg-emerald-100 text-emerald-700' };
     return { label: 'File', cls: 'bg-gray-100 text-gray-700' };
   };
@@ -131,7 +133,14 @@ const FilePreviewModal = ({ file, onClose }) => {
               />
             </div>
           )}
-          {!isPdf && !isImage && !useGoogleViewer && (
+          {isWebLink && (
+            <iframe
+              src={file.url}
+              className="w-full h-full border-0 bg-white"
+              title={`Preview: ${file.name}`}
+            />
+          )}
+          {!isPdf && !isImage && !useGoogleViewer && !isWebLink && (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-gray-500">
               <p className="text-lg font-medium">Không thể xem trước loại file này</p>
               <button
