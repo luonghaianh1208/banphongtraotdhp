@@ -440,6 +440,8 @@ const PlansManagePage = () => {
                                     <EvidenceUpload
                                         files={formData.attachments}
                                         onChange={(newFiles) => setFormData(p => ({ ...p, attachments: newFiles }))}
+                                        helperText="Có thể tải file văn bản hoặc thêm link tài liệu, link biểu mẫu, link trang web. Link hợp lệ bắt đầu bằng http:// hoặc https://."
+                                        linkButtonLabel="Thêm link"
                                     />
                                 </div>
                             </div>

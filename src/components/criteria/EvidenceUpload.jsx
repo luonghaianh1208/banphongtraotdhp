@@ -84,6 +84,7 @@ const EvidenceUpload = ({
     allowFileUpload = true,
     enforceFacebookLinks = false,
     helperText = '',
+    linkButtonLabel = '',
 }) => {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -249,14 +250,17 @@ const EvidenceUpload = ({
                             <button
                                 type="button"
                                 onClick={() => setShowLinkInput((prev) => !prev)}
-                                className={`p-3 border border-dashed rounded-xl transition-all flex items-center justify-center flex-shrink-0 w-12 ${
+                                className={`p-3 border border-dashed rounded-xl transition-all flex items-center justify-center gap-2 flex-shrink-0 ${
+                                    linkButtonLabel ? 'w-auto px-4' : 'w-12'
+                                } ${
                                     showLinkInput
                                         ? 'bg-indigo-50/50 border-indigo-300 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-500/50 dark:text-indigo-400'
                                         : 'bg-slate-50/20 border-slate-200 text-slate-400 hover:bg-slate-50/50 hover:text-slate-600 dark:bg-slate-800/20 dark:border-slate-700/50 dark:hover:bg-slate-800/50 dark:hover:text-slate-300'
                                 }`}
-                                title="Them lien ket URL"
+                                title="Thêm liên kết URL"
                             >
                                 <MdAddLink size={20} />
+                                {linkButtonLabel && <span className="text-xs font-bold whitespace-nowrap">{linkButtonLabel}</span>}
                             </button>
                         )}
                     </div>
