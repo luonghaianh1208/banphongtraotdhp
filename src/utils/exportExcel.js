@@ -332,7 +332,7 @@ export const exportCriteriaOverviewToExcel = async (criteriaSet, displayData, ta
     'Thẩm định',
     'Nội dung đã nộp',
     'Tổng minh chứng',
-    'Link Facebook tin bài',
+    'Link tin bài',
   ];
 
   const detailHeaders = [

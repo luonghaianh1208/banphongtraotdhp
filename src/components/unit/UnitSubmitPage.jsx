@@ -256,7 +256,7 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chỉ được lưu link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được lưu link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         if (normalizedResponses !== responses) {
@@ -299,7 +299,7 @@ const UnitSubmitPage = () => {
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
         const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
         if (invalidEvidenceRow) {
-            toast.error(`Chỉ được nộp link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+            toast.error(`Chỉ được nộp link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
         }
         const submitRequirementIssue = getSubmitRequirementIssue(normalizedResponses);
@@ -360,7 +360,7 @@ const UnitSubmitPage = () => {
             });
             const invalidEvidenceRow = findInvalidEvidenceRow(requestedResponses);
             if (invalidEvidenceRow) {
-                toast.error(`Chỉ được gửi link Facebook hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
+                toast.error(`Chỉ được gửi link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
                 return;
             }
             setSavingMessage('Dang gui giai trinh...');
@@ -600,7 +600,7 @@ const UnitSubmitPage = () => {
                                                         onChange={(newFiles) => handleResponseChange(row.id, 'evidenceFiles', newFiles)}
                                                         allowFileUpload={false}
                                                         enforceFacebookLinks={true}
-                                                        helperText="Chỉ nhập link Facebook hoặc thanhdoanhaiphong.gov.vn đưa tin bài. Không nhận file tải lên hoặc link ngoài phạm vi này."
+                                                        helperText="Chỉ nhập link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn đưa tin bài. Không nhận file tải lên hoặc link ngoài phạm vi này."
                                                         readOnly={isRowLocked && !isJustificationUnlocked}
                                                     />
                                                 </div>

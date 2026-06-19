@@ -1,4 +1,4 @@
-const ALLOWED_EVIDENCE_HOSTS = ['facebook.com', 'fb.watch', 'thanhdoanhaiphong.gov.vn'];
+const ALLOWED_EVIDENCE_HOSTS = ['facebook.com', 'fb.watch', 'tiktok.com', 'vm.tiktok.com', 'thanhdoanhaiphong.gov.vn'];
 
 export const isFacebookEvidenceUrl = (url) => {
   if (!url) return false;
