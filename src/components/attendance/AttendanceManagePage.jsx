@@ -1,7 +1,7 @@
 // AttendanceManagePage — Quản lý điểm danh cho cấp trên (admin/manager/member)
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheckCircle, MdCancel, MdAccessTime, MdGroup, MdVisibility, MdClose, MdPhone, MdPerson, MdImage, MdMoreTime } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheckCircle, MdCancel, MdAccessTime, MdGroup, MdVisibility, MdClose, MdPhone, MdPerson, MdImage, MdMoreTime, MdSearch } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import useAttendancePrograms from '../../hooks/useAttendancePrograms';
 import useAttendanceRecords from '../../hooks/useAttendanceRecords';
@@ -13,6 +13,7 @@ import ConfirmDialog from '../common/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { UNIT_BLOCKS } from '../../utils/constants';
 
 const AttendanceManagePage = () => {
   const { userProfile } = useAuth();
@@ -321,8 +322,26 @@ const AttendanceManagePage = () => {
 const ProgramDetailModal = ({ program, units, onClose }) => {
   const { records, loading } = useAttendanceRecords(program.id);
   const [viewingRecord, setViewingRecord] = useState(null);
+  const [unitBlockFilter, setUnitBlockFilter] = useState('all');
+  const [unitSearchTerm, setUnitSearchTerm] = useState('');
 
   const attendedUnitIds = useMemo(() => new Set(records.map(r => r.unitId)), [records]);
+  const recordByUnitId = useMemo(() => new Map(records.map(record => [record.unitId, record])), [records]);
+  const filteredUnits = useMemo(() => {
+    const search = unitSearchTerm.trim().toLowerCase();
+    return units.filter(unit => {
+      const matchesBlock = unitBlockFilter === 'all' || unit.blockId === unitBlockFilter;
+      if (!matchesBlock) return false;
+      if (!search) return true;
+
+      return [
+        unit.unitName,
+        unit.name,
+        unit.blockName,
+        unit.typeName,
+      ].some(value => (value || '').toLowerCase().includes(search));
+    });
+  }, [units, unitBlockFilter, unitSearchTerm]);
 
   return createPortal(
     <>
@@ -354,6 +373,42 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
                 {Math.max(0, units.length - attendedUnitIds.size)} chưa điểm danh
               </span>
             </div>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 transition-all">
+                <MdSearch size={18} className="text-gray-400 shrink-0" />
+                <input
+                  value={unitSearchTerm}
+                  onChange={e => setUnitSearchTerm(e.target.value)}
+                  placeholder="Tìm đơn vị..."
+                  className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 outline-none placeholder-gray-400 font-medium"
+                />
+                {unitSearchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setUnitSearchTerm('')}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    title="Xóa tìm kiếm"
+                  >
+                    <MdClose size={16} />
+                  </button>
+                )}
+              </div>
+              <select
+                value={unitBlockFilter}
+                onChange={e => setUnitBlockFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 text-sm font-semibold text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500/20"
+              >
+                <option value="all">Tất cả Khối</option>
+                {UNIT_BLOCKS.map(block => (
+                  <option key={block.id} value={block.id}>{block.name}</option>
+                ))}
+              </select>
+            </div>
+            {(unitSearchTerm || unitBlockFilter !== 'all') && (
+              <p className="mt-2 text-xs text-gray-400">
+                Hiển thị {filteredUnits.length}/{units.length} đơn vị
+              </p>
+            )}
           </div>
 
           {/* Body — scrollable */}
@@ -362,10 +417,12 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
               <LoadingSpinner />
             ) : units.length === 0 ? (
               <p className="text-center text-gray-400 py-8">Chưa có đơn vị nào trong hệ thống.</p>
+            ) : filteredUnits.length === 0 ? (
+              <p className="text-center text-gray-400 py-8">Không có đơn vị phù hợp.</p>
             ) : (
-              units.map(unit => {
+              filteredUnits.map(unit => {
                 const attended = attendedUnitIds.has(unit.id);
-                const record = records.find(r => r.unitId === unit.id);
+                const record = recordByUnitId.get(unit.id);
                 return (
                   <div
                     key={unit.id}
