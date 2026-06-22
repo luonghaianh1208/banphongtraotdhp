@@ -1,7 +1,7 @@
 // AttendanceManagePage — Quản lý điểm danh cho cấp trên (admin/manager/member)
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheckCircle, MdCancel, MdAccessTime, MdGroup, MdVisibility, MdClose, MdPhone, MdPerson, MdImage, MdMoreTime, MdSearch } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheckCircle, MdCancel, MdAccessTime, MdGroup, MdVisibility, MdClose, MdPhone, MdPerson, MdImage, MdMoreTime, MdSearch, MdFileDownload } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import useAttendancePrograms from '../../hooks/useAttendancePrograms';
 import useAttendanceRecords from '../../hooks/useAttendanceRecords';
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { UNIT_BLOCKS } from '../../utils/constants';
+import { exportAttendanceUnitsToExcel } from '../../utils/exportExcel';
 
 const AttendanceManagePage = () => {
   const { userProfile } = useAuth();
@@ -324,14 +325,19 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
   const [viewingRecord, setViewingRecord] = useState(null);
   const [unitBlockFilter, setUnitBlockFilter] = useState('all');
   const [unitSearchTerm, setUnitSearchTerm] = useState('');
+  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState('all');
 
   const attendedUnitIds = useMemo(() => new Set(records.map(r => r.unitId)), [records]);
   const recordByUnitId = useMemo(() => new Map(records.map(record => [record.unitId, record])), [records]);
+  const missingUnitCount = Math.max(0, units.length - attendedUnitIds.size);
   const filteredUnits = useMemo(() => {
     const search = unitSearchTerm.trim().toLowerCase();
     return units.filter(unit => {
       const matchesBlock = unitBlockFilter === 'all' || unit.blockId === unitBlockFilter;
       if (!matchesBlock) return false;
+      const attended = attendedUnitIds.has(unit.id);
+      if (attendanceStatusFilter === 'attended' && !attended) return false;
+      if (attendanceStatusFilter === 'missing' && attended) return false;
       if (!search) return true;
 
       return [
@@ -341,7 +347,26 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
         unit.typeName,
       ].some(value => (value || '').toLowerCase().includes(search));
     });
-  }, [units, unitBlockFilter, unitSearchTerm]);
+  }, [units, unitBlockFilter, attendanceStatusFilter, attendedUnitIds, unitSearchTerm]);
+  const filterLabel = [
+    attendanceStatusFilter === 'attended' ? 'Đã điểm danh' : '',
+    attendanceStatusFilter === 'missing' ? 'Chưa điểm danh' : '',
+    unitBlockFilter !== 'all' ? UNIT_BLOCKS.find(block => block.id === unitBlockFilter)?.name : '',
+    unitSearchTerm.trim() ? `Tìm: ${unitSearchTerm.trim()}` : '',
+  ].filter(Boolean).join(' - ') || 'Tất cả đơn vị';
+
+  const toggleStatusFilter = (status) => {
+    setAttendanceStatusFilter(current => current === status ? 'all' : status);
+  };
+
+  const handleExportAttendance = async () => {
+    try {
+      await exportAttendanceUnitsToExcel(program, filteredUnits, records, filterLabel);
+      toast.success('Đã xuất file Excel điểm danh.');
+    } catch (error) {
+      toast.error('Lỗi xuất Excel: ' + error.message);
+    }
+  };
 
   return createPortal(
     <>
@@ -366,12 +391,30 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
               </button>
             </div>
             <div className="mt-3 flex items-center gap-3 text-sm">
-              <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+              <button
+                type="button"
+                onClick={() => toggleStatusFilter('attended')}
+                className={`px-3 py-1 rounded-full font-bold text-xs transition-all ${
+                  attendanceStatusFilter === 'attended'
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                }`}
+                title="Lọc đơn vị đã điểm danh"
+              >
                 {attendedUnitIds.size} đã điểm danh
-              </span>
-              <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold text-xs">
-                {Math.max(0, units.length - attendedUnitIds.size)} chưa điểm danh
-              </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleStatusFilter('missing')}
+                className={`px-3 py-1 rounded-full font-bold text-xs transition-all ${
+                  attendanceStatusFilter === 'missing'
+                    ? 'bg-gray-700 text-white shadow-md shadow-gray-500/20'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+                title="Lọc đơn vị chưa điểm danh"
+              >
+                {missingUnitCount} chưa điểm danh
+              </button>
             </div>
             <div className="mt-4 flex flex-col sm:flex-row gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 transition-all">
@@ -403,8 +446,17 @@ const ProgramDetailModal = ({ program, units, onClose }) => {
                   <option key={block.id} value={block.id}>{block.name}</option>
                 ))}
               </select>
+              <button
+                type="button"
+                onClick={handleExportAttendance}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
+                title="Xuất danh sách đang hiển thị ra Excel"
+              >
+                <MdFileDownload size={18} />
+                <span>Xuất Excel</span>
+              </button>
             </div>
-            {(unitSearchTerm || unitBlockFilter !== 'all') && (
+            {(unitSearchTerm || unitBlockFilter !== 'all' || attendanceStatusFilter !== 'all') && (
               <p className="mt-2 text-xs text-gray-400">
                 Hiển thị {filteredUnits.length}/{units.length} đơn vị
               </p>

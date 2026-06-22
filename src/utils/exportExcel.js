@@ -646,6 +646,139 @@ export const exportUnitsToExcel = (units, filename = 'danh-sach-don-vi') => {
 // TASKS — Export
 // ======================================
 
+export const exportAttendanceUnitsToExcel = async (program, units, records, filterLabel = 'Tất cả đơn vị') => {
+  const recordByUnitId = new Map(records.map(record => [record.unitId, record]));
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Ban PT TĐHP';
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const worksheet = workbook.addWorksheet('Điểm danh');
+  worksheet.views = [{ state: 'frozen', ySplit: 5 }];
+  worksheet.properties.defaultRowHeight = 22;
+
+  const headers = [
+    'STT',
+    'Đơn vị',
+    'Khối',
+    'Loại',
+    'Trạng thái',
+    'Đại diện',
+    'SĐT',
+    'Có mặt lúc',
+    'Số lượng',
+    'Nộp lúc',
+  ];
+  const rows = units.map((unit, index) => {
+    const record = recordByUnitId.get(unit.id);
+    return [
+      index + 1,
+      unit.unitName || unit.name || '',
+      unit.blockName || '',
+      unit.typeName || '',
+      record ? 'Đã điểm danh' : 'Chưa điểm danh',
+      record?.representativeName || '',
+      record?.representativePhone || '',
+      record?.arrivalTime || '',
+      record?.participantCount ?? '',
+      record?.submittedAt ? formatDateTime(record.submittedAt) : '',
+    ];
+  });
+
+  const attendedCount = units.filter(unit => recordByUnitId.has(unit.id)).length;
+  const missingCount = Math.max(0, units.length - attendedCount);
+  worksheet.mergeCells('A1:J1');
+  worksheet.getCell('A1').value = program?.title || 'Báo cáo điểm danh';
+  worksheet.getCell('A1').font = { bold: true, size: 16, color: { argb: 'FF064E3B' } };
+  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+  worksheet.getRow(1).height = 28;
+
+  worksheet.mergeCells('A2:J2');
+  worksheet.getCell('A2').value = `${formatDateTime(program?.startTime)} → ${formatDateTime(program?.endTime)}`;
+  worksheet.getCell('A2').font = { italic: true, color: { argb: 'FF64748B' } };
+  worksheet.getCell('A2').alignment = { vertical: 'middle', horizontal: 'center' };
+
+  worksheet.mergeCells('A3:J3');
+  worksheet.getCell('A3').value = `Bộ lọc: ${filterLabel} | Tổng: ${units.length} | Đã điểm danh: ${attendedCount} | Chưa điểm danh: ${missingCount}`;
+  worksheet.getCell('A3').font = { bold: true, color: { argb: 'FF0F766E' } };
+  worksheet.getCell('A3').alignment = { vertical: 'middle', horizontal: 'center' };
+
+  worksheet.addRow([]);
+  worksheet.addRow(headers);
+  if (rows.length > 0) {
+    rows.forEach(row => worksheet.addRow(row));
+  } else {
+    worksheet.addRow(['', '(Không có đơn vị phù hợp)', '', '', '', '', '', '', '', '']);
+  }
+
+  const headerRow = worksheet.getRow(5);
+  headerRow.height = 24;
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFD1FAE5' } },
+      left: { style: 'thin', color: { argb: 'FFD1FAE5' } },
+      bottom: { style: 'thin', color: { argb: 'FFD1FAE5' } },
+      right: { style: 'thin', color: { argb: 'FFD1FAE5' } },
+    };
+  });
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber <= 5) return;
+    row.eachCell({ includeEmpty: true }, cell => {
+      cell.alignment = { vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+      };
+      if (cell.value === 'Đã điểm danh') {
+        cell.font = { bold: true, color: { argb: 'FF047857' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+      }
+      if (cell.value === 'Chưa điểm danh') {
+        cell.font = { bold: true, color: { argb: 'FF64748B' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      }
+    });
+  });
+
+  worksheet.autoFilter = {
+    from: { row: 5, column: 1 },
+    to: { row: 5, column: headers.length },
+  };
+  worksheet.columns = [
+    { width: 6 },
+    { width: 42 },
+    { width: 30 },
+    { width: 22 },
+    { width: 16 },
+    { width: 22 },
+    { width: 16 },
+    { width: 14 },
+    { width: 10 },
+    { width: 20 },
+  ];
+
+  const safeName = (program?.title || 'diem-danh').replace(/[^a-zA-Z0-9\u00C0-\u1EF9 ]/g, '').trim().replace(/\s+/g, '_');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = `${safeName}_diem_danh_${dateStr}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(objectUrl);
+};
+
 export const exportToExcel = (tasks, users, filename = 'bao-cao-cong-viec') => {
   const userMap = {};
   users.forEach(u => { userMap[u.id] = u.displayName; });
