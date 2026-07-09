@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish, MdSearch, MdFilterList } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish, MdSearch, MdFilterList, MdGroup, MdPersonAdd } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
+import { useUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../context/AuthContext';
-import { createPlan, updatePlan, deletePlan } from '../../firebase/criteriaFirestore';
+import { createPlanWithActivityLog, updatePlanWithActivityLog, deletePlan } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
@@ -15,7 +16,8 @@ import { formatDisplayDate } from '../../utils/dateUtils';
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
     const { loading: unitsLoading } = useUnits();
-    const { currentUser, isAdmin, isManager } = useAuth();
+    const { users, loading: usersLoading } = useUsers();
+    const { currentUser, userProfile, isAdmin, isManager } = useAuth();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -25,18 +27,58 @@ const PlansManagePage = () => {
     const [selected, setSelected] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editTitle, setEditTitle] = useState('');
+    const [assignmentPlan, setAssignmentPlan] = useState(null);
+    const [assignmentDraft, setAssignmentDraft] = useState([]);
+    const [isSavingAssignees, setIsSavingAssignees] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '', type: 'plan', description: '', submissionDeadline: '',
-        targetBlocks: [], targetTypes: [], attachments: [],
+        targetBlocks: [], targetTypes: [], attachments: [], assignedStaffIds: [],
     });
 
-    const loading = plansLoading || unitsLoading;
+    const loading = plansLoading || unitsLoading || usersLoading;
+
+    const staff = useMemo(() => (
+        users.filter(u => ['admin', 'manager', 'member'].includes(u.role) && u.isActive !== false)
+    ), [users]);
+
+    const getStaffName = (uid) => {
+        const user = staff.find(u => u.id === uid);
+        return user?.displayName || user?.email || '';
+    };
+
+    const getAssignedStaffNames = (ids = []) => (
+        ids.map(id => getStaffName(id) || id).filter(Boolean)
+    );
+
+    const getPlanAssigneeNames = (plan) => {
+        const ids = plan.assignedStaffIds || [];
+        if (ids.length) {
+            return ids.map((id, index) => getStaffName(id) || plan.assignedStaffNames?.[index] || id).filter(Boolean);
+        }
+        return plan.assignedStaffNames || [];
+    };
+
+    const getActorInfo = () => ({
+        actorId: currentUser?.uid || null,
+        actorName: userProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Người dùng hệ thống',
+        actorRole: userProfile?.role || '',
+    });
+
+    const buildPlanLog = (action, message, changes = {}) => ({
+            action,
+            message,
+            changes,
+            ...getActorInfo(),
+    });
+
+    const canAssignPlan = (plan) => isAdmin || isManager || plan.createdBy === currentUser?.uid;
+    const canDeletePlan = () => isAdmin || isManager;
 
     // Member chỉ thấy plans mình tạo, Admin/Manager thấy tất cả
     const visiblePlans = useMemo(() => {
         if (isAdmin || isManager) return plans;
-        return plans.filter(p => p.createdBy === currentUser?.uid);
+        return plans.filter(p => p.createdBy === currentUser?.uid || (p.assignedStaffIds || []).includes(currentUser?.uid));
     }, [plans, isAdmin, isManager, currentUser]);
 
     const filteredPlans = useMemo(() => {
@@ -82,7 +124,8 @@ const PlansManagePage = () => {
         if (!formData.title) { toast.error('Nhập tên kế hoạch'); return; }
         setIsSubmitting(true);
         try {
-            await createPlan({
+            const assignedStaffNames = getAssignedStaffNames(formData.assignedStaffIds);
+            await createPlanWithActivityLog({
                 title: formData.title,
                 type: formData.type,
                 description: formData.description,
@@ -90,13 +133,18 @@ const PlansManagePage = () => {
                 targetBlocks: formData.targetBlocks,
                 targetTypes: formData.targetTypes,
                 attachments: formData.attachments,
+                assignedStaffIds: formData.assignedStaffIds,
+                assignedStaffNames,
                 createdBy: currentUser?.uid || null,
                 createdByName: currentUser?.displayName || currentUser?.email || '',
                 status: 'draft',
-            });
+            }, buildPlanLog('create', `${getActorInfo().actorName} đã tạo kế hoạch "${formData.title}".`, {
+                title: formData.title,
+                assignedStaffNames,
+            }));
             toast.success('Tạo kế hoạch thành công!');
             setShowAddModal(false);
-            setFormData({ title: '', type: 'plan', description: '', submissionDeadline: '', targetBlocks: [], targetTypes: [], attachments: [] });
+            setFormData({ title: '', type: 'plan', description: '', submissionDeadline: '', targetBlocks: [], targetTypes: [], attachments: [], assignedStaffIds: [] });
         } catch (err) {
             toast.error('Lỗi: ' + err.message);
         } finally {
@@ -108,13 +156,21 @@ const PlansManagePage = () => {
     const saveEdit = async () => {
         if (!editTitle.trim()) return;
         try {
-            await updatePlan(editingId, { title: editTitle.trim() });
+            const plan = plans.find(p => p.id === editingId);
+            await updatePlanWithActivityLog(editingId, { title: editTitle.trim() }, buildPlanLog('update_title', `${getActorInfo().actorName} đã cập nhật tiêu đề kế hoạch.`, {
+                from: plan?.title || '',
+                to: editTitle.trim(),
+            }));
             toast.success('Đã cập nhật');
             setEditingId(null);
         } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi cập nhật.')); }
     };
 
     const handleDelete = async (planId, name) => {
+        if (!canDeletePlan()) {
+            toast.error('Bạn không có quyền xóa kế hoạch này.');
+            return;
+        }
         if (!confirm(`Xóa "${name}"?`)) return;
         try {
             await deletePlan(planId);
@@ -122,7 +178,46 @@ const PlansManagePage = () => {
         } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi xóa.')); }
     };
 
+    const openAssignmentModal = (plan) => {
+        setAssignmentPlan(plan);
+        setAssignmentDraft(plan.assignedStaffIds || []);
+    };
+
+    const closeAssignmentModal = () => {
+        setAssignmentPlan(null);
+        setAssignmentDraft([]);
+    };
+
+    const toggleAssignee = (uid) => {
+        setAssignmentDraft(prev => prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]);
+    };
+
+    const saveAssignees = async () => {
+        if (!assignmentPlan) return;
+        setIsSavingAssignees(true);
+        try {
+            const assignedStaffNames = getAssignedStaffNames(assignmentDraft);
+            await updatePlanWithActivityLog(assignmentPlan.id, {
+                assignedStaffIds: assignmentDraft,
+                assignedStaffNames,
+            }, buildPlanLog('update_assignees', `${getActorInfo().actorName} đã cập nhật nhân viên phụ trách kế hoạch.`, {
+                assignedStaffNames,
+            }));
+            toast.success('Đã cập nhật nhân viên phụ trách.');
+            closeAssignmentModal();
+        } catch (err) {
+            console.error(err);
+            toast.error(getVietnameseError(err, 'Lỗi cập nhật nhân viên phụ trách.'));
+        } finally {
+            setIsSavingAssignees(false);
+        }
+    };
+
     const handleBulkDelete = async () => {
+        if (!canDeletePlan()) {
+            toast.error('Bạn không có quyền xóa kế hoạch.');
+            return;
+        }
         if (!confirm(`Xóa ${selected.length} kế hoạch đã chọn?`)) return;
         try {
             for (const id of selected) await deletePlan(id);
@@ -131,8 +226,9 @@ const PlansManagePage = () => {
         } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi xóa hàng loạt.')); }
     };
 
+    const deletableFilteredPlans = filteredPlans.filter(canDeletePlan);
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-    const toggleAll = () => setSelected(selected.length === filteredPlans.length ? [] : filteredPlans.map(p => p.id));
+    const toggleAll = () => setSelected(selected.length === deletableFilteredPlans.length ? [] : deletableFilteredPlans.map(p => p.id));
 
     const statusMap = {
         draft: { label: 'Nháp', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
@@ -201,7 +297,7 @@ const PlansManagePage = () => {
                     <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center gap-2">
                         <MdAdd size={20} /> Thêm Mới
                     </button>
-                    {selected.length > 0 && (
+                    {selected.length > 0 && canDeletePlan() && (
                         <button onClick={handleBulkDelete} className="btn bg-rose-500 hover:bg-rose-600 text-white flex items-center gap-2">
                             <MdDelete size={20} /> Xóa ({selected.length})
                         </button>
@@ -217,8 +313,9 @@ const PlansManagePage = () => {
                                 <th className="px-6 py-4 text-left w-12 text-slate-500 dark:text-slate-400">
                                     <input
                                         type="checkbox"
-                                        checked={selected.length === filteredPlans.length && filteredPlans.length > 0}
+                                        checked={selected.length === deletableFilteredPlans.length && deletableFilteredPlans.length > 0}
                                         onChange={toggleAll}
+                                        disabled={!deletableFilteredPlans.length}
                                         className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
                                     />
                                 </th>
@@ -234,6 +331,7 @@ const PlansManagePage = () => {
                             {filteredPlans.map(plan => {
                                 const st = statusMap[plan.status] || statusMap.draft;
                                 const isSelected = selected.includes(plan.id);
+                                const assigneeNames = getPlanAssigneeNames(plan);
                                 return (
                                     <tr
                                         key={plan.id}
@@ -245,6 +343,7 @@ const PlansManagePage = () => {
                                                 type="checkbox"
                                                 checked={isSelected}
                                                 onChange={() => toggleSelect(plan.id)}
+                                                disabled={!canDeletePlan(plan)}
                                                 className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500 transition-transform duration-200 active:scale-95"
                                             />
                                         </td>
@@ -266,8 +365,27 @@ const PlansManagePage = () => {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                                    {plan.title}
+                                                <div className="space-y-2">
+                                                    <div className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                                        {plan.title}
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                                                        <span className="inline-flex items-center gap-1 font-semibold text-slate-400">
+                                                            <MdGroup size={14} /> Phụ trách:
+                                                        </span>
+                                                        {assigneeNames.length ? assigneeNames.slice(0, 3).map(name => (
+                                                            <span key={name} className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                                                {name}
+                                                            </span>
+                                                        )) : (
+                                                            <span className="italic text-slate-400">Chưa giao</span>
+                                                        )}
+                                                        {assigneeNames.length > 3 && (
+                                                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                                                                +{assigneeNames.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </td>
@@ -307,7 +425,10 @@ const PlansManagePage = () => {
                                                     onClick={async () => {
                                                         const newStatus = plan.status === 'published' ? 'draft' : 'published';
                                                         try {
-                                                            await updatePlan(plan.id, { status: newStatus });
+                                                            await updatePlanWithActivityLog(plan.id, { status: newStatus }, buildPlanLog('update_status', `${getActorInfo().actorName} đã cập nhật trạng thái kế hoạch.`, {
+                                                                from: plan.status || 'draft',
+                                                                to: newStatus,
+                                                            }));
                                                             toast.success(newStatus === 'published' ? 'Đã công bố cho cơ sở!' : 'Đã thu hồi về nháp!');
                                                         } catch (err) {
                                                             toast.error('Lỗi: ' + err.message);
@@ -328,6 +449,15 @@ const PlansManagePage = () => {
                                                 >
                                                     <MdEdit size={20} />
                                                 </button>
+                                                {canAssignPlan(plan) && (
+                                                    <button
+                                                        onClick={() => openAssignmentModal(plan)}
+                                                        className="p-2 text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-lg"
+                                                        title="Giao nhân viên phụ trách"
+                                                    >
+                                                        <MdPersonAdd size={20} />
+                                                    </button>
+                                                )}
                                                 <Link
                                                     to={`/plans/${plan.id}`}
                                                     className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg"
@@ -337,6 +467,7 @@ const PlansManagePage = () => {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                                     </svg>
                                                 </Link>
+                                                {canDeletePlan(plan) && (
                                                 <button
                                                     onClick={() => handleDelete(plan.id, plan.title)}
                                                     className="p-2 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg"
@@ -344,6 +475,7 @@ const PlansManagePage = () => {
                                                 >
                                                     <MdDelete size={20} />
                                                 </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -447,6 +579,34 @@ const PlansManagePage = () => {
                             </div>
 
                             <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Nhân viên phụ trách</label>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-2.5 px-1 uppercase tracking-wider">
+                                    Nhân viên được chọn sẽ nhìn thấy và chỉnh sửa kế hoạch này
+                                </p>
+                                <div className="space-y-2 glass border border-slate-200/50 dark:border-slate-800 rounded-2xl p-4 max-h-[170px] overflow-y-auto custom-scrollbar-thin">
+                                    {staff.length ? staff.map(user => (
+                                        <label key={user.id} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.assignedStaffIds.includes(user.id)}
+                                                onChange={() => setFormData(prev => ({
+                                                    ...prev,
+                                                    assignedStaffIds: prev.assignedStaffIds.includes(user.id)
+                                                        ? prev.assignedStaffIds.filter(id => id !== user.id)
+                                                        : [...prev.assignedStaffIds, user.id],
+                                                }))}
+                                                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
+                                            />
+                                            <span className="font-semibold">{user.displayName || user.email}</span>
+                                            <span className="ml-auto text-[10px] uppercase text-slate-400">{user.role}</span>
+                                        </label>
+                                    )) : (
+                                        <p className="text-sm italic text-slate-400">Chưa có nhân viên để giao phụ trách.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Phân quyền đối tượng thực hiện</label>
                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-2.5 px-1 uppercase tracking-wider">
                                     Nếu để trống, tất cả các đơn vị sẽ được tham gia
@@ -508,6 +668,67 @@ const PlansManagePage = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>,
+                document.body
+            )}
+            {assignmentPlan && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 fade-in" onClick={closeAssignmentModal}></div>
+                    <div className="relative z-10 flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95">
+                        <div className="mb-5 flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Giao nhân viên phụ trách</h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{assignmentPlan.title}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeAssignmentModal}
+                                className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                <MdClose size={22} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+                            {staff.length ? staff.map(user => (
+                                <label key={user.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-sm text-slate-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50/60 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:border-emerald-900 dark:hover:bg-emerald-900/20">
+                                    <input
+                                        type="checkbox"
+                                        checked={assignmentDraft.includes(user.id)}
+                                        onChange={() => toggleAssignee(user.id)}
+                                        className="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 dark:border-slate-600"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate font-bold">{user.displayName || user.email}</p>
+                                        <p className="text-xs uppercase tracking-wide text-slate-400">{user.role}</p>
+                                    </div>
+                                </label>
+                            )) : (
+                                <p className="rounded-2xl bg-slate-50 p-4 text-sm italic text-slate-400 dark:bg-slate-800/60">Chưa có nhân viên để giao phụ trách.</p>
+                            )}
+                        </div>
+
+                        <div className="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={closeAssignmentModal}
+                                disabled={isSavingAssignees}
+                                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={saveAssignees}
+                                disabled={isSavingAssignees}
+                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                            >
+                                {isSavingAssignees && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
+                                Lưu phụ trách
+                            </button>
+                        </div>
                     </div>
                 </div>,
                 document.body

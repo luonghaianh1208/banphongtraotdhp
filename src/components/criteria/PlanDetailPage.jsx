@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { usePlans } from '../../hooks/usePlans';
 import { useContestEntries } from '../../hooks/useContestEntries';
 import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
-import { updatePlan } from '../../firebase/criteriaFirestore';
+import { updatePlanWithActivityLog, subscribeToPlanActivityLogs } from '../../firebase/criteriaFirestore';
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import { formatDateTime, formatDisplayDate } from '../../utils/dateUtils';
@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
     MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
-    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose
+    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose, MdHistory, MdGroup
 } from 'react-icons/md';
 
 const PlanDetailPage = () => {
@@ -21,16 +21,32 @@ const PlanDetailPage = () => {
     const { plans, loading: plansLoading } = usePlans();
     const { entries, loading: entriesLoading } = useContestEntries(planId);
     const { units, loading: unitsLoading } = useUnits();
-    const { currentUser, isAdmin, isManager } = useAuth();
+    const { currentUser, userProfile, isAdmin, isManager } = useAuth();
 
     const [localPlan, setLocalPlan] = useState(null);
     const [isEditingContent, setIsEditingContent] = useState(false);
     const [editDescription, setEditDescription] = useState('');
     const [editAttachments, setEditAttachments] = useState([]);
     const [isSavingContent, setIsSavingContent] = useState(false);
+    const [activityLogs, setActivityLogs] = useState([]);
+    const [logsLoading, setLogsLoading] = useState(true);
 
     const remotePlan = useMemo(() => plans.find(x => x.id === planId) || null, [plans, planId]);
     const plan = localPlan?.id === planId ? localPlan : remotePlan;
+    const isAssignedToCurrentUser = useMemo(() => (
+        !!currentUser?.uid && !!plan && (plan.assignedStaffIds || []).includes(currentUser.uid)
+    ), [plan, currentUser]);
+
+    useEffect(() => {
+        if (!planId || (!isAdmin && !isManager)) return undefined;
+        return subscribeToPlanActivityLogs(planId, (logs) => {
+            setActivityLogs(logs);
+            setLogsLoading(false);
+        }, (error) => {
+            console.error(error);
+            setLogsLoading(false);
+        });
+    }, [planId, isAdmin, isManager]);
 
     const combinedUnitEntries = useMemo(() => {
         if (!units || !entries) return [];
@@ -86,7 +102,7 @@ const PlanDetailPage = () => {
     }
 
     // Member chỉ xem được plan mình tạo
-    if (!isAdmin && !isManager && plan.createdBy !== currentUser?.uid) {
+    if (!isAdmin && !isManager && plan.createdBy !== currentUser?.uid && !isAssignedToCurrentUser) {
         return <Navigate to="/plans-manage" replace />;
     }
 
@@ -98,7 +114,18 @@ const PlanDetailPage = () => {
     };
 
     const planStatus = statusMap[plan.status] || statusMap.draft;
-    const canEditPlan = isAdmin || isManager || plan.createdBy === currentUser?.uid;
+    const canEditPlan = isAdmin || isManager || plan.createdBy === currentUser?.uid || isAssignedToCurrentUser;
+    const assigneeNames = plan.assignedStaffNames?.length ? plan.assignedStaffNames : (plan.assignedStaffIds || []);
+    const actorName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Người dùng hệ thống';
+
+    const buildPlanLog = (action, message, changes = {}) => ({
+            action,
+            message,
+            changes,
+            actorId: currentUser?.uid || null,
+            actorName,
+            actorRole: userProfile?.role || '',
+    });
 
     const startEditContent = () => {
         setEditDescription(plan.description || '');
@@ -115,10 +142,12 @@ const PlanDetailPage = () => {
     const savePlanContent = async () => {
         setIsSavingContent(true);
         try {
-            await updatePlan(plan.id, {
+            await updatePlanWithActivityLog(plan.id, {
                 description: editDescription,
                 attachments: editAttachments,
-            });
+            }, buildPlanLog('update_content', `${actorName} đã cập nhật nội dung kế hoạch và yêu cầu hồ sơ.`, {
+                attachmentsCount: editAttachments.length,
+            }));
             setLocalPlan((prev) => ({
                 ...(prev || plan),
                 description: editDescription,
@@ -194,6 +223,22 @@ const PlanDetailPage = () => {
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Chưa nộp</p>
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{stats.notStarted + stats.draft}</p>
                     </div>
+                </div>
+            </div>
+
+            <div className="card p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="mr-2 inline-flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                        <MdGroup size={18} className="text-emerald-600 dark:text-emerald-400" />
+                        Nhân viên phụ trách
+                    </div>
+                    {assigneeNames.length ? assigneeNames.map(name => (
+                        <span key={name} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            {name}
+                        </span>
+                    )) : (
+                        <span className="text-sm italic text-slate-400">Chưa giao nhân viên phụ trách.</span>
+                    )}
                 </div>
             </div>
 
@@ -277,6 +322,42 @@ const PlanDetailPage = () => {
                     )}
                 </div>
             </div>
+
+            {(isAdmin || isManager) && (
+                <div className="card overflow-hidden">
+                    <div className="bg-slate-500/10 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <h3 className="text-base font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <MdHistory size={20} /> Nhật ký thao tác
+                        </h3>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            {activityLogs.length} bản ghi gần nhất
+                        </span>
+                    </div>
+                    <div className="p-5">
+                        {logsLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-500" />
+                                Đang tải nhật ký...
+                            </div>
+                        ) : activityLogs.length ? (
+                            <div className="space-y-3">
+                                {activityLogs.map(log => (
+                                    <div key={log.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/40">
+                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{log.message || 'Đã cập nhật kế hoạch.'}</p>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                                            <span>{log.actorName || 'Không rõ người thao tác'}</span>
+                                            <span>•</span>
+                                            <span>{formatTimestamp(log.createdAt)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm italic text-slate-400">Chưa có nhật ký thao tác.</p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Unit Submissions Table — Excel style */}
             <div className="card overflow-hidden">

@@ -1,6 +1,6 @@
 import {
     collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-    query, where, orderBy, onSnapshot, serverTimestamp, writeBatch, setDoc
+    query, where, orderBy, onSnapshot, serverTimestamp, writeBatch, setDoc, limit
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -193,6 +193,63 @@ export const createPlan = async (data) => {
 export const updatePlan = async (planId, updates) => {
     const ref = doc(db, 'plans', planId);
     return updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+};
+
+export const addPlanActivityLog = async (planId, logData) => {
+    const colRef = collection(db, 'plans', planId, 'activityLogs');
+    return addDoc(colRef, {
+        action: logData.action || 'update',
+        message: logData.message || '',
+        actorId: logData.actorId || null,
+        actorName: logData.actorName || '',
+        actorRole: logData.actorRole || '',
+        changes: logData.changes || {},
+        createdAt: serverTimestamp(),
+    });
+};
+
+const normalizePlanLogData = (logData) => ({
+    action: logData.action || 'update',
+    message: logData.message || '',
+    actorId: logData.actorId || null,
+    actorName: logData.actorName || '',
+    actorRole: logData.actorRole || '',
+    changes: logData.changes || {},
+    createdAt: serverTimestamp(),
+});
+
+export const createPlanWithActivityLog = async (data, logData) => {
+    const planRef = doc(collection(db, 'plans'));
+    const logRef = doc(collection(db, 'plans', planRef.id, 'activityLogs'));
+    const batch = writeBatch(db);
+    batch.set(planRef, {
+        ...data,
+        status: 'draft',
+        createdAt: serverTimestamp()
+    });
+    batch.set(logRef, normalizePlanLogData(logData));
+    await batch.commit();
+    return planRef;
+};
+
+export const updatePlanWithActivityLog = async (planId, updates, logData) => {
+    const planRef = doc(db, 'plans', planId);
+    const logRef = doc(collection(db, 'plans', planId, 'activityLogs'));
+    const batch = writeBatch(db);
+    batch.update(planRef, { ...updates, updatedAt: serverTimestamp() });
+    batch.set(logRef, normalizePlanLogData(logData));
+    return batch.commit();
+};
+
+export const subscribeToPlanActivityLogs = (planId, callback, onError) => {
+    const q = query(
+        collection(db, 'plans', planId, 'activityLogs'),
+        orderBy('createdAt', 'desc'),
+        limit(30)
+    );
+    return onSnapshot(q, (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, onError);
 };
 
 export const publishPlan = async (planId) => {
