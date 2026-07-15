@@ -8,7 +8,7 @@ import { updatePlanWithActivityLog, subscribeToPlanActivityLogs } from '../../fi
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import { formatDateTime, formatDisplayDate } from '../../utils/dateUtils';
-import { downloadAttachmentGroupsAsZip } from '../../utils/downloadAttachments';
+import { countAttachments, downloadAttachmentGroupsAsZip } from '../../utils/downloadAttachments';
 import toast from 'react-hot-toast';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
@@ -32,6 +32,7 @@ const PlanDetailPage = () => {
     const [activityLogs, setActivityLogs] = useState([]);
     const [logsLoading, setLogsLoading] = useState(true);
     const [isDownloadingAttachments, setIsDownloadingAttachments] = useState(false);
+    const [isDownloadingUnitSubmissions, setIsDownloadingUnitSubmissions] = useState(false);
 
     const remotePlan = useMemo(() => plans.find(x => x.id === planId) || null, [plans, planId]);
     const plan = localPlan?.id === planId ? localPlan : remotePlan;
@@ -79,6 +80,20 @@ const PlanDetailPage = () => {
         const notStarted = combinedUnitEntries.filter(e => e.status === 'not_started').length;
         return { submitted, draft, notStarted, total: combinedUnitEntries.length };
     }, [combinedUnitEntries]);
+
+    const submittedUnitDocumentGroups = useMemo(() => (
+        combinedUnitEntries
+            .filter(entry => entry.status === 'submitted' && (entry.docs || []).some(doc => doc?.url))
+            .map(entry => ({
+                title: entry.unitName,
+                attachments: entry.docs,
+            }))
+    ), [combinedUnitEntries]);
+
+    const submittedDocumentCount = useMemo(
+        () => countAttachments(submittedUnitDocumentGroups),
+        [submittedUnitDocumentGroups]
+    );
 
     const getBlockLabel = (p) => {
         if (!p?.targetBlocks?.length) return 'Tất cả đơn vị';
@@ -175,6 +190,27 @@ const PlanDetailPage = () => {
             toast.error(error.message || 'Không thể tải tài liệu xuống.');
         } finally {
             setIsDownloadingAttachments(false);
+        }
+    };
+
+    const downloadAllUnitSubmissions = async () => {
+        if (!submittedDocumentCount) {
+            toast.error('Chưa có hồ sơ đơn vị đã nộp để tải xuống.');
+            return;
+        }
+
+        setIsDownloadingUnitSubmissions(true);
+        try {
+            const count = await downloadAttachmentGroupsAsZip(
+                submittedUnitDocumentGroups,
+                `ho-so-don-vi-${plan.title}`
+            );
+            toast.success(`Đã tải ${count} tệp của ${submittedUnitDocumentGroups.length} đơn vị.`);
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Không thể tải hồ sơ đơn vị xuống.');
+        } finally {
+            setIsDownloadingUnitSubmissions(false);
         }
     };
 
@@ -386,14 +422,26 @@ const PlanDetailPage = () => {
             )}
 
             {/* Unit Submissions Table — Excel style */}
-            <div className="card overflow-hidden">
-                <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-100/20 flex items-center justify-between">
+            <div className="card overflow-visible">
+                <div className="sticky top-16 z-20 rounded-t-xl bg-emerald-50/95 px-6 py-4 border-b border-emerald-100/20 flex flex-wrap items-center justify-between gap-3 backdrop-blur-sm dark:bg-emerald-950/95">
                     <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-2">
                         <MdFilterList size={20} /> Danh sách đơn vị nộp hồ sơ
                     </h3>
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {stats.submitted}/{stats.total} đã nộp
-                    </span>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            {stats.submitted}/{stats.total} đã nộp • {submittedDocumentCount} tệp
+                        </span>
+                        <button
+                            type="button"
+                            onClick={downloadAllUnitSubmissions}
+                            disabled={!submittedDocumentCount || isDownloadingUnitSubmissions}
+                            className="btn btn-primary px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Tải toàn bộ hồ sơ đã nộp, chia thư mục theo đơn vị"
+                        >
+                            <MdDownload size={17} />
+                            {isDownloadingUnitSubmissions ? 'Đang đóng gói...' : 'Tải toàn bộ hồ sơ'}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
