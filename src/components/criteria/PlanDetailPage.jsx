@@ -8,11 +8,12 @@ import { updatePlanWithActivityLog, subscribeToPlanActivityLogs } from '../../fi
 import { UNIT_BLOCKS } from '../../utils/constants';
 import EvidenceUpload from './EvidenceUpload';
 import { formatDateTime, formatDisplayDate } from '../../utils/dateUtils';
+import { downloadAttachmentGroupsAsZip } from '../../utils/downloadAttachments';
 import toast from 'react-hot-toast';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
     MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
-    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose, MdHistory, MdGroup
+    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose, MdHistory, MdGroup, MdDownload
 } from 'react-icons/md';
 
 const PlanDetailPage = () => {
@@ -30,6 +31,7 @@ const PlanDetailPage = () => {
     const [isSavingContent, setIsSavingContent] = useState(false);
     const [activityLogs, setActivityLogs] = useState([]);
     const [logsLoading, setLogsLoading] = useState(true);
+    const [isDownloadingAttachments, setIsDownloadingAttachments] = useState(false);
 
     const remotePlan = useMemo(() => plans.find(x => x.id === planId) || null, [plans, planId]);
     const plan = localPlan?.id === planId ? localPlan : remotePlan;
@@ -160,6 +162,19 @@ const PlanDetailPage = () => {
             toast.error('Lỗi khi cập nhật nội dung kế hoạch.');
         } finally {
             setIsSavingContent(false);
+        }
+    };
+
+    const downloadAllAttachments = async () => {
+        setIsDownloadingAttachments(true);
+        try {
+            const count = await downloadAttachmentGroupsAsZip([plan], `tai-lieu-${plan.title}`);
+            toast.success(`Đã tải ${count} tài liệu.`);
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Không thể tải tài liệu xuống.');
+        } finally {
+            setIsDownloadingAttachments(false);
         }
     };
 
@@ -312,11 +327,22 @@ const PlanDetailPage = () => {
                     {/* Tài liệu đính kèm từ cấp trên */}
                     {!isEditingContent && plan.attachments && plan.attachments.length > 0 && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                <MdAttachFile size={14} /> Tài liệu đính kèm ({plan.attachments.length})
-                            </h4>
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <MdAttachFile size={14} /> Tài liệu đính kèm ({plan.attachments.length})
+                                </h4>
+                                <button
+                                    type="button"
+                                    onClick={downloadAllAttachments}
+                                    disabled={isDownloadingAttachments}
+                                    className="btn btn-secondary px-3 py-1.5 text-xs"
+                                >
+                                    <MdDownload size={16} />
+                                    {isDownloadingAttachments ? 'Đang đóng gói...' : 'Tải tất cả'}
+                                </button>
+                            </div>
                             <div className="bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3">
-                                <EvidenceUpload files={plan.attachments} onChange={() => {}} readOnly previewOnClick />
+                                <EvidenceUpload files={plan.attachments} onChange={() => {}} readOnly previewOnClick allowDownload />
                             </div>
                         </div>
                     )}

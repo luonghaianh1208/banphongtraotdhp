@@ -1,6 +1,6 @@
 // AllTasksPage — trang tất cả công việc: bảng task toàn tổ với filter & export
 import { useState, useEffect, useMemo } from 'react';
-import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank, MdNotificationsActive, MdSchedule } from 'react-icons/md';
+import { MdAdd, MdFileDownload, MdPictureAsPdf, MdDelete, MdSelectAll, MdCheckBox, MdCheckBoxOutlineBlank, MdNotificationsActive, MdSchedule, MdDownload } from 'react-icons/md';
 import { useTasks } from '../hooks/useTasks';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { filterTasks } from '../utils/statusUtils';
 import { exportToExcel } from '../utils/exportExcel';
 import { exportToPdf } from '../utils/exportPdf';
+import { countAttachments, downloadAttachmentGroupsAsZip } from '../utils/downloadAttachments';
 import toast from 'react-hot-toast';
 
 const AllTasksPage = () => {
@@ -31,6 +32,8 @@ const AllTasksPage = () => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadingTaskId, setDownloadingTaskId] = useState(null);
   const [filters, setFilters] = useState({
     search: '', assignee: '', status: '', priority: '', category: '', dateFrom: '', dateTo: ''
   });
@@ -115,6 +118,31 @@ const AllTasksPage = () => {
     }
   };
 
+  const downloadTaskAttachments = async (tasksToDownload, archiveName, taskId = null) => {
+    if (!countAttachments(tasksToDownload)) {
+      toast.error('Không có tài liệu để tải xuống.');
+      return;
+    }
+
+    if (taskId) setDownloadingTaskId(taskId);
+    else setDownloadLoading(true);
+    try {
+      const count = await downloadAttachmentGroupsAsZip(tasksToDownload, archiveName);
+      toast.success(`Đã tải ${count} tài liệu.`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Không thể tải tài liệu xuống.');
+    } finally {
+      if (taskId) setDownloadingTaskId(null);
+      else setDownloadLoading(false);
+    }
+  };
+
+  const handleBulkDownload = () => {
+    const selectedTasks = filteredTasks.filter(task => selectedIds.has(task.id));
+    return downloadTaskAttachments(selectedTasks, 'tai-lieu-cong-viec-da-chon');
+  };
+
   const allSelected = filteredTasks.length > 0 && selectedIds.size === filteredTasks.length;
 
   if (loading) return <LoadingSpinner />;
@@ -136,6 +164,14 @@ const AllTasksPage = () => {
           )}
           {canManageTasks && selectedIds.size > 0 && (
             <>
+              <button
+                onClick={handleBulkDownload}
+                disabled={downloadLoading}
+                className="btn btn-secondary text-xs"
+              >
+                <MdDownload size={16} />
+                {downloadLoading ? 'Đang đóng gói...' : `Tải tài liệu (${selectedIds.size})`}
+              </button>
               <button
                 onClick={handleBulkRemind}
                 disabled={actionLoading}
@@ -197,6 +233,12 @@ const AllTasksPage = () => {
               selectable={canManageTasks}
               selected={selectedIds.has(task.id)}
               onToggleSelect={toggleSelect}
+              onDownloadAttachments={(taskToDownload) => downloadTaskAttachments(
+                [taskToDownload],
+                `tai-lieu-${taskToDownload.title}`,
+                taskToDownload.id
+              )}
+              downloadingAttachments={downloadingTaskId === task.id}
             />
           ))}
         </div>

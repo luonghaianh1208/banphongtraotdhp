@@ -1,12 +1,12 @@
 // TaskCard — card hiển thị task trên danh sách
 import { memo, useMemo } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
+import { MdAccessTime, MdPerson, MdAttachFile, MdCheckCircle, MdStickyNote2, MdCheckBox, MdCheckBoxOutlineBlank, MdDownload } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { useTaskConfig } from '../../context/TaskConfigContext';
 import { formatDateTime } from '../../utils/dateUtils';
 
-const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect }) => {
+const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, selected, onToggleSelect, onDownloadAttachments, downloadingAttachments }) => {
   const { getCategoryById } = useTaskConfig();
   const cat = getCategoryById(task.category);
 
@@ -86,16 +86,29 @@ const TaskCard = ({ task, users, onClick, onApprove, canApprove, selectable, sel
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 italic ml-1">• BỞI {creatorName.split(' ').pop().toUpperCase()}</span>
         </div>
 
-        {/* Nút duyệt hoàn thành — chỉ admin */}
-        {canApprove && !task.isCompleted && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onApprove(task.id); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-emerald-500/30"
-          >
-            <MdCheckCircle size={16} />
-            DUYỆT XONG
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {selectable && task.attachments?.length > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDownloadAttachments(task); }}
+              disabled={downloadingAttachments}
+              className="p-2 rounded-xl text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/20 hover:bg-teal-500 hover:text-white transition-all disabled:opacity-50"
+              title="Tải tất cả tài liệu của công việc"
+              aria-label={`Tải tài liệu của ${task.title}`}
+            >
+              <MdDownload size={17} />
+            </button>
+          )}
+          {/* Nút duyệt hoàn thành — chỉ admin */}
+          {canApprove && !task.isCompleted && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onApprove(task.id); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-emerald-500/30"
+            >
+              <MdCheckCircle size={16} />
+              DUYỆT XONG
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Notes indicator */}

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { isFacebookEvidenceUrl } from '../../utils/evidenceLinks';
 import FilePreviewModal from '../common/FilePreviewModal';
+import { downloadAttachment } from '../../utils/downloadAttachments';
 import {
     MdCloudUpload,
     MdInsertDriveFile,
@@ -14,7 +15,8 @@ import {
     MdTableChart,
     MdArticle,
     MdAddLink,
-    MdLink
+    MdLink,
+    MdDownload
 } from 'react-icons/md';
 
 const FILE_ICONS = {
@@ -87,6 +89,7 @@ const EvidenceUpload = ({
     helperText = '',
     linkButtonLabel = '',
     previewOnClick = false,
+    allowDownload = false,
 }) => {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -188,6 +191,15 @@ const EvidenceUpload = ({
     const handleRemove = (indexToRemove) => {
         if (readOnly) return;
         onChange(files.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleDownload = async (file) => {
+        try {
+            await downloadAttachment(file);
+        } catch (error) {
+            console.error(error);
+            toast.error('Không thể tải tài liệu xuống.');
+        }
     };
 
     const showLinkEditor = !readOnly && (showLinkInput || !allowFileUpload);
@@ -339,6 +351,17 @@ const EvidenceUpload = ({
                                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${extBadge.color} flex-shrink-0`}>
                                     {extBadge.label}
                                 </span>
+                                {allowDownload && file.url && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDownload(file)}
+                                        className="p-1 text-slate-400 hover:text-emerald-600 rounded transition-colors flex-shrink-0"
+                                        title="Tải tài liệu xuống"
+                                        aria-label={`Tải ${displayName}`}
+                                    >
+                                        <MdDownload size={15} />
+                                    </button>
+                                )}
                                 {!readOnly && (
                                     <button
                                         type="button"

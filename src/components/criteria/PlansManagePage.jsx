@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish, MdSearch, MdFilterList, MdGroup, MdPersonAdd } from 'react-icons/md';
+import { MdAdd, MdDelete, MdEdit, MdCheck, MdClose, MdPublish, MdSearch, MdFilterList, MdGroup, MdPersonAdd, MdDownload } from 'react-icons/md';
 import { usePlans } from '../../hooks/usePlans';
 import { useUnits } from '../../hooks/useUnits';
 import { useUsers } from '../../hooks/useUsers';
@@ -12,6 +12,7 @@ import EvidenceUpload from './EvidenceUpload';
 import toast from 'react-hot-toast';
 import { getVietnameseError } from '../../utils/errorUtils';
 import { formatDisplayDate } from '../../utils/dateUtils';
+import { downloadAttachmentGroupsAsZip, countAttachments } from '../../utils/downloadAttachments';
 
 const PlansManagePage = () => {
     const { plans, loading: plansLoading } = usePlans();
@@ -30,6 +31,8 @@ const PlansManagePage = () => {
     const [assignmentPlan, setAssignmentPlan] = useState(null);
     const [assignmentDraft, setAssignmentDraft] = useState([]);
     const [isSavingAssignees, setIsSavingAssignees] = useState(false);
+    const [downloadingPlanId, setDownloadingPlanId] = useState(null);
+    const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '', type: 'plan', description: '', submissionDeadline: '',
@@ -226,9 +229,34 @@ const PlansManagePage = () => {
         } catch (err) { console.error(err); toast.error(getVietnameseError(err, 'Lỗi xóa hàng loạt.')); }
     };
 
-    const deletableFilteredPlans = filteredPlans.filter(canDeletePlan);
+    const downloadPlans = async (plansToDownload, archiveName, planId = null) => {
+        const attachmentCount = countAttachments(plansToDownload);
+        if (!attachmentCount) {
+            toast.error('Không có tài liệu để tải xuống.');
+            return;
+        }
+
+        if (planId) setDownloadingPlanId(planId);
+        else setIsBulkDownloading(true);
+        try {
+            const count = await downloadAttachmentGroupsAsZip(plansToDownload, archiveName);
+            toast.success(`Đã tải ${count} tài liệu.`);
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Không thể tải tài liệu xuống.');
+        } finally {
+            if (planId) setDownloadingPlanId(null);
+            else setIsBulkDownloading(false);
+        }
+    };
+
+    const handleBulkDownload = () => {
+        const selectedPlans = filteredPlans.filter(plan => selected.includes(plan.id));
+        return downloadPlans(selectedPlans, 'tai-lieu-ke-hoach-da-chon');
+    };
+
     const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-    const toggleAll = () => setSelected(selected.length === deletableFilteredPlans.length ? [] : deletableFilteredPlans.map(p => p.id));
+    const toggleAll = () => setSelected(selected.length === filteredPlans.length ? [] : filteredPlans.map(p => p.id));
 
     const statusMap = {
         draft: { label: 'Nháp', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
@@ -297,6 +325,16 @@ const PlansManagePage = () => {
                     <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center gap-2">
                         <MdAdd size={20} /> Thêm Mới
                     </button>
+                    {selected.length > 0 && (
+                        <button
+                            onClick={handleBulkDownload}
+                            disabled={isBulkDownloading}
+                            className="btn btn-secondary flex items-center gap-2"
+                        >
+                            <MdDownload size={20} />
+                            {isBulkDownloading ? 'Đang đóng gói...' : `Tải tài liệu (${selected.length})`}
+                        </button>
+                    )}
                     {selected.length > 0 && canDeletePlan() && (
                         <button onClick={handleBulkDelete} className="btn bg-rose-500 hover:bg-rose-600 text-white flex items-center gap-2">
                             <MdDelete size={20} /> Xóa ({selected.length})
@@ -313,9 +351,9 @@ const PlansManagePage = () => {
                                 <th className="px-6 py-4 text-left w-12 text-slate-500 dark:text-slate-400">
                                     <input
                                         type="checkbox"
-                                        checked={selected.length === deletableFilteredPlans.length && deletableFilteredPlans.length > 0}
+                                        checked={selected.length === filteredPlans.length && filteredPlans.length > 0}
                                         onChange={toggleAll}
-                                        disabled={!deletableFilteredPlans.length}
+                                        disabled={!filteredPlans.length}
                                         className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500"
                                     />
                                 </th>
@@ -343,7 +381,6 @@ const PlansManagePage = () => {
                                                 type="checkbox"
                                                 checked={isSelected}
                                                 onChange={() => toggleSelect(plan.id)}
-                                                disabled={!canDeletePlan(plan)}
                                                 className="rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500 transition-transform duration-200 active:scale-95"
                                             />
                                         </td>
@@ -421,6 +458,16 @@ const PlansManagePage = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                                                {countAttachments([plan]) > 0 && (
+                                                    <button
+                                                        onClick={() => downloadPlans([plan], `tai-lieu-${plan.title}`, plan.id)}
+                                                        disabled={downloadingPlanId === plan.id}
+                                                        className="p-2 text-teal-600 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg disabled:opacity-50"
+                                                        title="Tải tất cả tài liệu của mục này"
+                                                    >
+                                                        <MdDownload size={20} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={async () => {
                                                         const newStatus = plan.status === 'published' ? 'draft' : 'published';

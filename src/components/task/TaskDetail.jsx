@@ -1,6 +1,6 @@
 // TaskDetail — modal chi tiết task: notes, attachments (upload cho mọi người), history, approve
-import { useState, useRef, useMemo, useCallback } from 'react';
-import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload, MdHourglassTop } from 'react-icons/md';
+import { useState, useRef, useMemo } from 'react';
+import { MdAccessTime, MdPerson, MdAttachFile, MdSend, MdCheckCircle, MdHistory, MdUpdate, MdDelete, MdStickyNote2, MdUndo, MdNotificationsActive, MdUploadFile, MdCloudUpload, MdHourglassTop, MdDownload } from 'react-icons/md';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import { formatDateTime, formatRelative } from '../../utils/dateUtils';
@@ -14,6 +14,7 @@ import ConfirmDialog from '../common/ConfirmDialog';
 import FilePreviewModal from '../common/FilePreviewModal';
 import DateTimePicker from '../common/DateTimePicker';
 import TaskPenaltySection from './TaskPenaltySection';
+import { downloadAttachment, downloadAttachmentGroupsAsZip } from '../../utils/downloadAttachments';
 
 const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const { currentUser, userProfile, canApprove, canManageTasks } = useAuth();
@@ -25,9 +26,8 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const fileInputRef = useRef(null);
-
-  if (!task) return null;
 
   // User lookup map — O(1), chỉ tính lại khi users thay đổi
   const userMap = useMemo(() => {
@@ -35,6 +35,8 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
     (users || []).forEach(u => { m[u.id] = u; });
     return m;
   }, [users]);
+
+  if (!task) return null;
 
   const assigneeNames = (task.assignees || [])
     .map(uid => userMap[uid]?.displayName || '?');
@@ -134,6 +136,28 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
       setUploading(false);
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadFile = async (file) => {
+    try {
+      await downloadAttachment(file);
+    } catch (error) {
+      console.error(error);
+      toast.error('Không thể tải tài liệu xuống.');
+    }
+  };
+
+  const handleDownloadAllFiles = async () => {
+    setDownloading(true);
+    try {
+      const count = await downloadAttachmentGroupsAsZip([task], `tai-lieu-${task.title}`);
+      toast.success(`Đã tải ${count} tài liệu.`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Không thể tải tài liệu xuống.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -328,12 +352,25 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
 
       {/* File đính kèm — hiển thị luôn, kèm thông tin người upload */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-          <MdAttachFile /> Tài liệu đính kèm
-          {task.attachments?.length > 0 && (
-            <span className="text-xs font-normal text-gray-400">({task.attachments.length} file)</span>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+            <MdAttachFile /> Tài liệu đính kèm
+            {task.attachments?.length > 0 && (
+              <span className="text-xs font-normal text-gray-400">({task.attachments.length} file)</span>
+            )}
+          </h4>
+          {canManageTasks && task.attachments?.length > 0 && (
+            <button
+              type="button"
+              onClick={handleDownloadAllFiles}
+              disabled={downloading}
+              className="btn btn-secondary px-3 py-1.5 text-xs"
+            >
+              <MdDownload size={16} />
+              {downloading ? 'Đang đóng gói...' : 'Tải tất cả'}
+            </button>
           )}
-        </h4>
+        </div>
 
         {/* Danh sách file hiện có */}
         {task.attachments?.length > 0 ? (
@@ -341,23 +378,33 @@ const TaskDetail = ({ task, users, onClose, onEdit }) => {
             {task.attachments.map((file, i) => {
               const typeInfo = getFileTypeLabel(file);
               return (
-                <button
+                <div
                   key={i}
-                  onClick={() => setPreviewFile(file)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50 text-sm text-gray-700 hover:bg-gray-100 transition-colors w-full text-left cursor-pointer group"
                 >
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${typeInfo.cls}`}>
                     {typeInfo.label}
                   </span>
-                  <div className="flex-1 min-w-0">
+                  <button type="button" onClick={() => setPreviewFile(file)} className="flex-1 min-w-0 text-left">
                     <p className="truncate font-medium text-gray-800 group-hover:text-primary-700 transition-colors">{file.name}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {getUploaderName(file.uploadedBy)}
                       {file.uploadedAt && ` • ${formatRelative(file.uploadedAt)}`}
                       {file.size && ` • ${(file.size / 1024).toFixed(0)} KB`}
                     </p>
-                  </div>
-                </button>
+                  </button>
+                  {canManageTasks && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFile(file)}
+                      className="p-2 rounded-lg text-gray-400 hover:bg-white hover:text-emerald-600 transition-colors"
+                      title="Tải tài liệu xuống"
+                      aria-label={`Tải ${file.name}`}
+                    >
+                      <MdDownload size={18} />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
