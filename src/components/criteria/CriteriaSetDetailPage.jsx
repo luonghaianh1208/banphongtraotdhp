@@ -3,13 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import {
     MdArrowBack, MdSave, MdPerson, MdExpandMore, MdExpandLess,
     MdAdd, MdDelete, MdEdit, MdDownload, MdClose, MdSelectAll,
-    MdSend, MdUndo, MdCheckCircle, MdCancel
+    MdSend, MdUndo, MdCheckCircle, MdCancel, MdLock
 } from 'react-icons/md';
 import { useCriteriaSets } from '../../hooks/useCriteriaSets';
 import { useUsers } from '../../hooks/useUsers';
 import { useUnits } from '../../hooks/useUnits';
 import { useSetAssignments } from '../../hooks/useAssignments';
-import { updateCriteriaSet, assignCriteriaToUnits, revokeCriteriaAssignment } from '../../firebase/criteriaFirestore';
+import { updateCriteriaSet, assignCriteriaToUnits, revokeCriteriaAssignment, setTieuChiClosed } from '../../firebase/criteriaFirestore';
 import { exportCriteriaSetToExcel } from '../../utils/exportExcel';
 import { useAuth } from '../../context/AuthContext';
 import { UNIT_BLOCKS } from '../../utils/constants';
@@ -167,6 +167,22 @@ const CriteriaSetDetailPage = () => {
     const bulkAssign = (userId) => mutate(s => {
         (s.tieuChi || []).forEach(tc => { tc.assignedTo = userId || null; });
     });
+
+    // Đóng / mở một Tiêu chí con
+    const handleToggleClosed = async (tc) => {
+        const nextClosed = !tc.closed;
+        if (nextClosed && !confirm(`Đóng tiêu chí "${tc.title}"? Đơn vị sẽ không thể chỉnh sửa/nộp thêm cho các mục trong tiêu chí này.`)) {
+            return;
+        }
+        try {
+            const remoteSet = criteriaSets.find(c => c.id === setId);
+            await setTieuChiClosed(setId, remoteSet?.tieuChi || [], tc.id, nextClosed, userProfile?.id || 'staff');
+            toast.success(nextClosed ? `Đã đóng tiêu chí: ${tc.title}` : `Đã mở lại tiêu chí: ${tc.title}`);
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi khi cập nhật trạng thái tiêu chí');
+        }
+    };
 
     // Toggle
     const toggleTC = (tcId) => setExpandedTC(p => ({ ...p, [tcId]: !p[tcId] }));
@@ -358,6 +374,35 @@ const CriteriaSetDetailPage = () => {
                                             </select>
                                         )}
                                     </div>
+
+                                    {!isReadOnly && (
+                                        tc.closed ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="inline-flex items-center gap-1 rounded-xl bg-white/20 backdrop-blur-sm px-2.5 py-1 text-[11px] font-bold text-white">
+                                                    <MdLock size={12} /> Đã đóng
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleClosed(tc)}
+                                                    disabled={isDirty}
+                                                    title={isDirty ? 'Lưu thay đổi trước khi mở lại tiêu chí' : 'Mở lại tiêu chí'}
+                                                    className="inline-flex items-center gap-1 rounded-xl bg-white/20 backdrop-blur-sm px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <MdUndo size={12} /> Mở lại
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleClosed(tc)}
+                                                disabled={isDirty}
+                                                title={isDirty ? 'Lưu thay đổi trước khi đóng tiêu chí' : 'Đóng tiêu chí'}
+                                                className="inline-flex items-center gap-1 rounded-xl bg-white/20 backdrop-blur-sm px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <MdLock size={12} /> Đóng tiêu chí
+                                            </button>
+                                        )
+                                    )}
                                 </div>
 
                                 <div className="cursor-pointer" onClick={() => toggleTC(tc.id)}>

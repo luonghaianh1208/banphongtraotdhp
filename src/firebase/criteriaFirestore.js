@@ -71,6 +71,21 @@ export const deleteCriteriaSet = async (setId) => {
     return deleteDoc(ref);
 };
 
+// Đóng / mở một Tiêu chí con cụ thể trong Bộ tiêu chí.
+// Lưu ý: closedAt dùng new Date() (không phải serverTimestamp()) vì đây là
+// giá trị nằm trong một phần tử mảng — Firestore không hỗ trợ sentinel
+// serverTimestamp() bên trong array.
+export const setTieuChiClosed = async (setId, tieuChi, tcId, closed, actorId) => {
+    const nextTieuChi = (tieuChi || []).map(tc => tc.id === tcId ? {
+        ...tc,
+        closed,
+        closedAt: closed ? new Date() : null,
+        closedBy: closed ? (actorId || null) : null,
+    } : tc);
+    const ref = doc(db, 'criteriaSets', setId);
+    return updateDoc(ref, { tieuChi: nextTieuChi, updatedAt: serverTimestamp() });
+};
+
 
 // ======================================
 // 3. SUBMISSION PERIODS
