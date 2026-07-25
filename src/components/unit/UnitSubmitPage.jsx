@@ -189,8 +189,9 @@ const UnitSubmitPage = () => {
     };
     const isReadOnly = isMainReportReadOnly;
     const isGraded = submissionStatus === 'graded';
-    const findInvalidEvidenceRow = (responseMap = {}) => (
+    const findInvalidEvidenceRow = (responseMap = {}, { skipClosed = false } = {}) => (
         tableRows.find((row) => {
+            if (skipClosed && row.tcClosed) return false;
             const evidenceFiles = responseMap[row.id]?.evidenceFiles || [];
             return evidenceFiles.length > 0 && !hasOnlyFacebookEvidenceLinks(evidenceFiles);
         }) || null
@@ -257,7 +258,7 @@ const UnitSubmitPage = () => {
         const unitId = userProfile.id;
         const normalizedResponses = normalizeResponses(responses);
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
-        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
+        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses, { skipClosed: true });
         if (invalidEvidenceRow) {
             toast.error(`Chỉ được lưu link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
@@ -300,7 +301,7 @@ const UnitSubmitPage = () => {
         const unitId = userProfile.id;
         const normalizedResponses = normalizeResponses(responses);
         const normalizedTotalScore = getTotalSelfScore(normalizedResponses);
-        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses);
+        const invalidEvidenceRow = findInvalidEvidenceRow(normalizedResponses, { skipClosed: true });
         if (invalidEvidenceRow) {
             toast.error(`Chỉ được nộp link Facebook, TikTok hoặc thanhdoanhaiphong.gov.vn ở mục: ${getRowLabel(invalidEvidenceRow)}`);
             return;
