@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import {
     MdArrowBack, MdInfo, MdPeople, MdCalendarToday,
     MdCheckCircle, MdEdit as MdDraft, MdHourglassEmpty,
-    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose, MdHistory, MdGroup, MdDownload
+    MdAttachFile, MdFilterList, MdEdit, MdSave, MdClose, MdHistory, MdGroup, MdDownload, MdSearch
 } from 'react-icons/md';
 
 const PlanDetailPage = () => {
@@ -33,6 +33,7 @@ const PlanDetailPage = () => {
     const [logsLoading, setLogsLoading] = useState(true);
     const [isDownloadingAttachments, setIsDownloadingAttachments] = useState(false);
     const [isDownloadingUnitSubmissions, setIsDownloadingUnitSubmissions] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const remotePlan = useMemo(() => plans.find(x => x.id === planId) || null, [plans, planId]);
     const plan = localPlan?.id === planId ? localPlan : remotePlan;
@@ -73,6 +74,12 @@ const PlanDetailPage = () => {
             };
         });
     }, [units, entries]);
+
+    const displayedEntries = useMemo(() => (
+        combinedUnitEntries.filter(entry =>
+            entry.unitName.toLowerCase().includes(searchTerm.trim().toLowerCase())
+        )
+    ), [combinedUnitEntries, searchTerm]);
 
     const stats = useMemo(() => {
         const submitted = combinedUnitEntries.filter(e => e.status === 'submitted').length;
@@ -444,6 +451,23 @@ const PlanDetailPage = () => {
                     </div>
                 </div>
 
+                <div className="px-6 py-3 border-b border-emerald-100/20 dark:border-emerald-900/30">
+                    <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-2.5 border border-gray-200/50 dark:border-gray-700/50 shadow-sm max-w-md w-full">
+                        <MdSearch size={18} className="text-gray-400" />
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="flex-1 bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                            placeholder="Tìm đơn vị..."
+                        />
+                        {searchTerm && (
+                            <button type="button" onClick={() => setSearchTerm('')}>
+                                <MdClose size={16} className="text-gray-400 hover:text-red-500" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse" style={{ minWidth: '700px' }}>
                         <thead>
@@ -456,7 +480,7 @@ const PlanDetailPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {combinedUnitEntries.map((entry, idx) => {
+                            {displayedEntries.map((entry, idx) => {
                                 const timeToUse = entry.submittedAt || entry.lastEditedAt || entry.createdAt;
                                 const timeString = formatTimestamp(timeToUse);
 
@@ -505,11 +529,13 @@ const PlanDetailPage = () => {
                                     </tr>
                                 );
                             })}
-                            {combinedUnitEntries.length === 0 && (
+                            {displayedEntries.length === 0 && (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-12 text-center">
                                         <MdPeople size={48} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
-                                        <p className="text-slate-400 font-medium">Chưa có đơn vị nào trong hệ thống</p>
+                                        <p className="text-slate-400 font-medium">
+                                            {searchTerm ? 'Không có đơn vị nào phù hợp với tìm kiếm.' : 'Chưa có đơn vị nào trong hệ thống'}
+                                        </p>
                                     </td>
                                 </tr>
                             )}
