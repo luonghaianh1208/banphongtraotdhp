@@ -149,6 +149,7 @@ const UnitSubmitPage = () => {
 
     const tableRows = buildCriteriaTableRows(criteriaSet);
     const scoreLimitsByRow = Object.fromEntries(tableRows.map((row) => [row.id, row.khungDiem]));
+    const tcClosedByRow = Object.fromEntries(tableRows.map((row) => [row.id, !!row.tcClosed]));
     const normalizeSelfScore = (mucId, value) => {
         const normalizedScore = clampCriteriaScore(value, scoreLimitsByRow[mucId]);
         return normalizedScore === '' ? '' : String(normalizedScore);
@@ -201,6 +202,7 @@ const UnitSubmitPage = () => {
     };
     const getSubmitRequirementIssue = (responseMap = {}) => {
         for (const row of tableRows) {
+            if (row.tcClosed) continue;
             const response = responseMap[row.id] || {};
             const missingFields = [];
             const noteValue = typeof response.notes === 'string' ? response.notes.trim() : '';
@@ -223,6 +225,7 @@ const UnitSubmitPage = () => {
         const graded = gradedData.scores[mucId] || {};
         const canEditJustificationField = ['justificationText', 'evidenceFiles'].includes(field) && canEditJustificationRow(graded);
         if (isMainReportReadOnly && !canEditJustificationField) return;
+        if (tcClosedByRow[mucId] && !canEditJustificationField) return;
         if (activeTab === 'giaiTrinh' && !canEditJustificationField) return;
         if (canEditJustificationField) {
             setJustificationResponses((prev) => ({

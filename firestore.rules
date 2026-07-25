@@ -220,6 +220,17 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'open'
             || get(/databases/$(database)/documents/submissionPeriods/$(resource.data.periodId)).data.status == 'draft'
           )
+          && (
+            // Kiểm tra không sửa mục thuộc tiêu chí đã bị đóng (closedMucIds)
+            !('responses' in request.resource.data)
+            || !('responses' in resource.data)
+            || !('criteriaSetId' in resource.data)
+            || !exists(/databases/$(database)/documents/criteriaSets/$(resource.data.criteriaSetId))
+            || !('closedMucIds' in get(/databases/$(database)/documents/criteriaSets/$(resource.data.criteriaSetId)).data)
+            || !request.resource.data.responses.diff(resource.data.responses).affectedKeys().hasAny(
+                 get(/databases/$(database)/documents/criteriaSets/$(resource.data.criteriaSetId)).data.closedMucIds
+               )
+          )
         );
       allow delete: if isAdminOrManager();
     }

@@ -79,11 +79,16 @@ export const setTieuChiClosed = async (setId, tieuChi, tcId, closed, actorId) =>
     const nextTieuChi = (tieuChi || []).map(tc => tc.id === tcId ? {
         ...tc,
         closed,
-        closedAt: closed ? new Date() : null,
+        closedAt: closed ? new Date().toISOString() : null,
         closedBy: closed ? (actorId || null) : null,
     } : tc);
+    // Danh sách phẳng các mục thuộc tiêu chí đang đóng — dùng cho firestore.rules
+    const closedMucIds = nextTieuChi
+        .filter(tc => tc.closed)
+        .flatMap(tc => (tc.noiDung || []).flatMap(nd => (nd.muc || []).map(m => m.id)))
+        .filter(Boolean);
     const ref = doc(db, 'criteriaSets', setId);
-    return updateDoc(ref, { tieuChi: nextTieuChi, updatedAt: serverTimestamp() });
+    return updateDoc(ref, { tieuChi: nextTieuChi, closedMucIds, updatedAt: serverTimestamp() });
 };
 
 

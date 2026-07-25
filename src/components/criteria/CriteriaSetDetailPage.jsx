@@ -78,11 +78,24 @@ const CriteriaSetDetailPage = () => {
                 });
             });
 
+            // Trạng thái đóng/mở tiêu chí luôn lấy từ dữ liệu live, tránh ghi đè
+            // thay đổi của admin khác khi editor này đang có sửa đổi chưa lưu
+            const remoteSet = criteriaSets.find(c => c.id === setId);
+            const tieuChiToSave = (localSet.tieuChi || []).map(tc => {
+                const remoteTC = (remoteSet?.tieuChi || []).find(t => t.id === tc.id);
+                return {
+                    ...tc,
+                    closed: remoteTC?.closed ?? false,
+                    closedAt: remoteTC?.closedAt ?? null,
+                    closedBy: remoteTC?.closedBy ?? null,
+                };
+            });
+
             await updateCriteriaSet(setId, {
                 title: localSet.title,
                 academicYear: localSet.academicYear,
                 description: localSet.description || '',
-                tieuChi: localSet.tieuChi || [],
+                tieuChi: tieuChiToSave,
                 totalMaxScore: total,
                 targetBlocks: localSet.targetBlocks || [],
                 targetTypes: localSet.targetTypes || [],
