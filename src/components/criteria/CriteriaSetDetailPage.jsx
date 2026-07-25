@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useParams, Link } from 'react-router-dom';
 import {
     MdArrowBack, MdSave, MdPerson, MdExpandMore, MdExpandLess,
@@ -13,6 +15,7 @@ import { updateCriteriaSet, assignCriteriaToUnits, revokeCriteriaAssignment, set
 import { exportCriteriaSetToExcel } from '../../utils/exportExcel';
 import { useAuth } from '../../context/AuthContext';
 import { UNIT_BLOCKS } from '../../utils/constants';
+import { parseFlexibleDate } from '../../utils/dateUtils';
 import toast from 'react-hot-toast';
 import TextareaAutosize from 'react-textarea-autosize';
 import CriteriaGuideFiles from './CriteriaGuideFiles';
@@ -550,14 +553,20 @@ const CriteriaSetDetailPage = () => {
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4">
-                                                                            <input
-                                                                                data-col="deadline"
-                                                                                onKeyDown={e => handleKeyDown(e, 'deadline')}
-                                                                                value={row.deadline}
-                                                                                onChange={e => updateMuc(tc.id, row.ndId, row.id, 'deadline', e.target.value)}
-                                                                                readOnly={isReadOnly}
+                                                                            <DatePicker
+                                                                                selected={parseFlexibleDate(row.deadline)}
+                                                                                onChange={(date) => {
+                                                                                    const iso = date
+                                                                                        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+                                                                                        : '';
+                                                                                    updateMuc(tc.id, row.ndId, row.id, 'deadline', iso);
+                                                                                }}
+                                                                                dateFormat="dd/MM/yyyy"
+                                                                                placeholderText="Chọn hạn..."
+                                                                                isClearable
+                                                                                withPortal
+                                                                                disabled={isReadOnly}
                                                                                 className="input w-full"
-                                                                                placeholder="30/10/2026"
                                                                             />
                                                                         </td>
                                                                         <td className="px-4 py-4 text-center">

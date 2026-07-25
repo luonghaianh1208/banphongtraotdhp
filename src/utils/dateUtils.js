@@ -101,3 +101,30 @@ export const getDateRange = (filter) => {
       return null;
   }
 };
+
+// Parse chuỗi ngày linh hoạt (yyyy-MM-dd, dd/MM/yyyy, hoặc chuỗi khác) thành Date.
+// Trả về null nếu rỗng hoặc không parse được — dùng làm `selected` cho DatePicker.
+export const parseFlexibleDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const d = new Date(`${trimmed}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const vnMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (vnMatch) {
+    const [, day, month, year] = vnMatch;
+    const d = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
