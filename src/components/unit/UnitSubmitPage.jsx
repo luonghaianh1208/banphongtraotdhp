@@ -524,7 +524,7 @@ const UnitSubmitPage = () => {
                                         return null;
                                     }
 
-                                    const isRowLocked = isReadOnly || activeTab === 'giaiTrinh';
+                                    const isRowLocked = isReadOnly || activeTab === 'giaiTrinh' || row.tcClosed;
                                     const dlStr = graded.justificationDeadline;
                                     const isDeadlineExpired = dlStr && new Date(dlStr) < new Date(new Date().toDateString());
                                     const isJustificationUnlocked = canEditJustificationRow(graded);
@@ -533,7 +533,14 @@ const UnitSubmitPage = () => {
                                         <tr key={row.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-gray-900/30 transition-colors">
                                             <td className="px-4 py-4">
                                                 {showTc ? (
-                                                    <div className="font-black text-gray-900 dark:text-white">{row.tcTitle}</div>
+                                                    <div className="font-black text-gray-900 dark:text-white flex items-center gap-1.5">
+                                                        {row.tcTitle}
+                                                        {row.tcClosed && (
+                                                            <span className="inline-flex items-center rounded-full bg-red-50 dark:bg-red-900/20 px-2 py-0.5 text-[10px] font-bold text-red-500 dark:text-red-300">
+                                                                Đã đóng
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 ) : (
                                                     <span className="text-xs font-bold text-gray-300 dark:text-gray-700">↳</span>
                                                 )}

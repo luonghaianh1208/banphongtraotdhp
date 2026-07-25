@@ -27,6 +27,7 @@ export const buildCriteriaTableRows = (criteriaSet) => {
                 id: muc.id,
                 tcId: tc.id,
                 tcTitle: tc.title || `Tieu chi ${tcIndex + 1}`,
+                tcClosed: !!tc.closed,
                 ndId: noiDung.id || `${tc.id}-nd-${noiDungIndex}`,
                 ndTitle: noiDung.title || '',
                 stt: muc.stt || mucIndex + 1,
